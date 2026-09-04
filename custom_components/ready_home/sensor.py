@@ -9,7 +9,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device import DeviceInfo
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -30,6 +30,7 @@ from .const import (
     ATTR_WATER_SUPPLY_HOURS,
     ATTR_WATER_TARGET,
     DOMAIN,
+    VERSION,
 )
 from .coordinator import ReadyHomeCoordinator
 
@@ -69,7 +70,8 @@ class ReadyHomeSensorBase(CoordinatorEntity[ReadyHomeCoordinator], SensorEntity)
             name="Ready Home",
             manufacturer="Ready Home",
             model="Emergency inventory",
-            sw_version="0.1.0",
+            sw_version=VERSION,
+            entry_type=DeviceEntryType.SERVICE,
         )
 
 

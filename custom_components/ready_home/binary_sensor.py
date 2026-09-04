@@ -8,11 +8,11 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device import DeviceInfo
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, VERSION
 from .coordinator import ReadyHomeCoordinator
 
 
@@ -46,7 +46,8 @@ class NeedsAttentionBinarySensor(
             name="Ready Home",
             manufacturer="Ready Home",
             model="Emergency inventory",
-            sw_version="0.1.0",
+            sw_version=VERSION,
+            entry_type=DeviceEntryType.SERVICE,
         )
 
     @property

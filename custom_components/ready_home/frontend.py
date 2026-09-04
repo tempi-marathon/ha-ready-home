@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 
@@ -10,21 +9,13 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_call_later
 
-from .const import DOMAIN
+from .const import DOMAIN, VERSION
 
 _LOGGER = logging.getLogger(__name__)
 
 URL_BASE = f"/{DOMAIN}"
 DIST_DIR = Path(__file__).parent / "dist"
 CARD_FILENAME = "ready-home.js"
-
-
-def _version() -> str:
-    manifest = Path(__file__).parent / "manifest.json"
-    try:
-        return json.loads(manifest.read_text(encoding="utf-8")).get("version", "0")
-    except OSError:
-        return "0"
 
 
 async def async_setup_frontend(hass: HomeAssistant) -> None:
@@ -58,8 +49,7 @@ async def async_setup_frontend(hass: HomeAssistant) -> None:
 
 async def _async_register_lovelace_resource(hass: HomeAssistant) -> None:
     """Add or update the module resource in Lovelace storage mode."""
-    version = _version()
-    wanted_url = f"{URL_BASE}/{CARD_FILENAME}?v={version}"
+    wanted_url = f"{URL_BASE}/{CARD_FILENAME}?v={VERSION}"
 
     try:
         lovelace = hass.data.get("lovelace")

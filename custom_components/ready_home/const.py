@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Final
 
 DOMAIN: Final = "ready_home"
+VERSION: Final = "0.1.0"
 STORAGE_KEY: Final = f"{DOMAIN}.inventory"
 STORAGE_VERSION: Final = 1
 SAVE_DELAY: Final = 1.0
