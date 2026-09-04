@@ -1,0 +1,85 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ready Home",
+        "description": "Houd noodvoorraden bij en meet de paraatheid van je huishouden.",
+        "data": {
+          "number_of_people": "Aantal personen in het huishouden"
+        }
+      }
+    },
+    "error": {
+      "invalid_people": "Voer minstens één persoon in"
+    },
+    "abort": {
+      "already_configured": "Ready Home is al geconfigureerd"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ready Home-opties",
+        "menu_options": {
+          "targets": "Paraatheidsdoelen",
+          "lists": "Locaties en categorieën",
+          "thresholds": "Drempels"
+        }
+      },
+      "targets": {
+        "title": "Paraatheidsdoelen",
+        "data": {
+          "number_of_people": "Aantal personen",
+          "duration_hours": "Duur (uren)",
+          "water_liters_per_person_per_day": "Liters water per persoon per dag",
+          "calories_per_person_per_day": "Calorieën per persoon per dag"
+        }
+      },
+      "lists": {
+        "title": "Locaties en categorieën",
+        "data": {
+          "locations": "Opslaglocaties",
+          "categories": "Categorieën"
+        }
+      },
+      "thresholds": {
+        "title": "Drempels",
+        "data": {
+          "expiring_days": "Houdbaarheidswaarschuwing (dagen)",
+          "urgent_days": "Urgente houdbaarheid (dagen)",
+          "attribute_item_cap": "Max. items in sensorattributen"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "readiness": {
+        "name": "Paraatheid"
+      },
+      "water_readiness": {
+        "name": "Waterparaatheid"
+      },
+      "food_readiness": {
+        "name": "Voedselparaatheid"
+      },
+      "expired_items": {
+        "name": "Verlopen items"
+      },
+      "expiring_items": {
+        "name": "Bijna verlopen items"
+      },
+      "low_stock_items": {
+        "name": "Lage voorraad"
+      },
+      "items": {
+        "name": "Items"
+      }
+    },
+    "binary_sensor": {
+      "needs_attention": {
+        "name": "Aandacht nodig"
+      }
+    }
+  }
+}

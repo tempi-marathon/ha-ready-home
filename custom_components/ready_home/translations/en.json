@@ -1,0 +1,85 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ready Home",
+        "description": "Track emergency supplies and measure household readiness.",
+        "data": {
+          "number_of_people": "Number of people in the household"
+        }
+      }
+    },
+    "error": {
+      "invalid_people": "Enter at least one person"
+    },
+    "abort": {
+      "already_configured": "Ready Home is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ready Home options",
+        "menu_options": {
+          "targets": "Readiness targets",
+          "lists": "Locations and categories",
+          "thresholds": "Thresholds"
+        }
+      },
+      "targets": {
+        "title": "Readiness targets",
+        "data": {
+          "number_of_people": "Number of people",
+          "duration_hours": "Duration (hours)",
+          "water_liters_per_person_per_day": "Water liters per person per day",
+          "calories_per_person_per_day": "Calories per person per day"
+        }
+      },
+      "lists": {
+        "title": "Locations and categories",
+        "data": {
+          "locations": "Storage locations",
+          "categories": "Categories"
+        }
+      },
+      "thresholds": {
+        "title": "Thresholds",
+        "data": {
+          "expiring_days": "Expiring window (days)",
+          "urgent_days": "Urgent window (days)",
+          "attribute_item_cap": "Max items in sensor attributes"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "readiness": {
+        "name": "Readiness"
+      },
+      "water_readiness": {
+        "name": "Water readiness"
+      },
+      "food_readiness": {
+        "name": "Food readiness"
+      },
+      "expired_items": {
+        "name": "Expired items"
+      },
+      "expiring_items": {
+        "name": "Expiring items"
+      },
+      "low_stock_items": {
+        "name": "Low stock items"
+      },
+      "items": {
+        "name": "Items"
+      }
+    },
+    "binary_sensor": {
+      "needs_attention": {
+        "name": "Needs attention"
+      }
+    }
+  }
+}

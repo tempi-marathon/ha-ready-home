@@ -1,0 +1,265 @@
+add_item:
+  name: Add inventory item
+  description: Add a new item to the Ready Home inventory.
+  fields:
+    name:
+      name: Name
+      description: Display name of the item
+      required: true
+      example: Bottled water
+      selector:
+        text:
+    quantity:
+      name: Quantity
+      required: true
+      example: 6
+      selector:
+        number:
+          min: 0
+          step: 0.01
+          mode: box
+    desired_quantity:
+      name: Desired quantity
+      example: 12
+      selector:
+        number:
+          min: 0
+          step: 0.01
+          mode: box
+    unit:
+      name: Unit
+      default: piece
+      selector:
+        select:
+          options:
+            - piece
+            - pack
+            - box
+            - gram
+            - kilogram
+            - liter
+            - milliliter
+    location:
+      name: Location
+      selector:
+        text:
+    category:
+      name: Category
+      selector:
+        text:
+    notes:
+      name: Notes
+      selector:
+        text:
+    barcode:
+      name: Barcode
+      selector:
+        text:
+    priority:
+      name: Priority
+      default: important
+      selector:
+        select:
+          options:
+            - essential
+            - important
+            - optional
+    expiry_date:
+      name: Expiry date
+      selector:
+        date:
+    resource:
+      name: Resource type
+      default: none
+      description: Whether this item counts toward water or food readiness
+      selector:
+        select:
+          options:
+            - none
+            - water
+            - food
+    liters_per_unit:
+      name: Liters per unit
+      description: Required for water items when unit is not liter/milliliter
+      selector:
+        number:
+          min: 0
+          step: 0.01
+          mode: box
+    calories_per_unit:
+      name: Calories per unit
+      description: Required for food items
+      selector:
+        number:
+          min: 0
+          step: 1
+          mode: box
+
+update_item:
+  name: Update inventory item
+  description: Partially update an item by item_id or unique name.
+  fields:
+    item_id:
+      name: Item ID
+      selector:
+        text:
+    name:
+      name: Current name
+      description: Used to find the item when item_id is not provided
+      selector:
+        text:
+    new_name:
+      name: New name
+      selector:
+        text:
+    quantity:
+      name: Quantity
+      selector:
+        number:
+          min: 0
+          step: 0.01
+          mode: box
+    desired_quantity:
+      name: Desired quantity
+      selector:
+        number:
+          min: 0
+          step: 0.01
+          mode: box
+    unit:
+      name: Unit
+      selector:
+        select:
+          options:
+            - piece
+            - pack
+            - box
+            - gram
+            - kilogram
+            - liter
+            - milliliter
+    location:
+      name: Location
+      selector:
+        text:
+    category:
+      name: Category
+      selector:
+        text:
+    notes:
+      name: Notes
+      selector:
+        text:
+    barcode:
+      name: Barcode
+      selector:
+        text:
+    priority:
+      name: Priority
+      selector:
+        select:
+          options:
+            - essential
+            - important
+            - optional
+    expiry_date:
+      name: Expiry date
+      selector:
+        date:
+    resource:
+      name: Resource type
+      selector:
+        select:
+          options:
+            - none
+            - water
+            - food
+    liters_per_unit:
+      name: Liters per unit
+      selector:
+        number:
+          min: 0
+          step: 0.01
+          mode: box
+    calories_per_unit:
+      name: Calories per unit
+      selector:
+        number:
+          min: 0
+          step: 1
+          mode: box
+
+adjust_quantity:
+  name: Adjust quantity
+  description: Add or subtract from an item's quantity (e.g. -1 after using a can).
+  fields:
+    item_id:
+      name: Item ID
+      selector:
+        text:
+    name:
+      name: Name
+      selector:
+        text:
+    delta:
+      name: Delta
+      required: true
+      example: -1
+      selector:
+        number:
+          step: 0.01
+          mode: box
+
+remove_item:
+  name: Remove inventory item
+  description: Delete an item from the inventory.
+  fields:
+    item_id:
+      name: Item ID
+      selector:
+        text:
+    name:
+      name: Name
+      selector:
+        text:
+
+list_items:
+  name: List inventory items
+  description: Return inventory items, optionally filtered.
+  fields:
+    location:
+      name: Location
+      selector:
+        text:
+    category:
+      name: Category
+      selector:
+        text:
+    resource:
+      name: Resource type
+      selector:
+        select:
+          options:
+            - none
+            - water
+            - food
+    status:
+      name: Status
+      selector:
+        select:
+          options:
+            - expired
+            - expiring
+            - low_stock
+            - ok
+
+lookup_barcode:
+  name: Look up barcode
+  description: Look up a product on Open Food Facts (does not add to inventory).
+  fields:
+    barcode:
+      name: Barcode
+      required: true
+      example: "3017620422003"
+      selector:
+        text:
