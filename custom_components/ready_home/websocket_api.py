@@ -8,21 +8,23 @@ from typing import Any
 import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import HomeAssistantError
 
 from .attention import item_summary
 from .barcode import lookup_product
-from .const import DOMAIN
+from .const import ATTR_CONFIG_ENTRY_ID, DOMAIN
 from .coordinator import ReadyHomeCoordinator, ReadyHomeData
+from .helpers import get_coordinator
+
 
 _LOGGER = logging.getLogger(__name__)
 
+_OPTIONAL_ENTRY = {vol.Optional(ATTR_CONFIG_ENTRY_ID): str}
 
-def _coordinator(hass: HomeAssistant) -> ReadyHomeCoordinator:
-    data = hass.data.get(DOMAIN) or {}
-    if not data:
-        raise HomeAssistantError("Ready Home is not set up")
-    return next(iter(data.values()))
+
+def _coordinator(hass: HomeAssistant, msg: dict[str, Any]) -> ReadyHomeCoordinator:
+    return get_coordinator(
+        hass, config_entry_id=msg.get(ATTR_CONFIG_ENTRY_ID) or None
+    )
 
 
 def _assessment_dict(data: ReadyHomeData) -> dict[str, Any]:
@@ -81,33 +83,39 @@ def _settings_dict(coordinator: ReadyHomeCoordinator) -> dict[str, Any]:
     }
 
 
-@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/items/list"})
+@websocket_api.websocket_command(
+    {vol.Required("type"): f"{DOMAIN}/items/list", **_OPTIONAL_ENTRY}
+)
 @websocket_api.async_response
 async def ws_items_list(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
 ) -> None:
     """Return full inventory snapshot."""
-    coordinator = _coordinator(hass)
+    coordinator = _coordinator(hass, msg)
     connection.send_result(msg["id"], _snapshot(coordinator))
 
 
-@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/settings"})
+@websocket_api.websocket_command(
+    {vol.Required("type"): f"{DOMAIN}/settings", **_OPTIONAL_ENTRY}
+)
 @websocket_api.async_response
 async def ws_settings(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
 ) -> None:
     """Return readiness settings and reference lists."""
-    coordinator = _coordinator(hass)
+    coordinator = _coordinator(hass, msg)
     connection.send_result(msg["id"], _settings_dict(coordinator))
 
 
-@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/subscribe"})
+@websocket_api.websocket_command(
+    {vol.Required("type"): f"{DOMAIN}/subscribe", **_OPTIONAL_ENTRY}
+)
 @websocket_api.async_response
 async def ws_subscribe(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
 ) -> None:
     """Subscribe to inventory changes; push snapshot on each update."""
-    coordinator = _coordinator(hass)
+    coordinator = _coordinator(hass, msg)
     subscription_id = msg["id"]
 
     @callback

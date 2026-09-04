@@ -2,6 +2,12 @@ add_item:
   name: Add inventory item
   description: Add a new item to the Ready Home inventory.
   fields:
+    config_entry_id:
+      name: Config entry
+      description: Ready Home profile (optional while only one profile exists)
+      selector:
+        config_entry:
+          integration: ready_home
     name:
       name: Name
       description: Display name of the item
@@ -99,6 +105,12 @@ update_item:
   name: Update inventory item
   description: Partially update an item by item_id or unique name.
   fields:
+    config_entry_id:
+      name: Config entry
+      description: Ready Home profile (optional while only one profile exists)
+      selector:
+        config_entry:
+          integration: ready_home
     item_id:
       name: Item ID
       selector:
@@ -193,6 +205,12 @@ adjust_quantity:
   name: Adjust quantity
   description: Add or subtract from an item's quantity (e.g. -1 after using a can).
   fields:
+    config_entry_id:
+      name: Config entry
+      description: Ready Home profile (optional while only one profile exists)
+      selector:
+        config_entry:
+          integration: ready_home
     item_id:
       name: Item ID
       selector:
@@ -214,6 +232,12 @@ remove_item:
   name: Remove inventory item
   description: Delete an item from the inventory.
   fields:
+    config_entry_id:
+      name: Config entry
+      description: Ready Home profile (optional while only one profile exists)
+      selector:
+        config_entry:
+          integration: ready_home
     item_id:
       name: Item ID
       selector:
@@ -227,6 +251,12 @@ list_items:
   name: List inventory items
   description: Return inventory items, optionally filtered.
   fields:
+    config_entry_id:
+      name: Config entry
+      description: Ready Home profile (optional while only one profile exists)
+      selector:
+        config_entry:
+          integration: ready_home
     location:
       name: Location
       selector:
@@ -257,6 +287,12 @@ lookup_barcode:
   name: Look up barcode
   description: Look up a product on Open Food Facts (does not add to inventory).
   fields:
+    config_entry_id:
+      name: Config entry
+      description: Ready Home profile (optional while only one profile exists)
+      selector:
+        config_entry:
+          integration: ready_home
     barcode:
       name: Barcode
       required: true

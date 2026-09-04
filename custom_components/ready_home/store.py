@@ -9,7 +9,7 @@ from typing import Any
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
-from .const import SAVE_DELAY, STORAGE_KEY, STORAGE_VERSION
+from .const import SAVE_DELAY, STORAGE_KEY_LEGACY, STORAGE_VERSION, storage_key_for_entry
 from .models import InventoryItem
 
 _LOGGER = logging.getLogger(__name__)
@@ -18,14 +18,25 @@ Listener = Callable[[], Awaitable[None] | None]
 
 
 class InventoryStore:
-    """Versioned Store-backed CRUD for inventory items and bucket state."""
+    """Versioned Store-backed CRUD for inventory items and bucket state.
 
-    def __init__(self, hass: HomeAssistant) -> None:
+    Storage is scoped per config entry so multiple readiness profiles can
+    coexist later without colliding.
+    """
+
+    def __init__(self, hass: HomeAssistant, entry_id: str) -> None:
         self.hass = hass
+        self.entry_id = entry_id
         self._store: Store[dict[str, Any]] = Store(
             hass,
             STORAGE_VERSION,
-            STORAGE_KEY,
+            storage_key_for_entry(entry_id),
+            serialize_in_event_loop=False,
+        )
+        self._legacy_store: Store[dict[str, Any]] = Store(
+            hass,
+            STORAGE_VERSION,
+            STORAGE_KEY_LEGACY,
             serialize_in_event_loop=False,
         )
         self._items: dict[str, InventoryItem] = {}
@@ -45,8 +56,19 @@ class InventoryStore:
         return _remove
 
     async def async_load(self) -> None:
-        """Load items and bucket state from disk."""
+        """Load items and bucket state from disk, migrating legacy storage if needed."""
         data = await self._store.async_load()
+        migrated = False
+        if data is None:
+            legacy = await self._legacy_store.async_load()
+            if legacy is not None:
+                _LOGGER.info(
+                    "Migrating Ready Home inventory from legacy store key to entry %s",
+                    self.entry_id,
+                )
+                data = legacy
+                migrated = True
+
         if data is None:
             self._items = {}
             self._bucket_state = {}
@@ -66,7 +88,13 @@ class InventoryStore:
             str(k): str(v) for k, v in (data.get("bucket_state") or {}).items()
         }
         self._loaded = True
-        _LOGGER.debug("Loaded %s inventory items", len(self._items))
+        _LOGGER.debug(
+            "Loaded %s inventory items for entry %s", len(self._items), self.entry_id
+        )
+        if migrated:
+            self._schedule_save()
+            # Prevent a future second profile from re-importing the same legacy data.
+            self._legacy_store.async_delay_save(lambda: {}, SAVE_DELAY)
 
     def _schedule_save(self) -> None:
         self._store.async_delay_save(self._data_to_save, SAVE_DELAY)

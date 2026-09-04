@@ -3,14 +3,16 @@
     "step": {
       "user": {
         "title": "Ready Home",
-        "description": "Track emergency supplies and measure household readiness.",
+        "description": "Track emergency supplies and measure readiness. Name this profile (for example Home, cabin, or dogs) — it becomes the device name and entity id prefix.",
         "data": {
+          "name": "Profile name",
           "number_of_people": "Number of people in the household"
         }
       }
     },
     "error": {
-      "invalid_people": "Enter at least one person"
+      "invalid_people": "Enter at least one person",
+      "invalid_name": "Enter a profile name"
     },
     "abort": {
       "already_configured": "Ready Home is already configured"
@@ -21,9 +23,17 @@
       "init": {
         "title": "Ready Home options",
         "menu_options": {
+          "profile": "Profile",
           "targets": "Readiness targets",
           "lists": "Locations and categories",
           "thresholds": "Thresholds"
+        }
+      },
+      "profile": {
+        "title": "Profile",
+        "description": "Rename this readiness profile (for example Home, cabin, or dogs). The name is used as the device name and entity id prefix.",
+        "data": {
+          "name": "Profile name"
         }
       },
       "targets": {

@@ -5,12 +5,18 @@ from __future__ import annotations
 from typing import Final
 
 DOMAIN: Final = "ready_home"
-VERSION: Final = "0.1.0"
-STORAGE_KEY: Final = f"{DOMAIN}.inventory"
+VERSION: Final = "0.1.1"
+STORAGE_KEY_LEGACY: Final = f"{DOMAIN}.inventory"
 STORAGE_VERSION: Final = 1
 SAVE_DELAY: Final = 1.0
 
+
+def storage_key_for_entry(entry_id: str) -> str:
+    """Return the Store key for a profile's inventory."""
+    return f"{DOMAIN}.inventory.{entry_id}"
+
 # Config / options keys
+CONF_NAME: Final = "name"
 CONF_NUMBER_OF_PEOPLE: Final = "number_of_people"
 CONF_DURATION_HOURS: Final = "duration_hours"
 CONF_WATER_LITERS_PER_PERSON_PER_DAY: Final = "water_liters_per_person_per_day"
@@ -21,7 +27,10 @@ CONF_EXPIRING_DAYS: Final = "expiring_days"
 CONF_URGENT_DAYS: Final = "urgent_days"
 CONF_ATTRIBUTE_ITEM_CAP: Final = "attribute_item_cap"
 
+ATTR_CONFIG_ENTRY_ID: Final = "config_entry_id"
+
 # Defaults (match Ready Home App)
+DEFAULT_PROFILE_NAME: Final = "Home"
 DEFAULT_DURATION_HOURS: Final = 72
 DEFAULT_WATER_LITERS_PER_PERSON_PER_DAY: Final = 3.0
 DEFAULT_CALORIES_PER_PERSON_PER_DAY: Final = 2000

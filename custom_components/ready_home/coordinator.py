@@ -53,6 +53,7 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
         super().__init__(hass, _LOGGER, name=DOMAIN)
         self.store = store
         self.settings = settings
+        self.entry_id: str | None = None
         self._unsub_daily: CALLBACK_TYPE | None = None
         self._unsub_store: CALLBACK_TYPE | None = None
 

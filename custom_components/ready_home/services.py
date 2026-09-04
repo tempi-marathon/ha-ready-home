@@ -7,12 +7,12 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse, callback
-from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 
 from .attention import expiry_severity, item_summary
-from .const import DOMAIN
-from .coordinator import ReadyHomeCoordinator
+from .const import ATTR_CONFIG_ENTRY_ID, DOMAIN
+from .helpers import entry_id_from_call_data, get_coordinator
 from .models import (
     InventoryItem,
     InventoryPriority,
@@ -47,16 +47,8 @@ ATTR_DELTA = "delta"
 ATTR_STATUS = "status"
 
 
-def _get_coordinator(hass: HomeAssistant) -> ReadyHomeCoordinator:
-    data = hass.data.get(DOMAIN)
-    if not data:
-        raise HomeAssistantError("Ready Home is not set up")
-    # single_config_entry — one entry
-    return next(iter(data.values()))
-
-
 def _resolve_item(
-    coordinator: ReadyHomeCoordinator,
+    coordinator: Any,
     item_id: str | None,
     name: str | None,
 ) -> InventoryItem:
@@ -94,6 +86,7 @@ ADD_SCHEMA = vol.Schema(
         ),
         vol.Optional(ATTR_LITERS_PER_UNIT): vol.Any(None, vol.Coerce(float)),
         vol.Optional(ATTR_CALORIES_PER_UNIT): vol.Any(None, vol.Coerce(float)),
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
     }
 )
 
@@ -114,8 +107,8 @@ UPDATE_SCHEMA = vol.Schema(
         vol.Optional(ATTR_RESOURCE): vol.In([r.value for r in ResourceType]),
         vol.Optional(ATTR_LITERS_PER_UNIT): vol.Any(None, vol.Coerce(float)),
         vol.Optional(ATTR_CALORIES_PER_UNIT): vol.Any(None, vol.Coerce(float)),
-    },
-    extra=vol.PREVENT_EXTRA,
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+    }
 )
 
 ADJUST_SCHEMA = vol.Schema(
@@ -123,6 +116,7 @@ ADJUST_SCHEMA = vol.Schema(
         vol.Optional(ATTR_ITEM_ID): cv.string,
         vol.Optional(ATTR_NAME): cv.string,
         vol.Required(ATTR_DELTA): vol.Coerce(float),
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
     }
 )
 
@@ -130,6 +124,7 @@ REMOVE_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_ITEM_ID): cv.string,
         vol.Optional(ATTR_NAME): cv.string,
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
     }
 )
 
@@ -141,10 +136,14 @@ LIST_SCHEMA = vol.Schema(
         vol.Optional(ATTR_STATUS): vol.In(
             ["expired", "expiring", "low_stock", "ok"]
         ),
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
     }
 )
 
-LOOKUP_SCHEMA = vol.Schema({vol.Required(ATTR_BARCODE): cv.string})
+LOOKUP_SCHEMA = vol.Schema({
+    vol.Required(ATTR_BARCODE): cv.string,
+    vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+})
 
 
 def _matches_status(
@@ -170,7 +169,7 @@ def async_register_services(hass: HomeAssistant) -> None:
 
     async def handle_add(call: ServiceCall) -> dict[str, Any]:
         data = ADD_SCHEMA(dict(call.data))
-        coordinator = _get_coordinator(hass)
+        coordinator = get_coordinator(hass, config_entry_id=entry_id_from_call_data(data))
         item = InventoryItem(
             name=data[ATTR_NAME],
             quantity=data[ATTR_QUANTITY],
@@ -193,7 +192,7 @@ def async_register_services(hass: HomeAssistant) -> None:
 
     async def handle_update(call: ServiceCall) -> dict[str, Any]:
         data = UPDATE_SCHEMA(dict(call.data))
-        coordinator = _get_coordinator(hass)
+        coordinator = get_coordinator(hass, config_entry_id=entry_id_from_call_data(data))
         item = _resolve_item(
             coordinator, data.get(ATTR_ITEM_ID), data.get(ATTR_NAME)
         )
@@ -224,7 +223,7 @@ def async_register_services(hass: HomeAssistant) -> None:
 
     async def handle_adjust(call: ServiceCall) -> dict[str, Any]:
         data = ADJUST_SCHEMA(dict(call.data))
-        coordinator = _get_coordinator(hass)
+        coordinator = get_coordinator(hass, config_entry_id=entry_id_from_call_data(data))
         item = _resolve_item(
             coordinator, data.get(ATTR_ITEM_ID), data.get(ATTR_NAME)
         )
@@ -237,7 +236,7 @@ def async_register_services(hass: HomeAssistant) -> None:
 
     async def handle_remove(call: ServiceCall) -> dict[str, Any]:
         data = REMOVE_SCHEMA(dict(call.data))
-        coordinator = _get_coordinator(hass)
+        coordinator = get_coordinator(hass, config_entry_id=entry_id_from_call_data(data))
         item = _resolve_item(
             coordinator, data.get(ATTR_ITEM_ID), data.get(ATTR_NAME)
         )
@@ -246,7 +245,7 @@ def async_register_services(hass: HomeAssistant) -> None:
 
     async def handle_list(call: ServiceCall) -> dict[str, Any]:
         data = LIST_SCHEMA(dict(call.data))
-        coordinator = _get_coordinator(hass)
+        coordinator = get_coordinator(hass, config_entry_id=entry_id_from_call_data(data))
         settings = coordinator.settings
         items = list(coordinator.store.items)
 

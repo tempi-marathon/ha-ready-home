@@ -18,14 +18,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Ready Home from a config entry."""
     from homeassistant.const import Platform
 
+    from .const import CONF_NAME, DEFAULT_PROFILE_NAME
     from .coordinator import ReadyHomeCoordinator
     from .models import ReadinessSettings
     from .services import async_register_services
     from .store import InventoryStore
 
-    store = InventoryStore(hass)
+    if CONF_NAME not in entry.data:
+        name = str(entry.title or DEFAULT_PROFILE_NAME).strip() or DEFAULT_PROFILE_NAME
+        hass.config_entries.async_update_entry(
+            entry, data={**dict(entry.data), CONF_NAME: name}
+        )
+
+    store = InventoryStore(hass, entry.entry_id)
     settings = ReadinessSettings.from_options(dict(entry.options))
     coordinator = ReadyHomeCoordinator(hass, store, settings)
+    coordinator.entry_id = entry.entry_id
     await coordinator.async_setup()
 
     hass.data.setdefault(DOMAIN, {})

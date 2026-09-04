@@ -3,14 +3,16 @@
     "step": {
       "user": {
         "title": "Ready Home",
-        "description": "Houd noodvoorraden bij en meet de paraatheid van je huishouden.",
+        "description": "Houd noodvoorraden bij en meet paraatheid. Geef dit profiel een naam (bijvoorbeeld Home, chalet of honden) — die wordt de apparaarnaam en het voorvoegsel van de entity-id.",
         "data": {
+          "name": "Profielnaam",
           "number_of_people": "Aantal personen in het huishouden"
         }
       }
     },
     "error": {
-      "invalid_people": "Voer minstens één persoon in"
+      "invalid_people": "Voer minstens één persoon in",
+      "invalid_name": "Voer een profielnaam in"
     },
     "abort": {
       "already_configured": "Ready Home is al geconfigureerd"
@@ -21,9 +23,17 @@
       "init": {
         "title": "Ready Home-opties",
         "menu_options": {
+          "profile": "Profiel",
           "targets": "Paraatheidsdoelen",
           "lists": "Locaties en categorieën",
           "thresholds": "Drempels"
+        }
+      },
+      "profile": {
+        "title": "Profiel",
+        "description": "Hernoem dit paraatheidsprofiel (bijvoorbeeld Home, chalet of honden). De naam wordt gebruikt als apparaarnaam en voorvoegsel van de entity-id.",
+        "data": {
+          "name": "Profielnaam"
         }
       },
       "targets": {

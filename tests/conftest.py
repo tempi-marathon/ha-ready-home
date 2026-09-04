@@ -36,6 +36,9 @@ def _ensure_homeassistant_stubs() -> None:
             "homeassistant.helpers.aiohttp_client"
         ),
         "homeassistant.exceptions": types.ModuleType("homeassistant.exceptions"),
+        "homeassistant.config_entries": types.ModuleType(
+            "homeassistant.config_entries"
+        ),
         "homeassistant.components": types.ModuleType("homeassistant.components"),
         "homeassistant.components.websocket_api": types.ModuleType(
             "homeassistant.components.websocket_api"
@@ -99,6 +102,7 @@ def _ensure_homeassistant_stubs() -> None:
     modules["homeassistant.core"].HomeAssistant = MagicMock
     modules["homeassistant.core"].callback = lambda f: f
     modules["homeassistant.core"].CALLBACK_TYPE = object
+    modules["homeassistant.config_entries"].ConfigEntry = MagicMock
 
     for name, mod in modules.items():
         sys.modules.setdefault(name, mod)

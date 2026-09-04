@@ -40,7 +40,7 @@ def inventory_store(monkeypatch: pytest.MonkeyPatch) -> InventoryStore:
     monkeypatch.setattr(
         "custom_components.ready_home.store.Store", _store_factory
     )
-    store = InventoryStore(hass)
+    store = InventoryStore(hass, "test-entry")
     store._fake = fake  # type: ignore[attr-defined]
     return store
 
@@ -82,7 +82,7 @@ async def test_persist_and_reload(inventory_store: InventoryStore) -> None:
     await store.async_add(item)
 
     # Simulate reload from the same backing data
-    store2 = InventoryStore(MagicMock())
+    store2 = InventoryStore(MagicMock(), "test-entry")
     store2._store = store._store  # type: ignore[assignment]
     await store2.async_load()
     loaded = store2.get(item.id)

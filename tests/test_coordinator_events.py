@@ -44,7 +44,7 @@ def coordinator(monkeypatch: pytest.MonkeyPatch) -> ReadyHomeCoordinator:
         return backend
 
     monkeypatch.setattr("custom_components.ready_home.store.Store", _factory)
-    store = InventoryStore(hass)
+    store = InventoryStore(hass, "test-entry")
     settings = ReadinessSettings(number_of_people=2)
     coord = ReadyHomeCoordinator(hass, store, settings)
     # Skip daily tracker / listener wiring; call _async_update_data directly
