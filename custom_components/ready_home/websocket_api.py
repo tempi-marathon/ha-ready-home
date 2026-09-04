@@ -15,7 +15,6 @@ from .const import ATTR_CONFIG_ENTRY_ID, DOMAIN
 from .coordinator import ReadyHomeCoordinator, ReadyHomeData
 from .helpers import get_coordinator
 
-
 _LOGGER = logging.getLogger(__name__)
 
 _OPTIONAL_ENTRY = {vol.Optional(ATTR_CONFIG_ENTRY_ID): str}
