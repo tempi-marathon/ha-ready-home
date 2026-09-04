@@ -38,11 +38,12 @@ Sensors / events (unchanged)
 
 ## Backend work
 
-1. **Panel registration** (in `frontend.py` or new `panel.py`)
-   - Register a built-in panel via `homeassistant.components.frontend.async_register_built_in_panel` (same pattern as Alarmo / Scheduler).
-   - Sidebar title: “Ready Home”; icon: `mdi:shield-home` (or brand later).
+1. **Panel registration** (in `panel.py`)
+   - Register via `homeassistant.components.panel_custom.async_register_panel` with **`module_url`** (Alarmo pattern — not bare `async_register_built_in_panel` / `js_url`).
+   - Sidebar title: “Ready Home”; icon: `mdi:shield-home`; route: `/ready_home`.
    - `require_admin`: **false** (household users should manage inventory); document that HA user permissions still apply to services.
-   - Unregister on last entry unload.
+   - Unregister with `frontend.async_remove_panel` on last entry unload.
+   - Manifest dependency: `panel_custom`.
 
 2. **Static assets**
    - Extend the existing Vite build to emit a **panel bundle** (e.g. `dist/ready-home-panel.js`) in addition to `ready-home.js` (cards).

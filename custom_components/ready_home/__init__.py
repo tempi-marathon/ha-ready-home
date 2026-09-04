@@ -41,11 +41,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async_register_services(hass)
 
-    from .frontend import async_setup_frontend
+    from .panel import async_setup_panel
     from .websocket_api import async_register_websocket
 
     async_register_websocket(hass)
-    await async_setup_frontend(hass)
+    await async_setup_panel(hass)
 
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
@@ -60,6 +60,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     from homeassistant.const import Platform
 
     from .coordinator import ReadyHomeCoordinator
+    from .panel import async_unregister_panel
     from .services import async_unregister_services
 
     unload_ok = await hass.config_entries.async_unload_platforms(
@@ -70,6 +71,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await coordinator.async_shutdown()
         if not hass.data[DOMAIN]:
             async_unregister_services(hass)
+            async_unregister_panel(hass)
             hass.data.pop(DOMAIN, None)
     return unload_ok
 

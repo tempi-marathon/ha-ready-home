@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Final
 
 DOMAIN: Final = "ready_home"
-VERSION: Final = "0.1.1"
+VERSION: Final = "0.1.2"
 STORAGE_KEY_LEGACY: Final = f"{DOMAIN}.inventory"
 STORAGE_VERSION: Final = 1
 SAVE_DELAY: Final = 1.0
@@ -47,6 +47,13 @@ EVENT_ITEM_LOW_STOCK: Final = f"{DOMAIN}_item_low_stock"
 
 # Platforms
 PLATFORMS: Final = ["sensor", "binary_sensor"]
+
+# Sidebar panel
+PANEL_URL_PATH: Final = DOMAIN
+PANEL_WEBCOMPONENT: Final = "ready-home-panel"
+PANEL_FILENAME: Final = "ready-home-panel.js"
+PANEL_ICON: Final = "mdi:shield-home"
+PANEL_TITLE: Final = "Ready Home"
 
 # Attr keys
 ATTR_ITEMS: Final = "items"
