@@ -40,8 +40,8 @@ class NeedsAttentionBinarySensor(
         self, coordinator: ReadyHomeCoordinator, entry: ConfigEntry
     ) -> None:
         super().__init__(coordinator)
+        self._object_id = "needs_attention"
         self._attr_unique_id = f"{entry.entry_id}_needs_attention"
-        self._attr_suggested_object_id = "needs_attention"
         from .helpers import profile_name
 
         self._attr_device_info = DeviceInfo(
@@ -52,6 +52,11 @@ class NeedsAttentionBinarySensor(
             sw_version=VERSION,
             entry_type=DeviceEntryType.SERVICE,
         )
+
+    @property
+    def suggested_object_id(self) -> str | None:
+        """Stable English object id (not derived from translated name)."""
+        return self._object_id
 
     @property
     def is_on(self) -> bool:
