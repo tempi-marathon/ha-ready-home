@@ -14,7 +14,7 @@ Installable through [HACS](https://hacs.xyz/) as a custom repository (category: 
 | **Actions** | `add_item`, `update_item`, `adjust_quantity`, `remove_item`, `list_items`, `lookup_barcode` |
 | **Events** | `ready_home_item_expired`, `ready_home_item_expiring`, `ready_home_item_low_stock` (fire once on transition) |
 | **Cards** | Bundled Lovelace cards for readiness and inventory (auto-registered in storage mode) |
-| **Sidebar** | Ready Home panel for inventory management (shell in progress) |
+| **Sidebar** | Ready Home panel for full inventory management |
 | **Barcode** | Open Food Facts lookup via action, websocket, or inventory card scan |
 
 ## Installation
@@ -27,11 +27,11 @@ Installable through [HACS](https://hacs.xyz/) as a custom repository (category: 
 Cards are registered automatically when Lovelace is in **storage** mode. In **YAML** mode, add this resource manually:
 
 ```yaml
-url: /ready_home/ready-home.js?v=0.1.2
+url: /ready_home/ready-home.js?v=0.1.3
 type: module
 ```
 
-After setup, a **Ready Home** item appears in the sidebar (management UI; inventory table comes next).
+After setup, a **Ready Home** item appears in the sidebar for inventory management (add/edit/±/remove, filters, barcode).
 
 ## Configuration
 

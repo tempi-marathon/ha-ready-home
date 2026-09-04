@@ -93,13 +93,13 @@ Sensors / events (unchanged)
 
 ## Acceptance criteria
 
-- [ ] Sidebar shows **Ready Home** after integration setup; disappears when integration is removed.
-- [ ] User can add, edit, adjust quantity, and remove items without Developer Tools.
-- [ ] Table updates live when services mutate inventory (another tab / automation).
-- [ ] Barcode lookup fills name/calories hints in the add form when OFF finds a product.
-- [ ] Readiness card still works on Lovelace; management does not require it.
-- [ ] Existing Dutch entity IDs are unrelated; panel does not depend on entity object ids.
-- [ ] Single profile only; no profile picker required.
+- [x] Sidebar shows **Ready Home** after integration setup; disappears when integration is removed.
+- [x] User can add, edit, adjust quantity, and remove items without Developer Tools.
+- [x] Table updates live when services mutate inventory (another tab / automation).
+- [x] Barcode lookup fills name/calories hints in the add form when OFF finds a product.
+- [x] Readiness card still works on Lovelace; management does not require it.
+- [x] Existing Dutch entity IDs are unrelated; panel does not depend on entity object ids.
+- [x] Single profile only; no profile picker required.
 
 ## Effort / risk notes
 

@@ -113,7 +113,7 @@ async def ws_settings(
 async def ws_subscribe(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
 ) -> None:
-    """Subscribe to inventory changes; push snapshot on each update."""
+    """Subscribe to inventory changes; push snapshot after each coordinator refresh."""
     coordinator = _coordinator(hass, msg)
     subscription_id = msg["id"]
 
@@ -123,11 +123,12 @@ async def ws_subscribe(
             websocket_api.event_message(subscription_id, _snapshot(coordinator))
         )
 
-    # Immediate snapshot
+    # Immediate snapshot, then follow coordinator refreshes (store mutations
+    # request a refresh; pushing from the store listener would be stale).
     connection.send_result(subscription_id)
     _push()
 
-    unsubscribe = coordinator.store.async_add_listener(_push)
+    unsubscribe = coordinator.async_add_listener(_push)
     connection.subscriptions[subscription_id] = unsubscribe
 
 
