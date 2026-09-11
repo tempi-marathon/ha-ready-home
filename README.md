@@ -150,8 +150,6 @@ npm run build   # writes custom_components/ready_home/dist/ready-home-panel.js
 npm test
 ```
 
-Phase specifications for follow-up work live in [docs/phases/](docs/phases/).
-
 ## Release checklist (HACS default store)
 
 Before submitting to [hacs/default](https://github.com/hacs/default):
