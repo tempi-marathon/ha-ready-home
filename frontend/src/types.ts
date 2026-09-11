@@ -23,21 +23,7 @@ export interface HomeAssistant {
   localize: (key: string) => string;
 }
 
-export interface LovelaceCardConfig {
-  type: string;
-  [key: string]: unknown;
-}
-
 declare global {
-  interface Window {
-    customCards?: Array<{
-      type: string;
-      name: string;
-      description: string;
-      preview?: boolean;
-    }>;
-  }
-
   interface BarcodeDetector {
     detect(source: ImageBitmapSource): Promise<Array<{ rawValue: string }>>;
   }

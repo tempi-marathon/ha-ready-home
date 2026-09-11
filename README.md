@@ -1,6 +1,6 @@
 # Ready Home for Home Assistant
 
-Track household emergency supplies, measure readiness against water and calorie targets, and surface expired, expiring, and low-stock items as Home Assistant sensors, events, and Lovelace cards.
+Track household emergency supplies, measure readiness against water and calorie targets, and surface expired, expiring, and low-stock items as Home Assistant sensors, events, and a sidebar management panel.
 
 Installable through [HACS](https://hacs.xyz/) as a custom repository (category: **Integration**).
 
@@ -13,9 +13,8 @@ Installable through [HACS](https://hacs.xyz/) as a custom repository (category: 
 | **Sensors** | Overall / water / food readiness %, expired / expiring / low-stock counts, total items, needs-attention binary sensor |
 | **Actions** | `add_item`, `update_item`, `adjust_quantity`, `remove_item`, `list_items`, `lookup_barcode` |
 | **Events** | `ready_home_item_expired`, `ready_home_item_expiring`, `ready_home_item_low_stock` (fire once on transition) |
-| **Cards** | Bundled Lovelace cards for readiness and inventory (auto-registered in storage mode) |
 | **Sidebar** | Ready Home panel for full inventory management |
-| **Barcode** | Open Food Facts lookup via action, websocket, or inventory card scan |
+| **Barcode** | Open Food Facts lookup via action, websocket, or sidebar panel scan |
 
 ## Installation
 
@@ -24,14 +23,9 @@ Installable through [HACS](https://hacs.xyz/) as a custom repository (category: 
 3. Settings → Devices & Services → Add Integration → **Ready Home**.
 4. Enter the number of people in the household.
 
-Cards are registered automatically when Lovelace is in **storage** mode. In **YAML** mode, add this resource manually:
-
-```yaml
-url: /ready_home/ready-home.js?v=0.1.3
-type: module
-```
-
 After setup, a **Ready Home** item appears in the sidebar for inventory management (add/edit/±/remove, filters, barcode).
+
+If you previously added a Lovelace resource for `/ready_home/ready-home.js`, you can remove it (Settings → Dashboards → ⋮ → Resources, or from YAML). Storage-mode installs clean that resource up automatically on the next load.
 
 ## Configuration
 
@@ -40,20 +34,6 @@ Open the integration → Configure:
 - **Readiness targets** — people, duration hours, liters/person/day, kcal/person/day
 - **Locations and categories** — free-text lists used when organizing items
 - **Thresholds** — expiring window (default 30 days), urgent window (7 days), attribute item cap (100)
-
-## Lovelace cards
-
-Add via the card picker:
-
-- **Ready Home Readiness** (`custom:ready-home-readiness-card`) — gauges and attention counts
-- **Ready Home Inventory** (`custom:ready-home-inventory-card`) — table, filters, quantity steppers, add/edit, barcode scan
-
-```yaml
-type: vertical-stack
-cards:
-  - type: custom:ready-home-readiness-card
-  - type: custom:ready-home-inventory-card
-```
 
 ## Actions
 
@@ -166,7 +146,7 @@ pytest tests/ -v
 ruff check custom_components tests
 
 npm ci
-npm run build   # writes custom_components/ready_home/dist/{ready-home,ready-home-panel}.js
+npm run build   # writes custom_components/ready_home/dist/ready-home-panel.js
 npm test
 ```
 

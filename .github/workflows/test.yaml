@@ -42,5 +42,5 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
-      - name: Ensure card bundle exists
-        run: test -s custom_components/ready_home/dist/ready-home.js
+      - name: Ensure panel bundle exists
+        run: test -s custom_components/ready_home/dist/ready-home-panel.js

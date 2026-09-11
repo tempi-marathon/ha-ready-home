@@ -10,7 +10,6 @@ export default defineConfig({
     minify: "esbuild",
     rollupOptions: {
       input: {
-        "ready-home": resolve(__dirname, "frontend/src/main.ts"),
         "ready-home-panel": resolve(__dirname, "frontend/src/panel.ts"),
       },
       output: {
