@@ -23,6 +23,8 @@ CONF_WATER_LITERS_PER_PERSON_PER_DAY: Final = "water_liters_per_person_per_day"
 CONF_CALORIES_PER_PERSON_PER_DAY: Final = "calories_per_person_per_day"
 CONF_LOCATIONS: Final = "locations"
 CONF_CATEGORIES: Final = "categories"
+CONF_FOOD_CATEGORIES: Final = "food_categories"
+CONF_WATER_CATEGORIES: Final = "water_categories"
 CONF_EXPIRING_DAYS: Final = "expiring_days"
 CONF_URGENT_DAYS: Final = "urgent_days"
 CONF_ATTRIBUTE_ITEM_CAP: Final = "attribute_item_cap"
@@ -39,6 +41,8 @@ DEFAULT_URGENT_DAYS: Final = 7
 DEFAULT_ATTRIBUTE_ITEM_CAP: Final = 100
 DEFAULT_LOCATIONS: Final = ["Pantry", "Garage", "Basement"]
 DEFAULT_CATEGORIES: Final = ["Food", "Water", "Medical", "Tools", "Other"]
+DEFAULT_FOOD_CATEGORIES: Final = ["Food"]
+DEFAULT_WATER_CATEGORIES: Final = ["Water"]
 
 # Events
 EVENT_ITEM_EXPIRED: Final = f"{DOMAIN}_item_expired"

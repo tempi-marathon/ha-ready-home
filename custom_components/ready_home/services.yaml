@@ -74,16 +74,6 @@ add_item:
       name: Expiry date
       selector:
         date:
-    resource:
-      name: Resource type
-      default: none
-      description: Whether this item counts toward water or food readiness
-      selector:
-        select:
-          options:
-            - none
-            - water
-            - food
     liters_per_unit:
       name: Liters per unit
       description: Required for water items when unit is not liter/milliliter
@@ -178,14 +168,6 @@ update_item:
       name: Expiry date
       selector:
         date:
-    resource:
-      name: Resource type
-      selector:
-        select:
-          options:
-            - none
-            - water
-            - food
     liters_per_unit:
       name: Liters per unit
       selector:
@@ -265,14 +247,15 @@ list_items:
       name: Category
       selector:
         text:
-    resource:
-      name: Resource type
+    readiness:
+      name: Readiness
+      description: Filter by category mapping (food, water, or neither)
       selector:
         select:
           options:
-            - none
-            - water
             - food
+            - water
+            - none
     status:
       name: Status
       selector:

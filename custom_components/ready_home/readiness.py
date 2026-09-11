@@ -4,12 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from .models import (
-    InventoryItem,
-    ReadinessAssessment,
-    ReadinessSettings,
-    ResourceType,
-)
+from .models import InventoryItem, ReadinessAssessment, ReadinessSettings
 
 
 def assess(
@@ -39,8 +34,8 @@ def assess(
     water_target = settings.water_target_liters()
     food_target = settings.food_target_calories()
 
-    water_on_hand, unmeasurable_water = _aggregate_water(items, today)
-    food_on_hand, unmeasurable_food = _aggregate_food(items, today)
+    water_on_hand, unmeasurable_water = _aggregate_water(items, settings, today)
+    food_on_hand, unmeasurable_food = _aggregate_food(items, settings, today)
 
     water_percent = _percent(water_on_hand, water_target)
     food_percent = _percent(food_on_hand, food_target)
@@ -73,12 +68,14 @@ def assess(
 
 
 def _aggregate_water(
-    items: list[InventoryItem], today: date
+    items: list[InventoryItem],
+    settings: ReadinessSettings,
+    today: date,
 ) -> tuple[float, int]:
     total = 0.0
     unmeasurable = 0
     for item in items:
-        if item.resource != ResourceType.WATER:
+        if not settings.is_water_category(item.category):
             continue
         if item.is_expired(today):
             continue
@@ -91,12 +88,14 @@ def _aggregate_water(
 
 
 def _aggregate_food(
-    items: list[InventoryItem], today: date
+    items: list[InventoryItem],
+    settings: ReadinessSettings,
+    today: date,
 ) -> tuple[float, int]:
     total = 0.0
     unmeasurable = 0
     for item in items:
-        if item.resource != ResourceType.FOOD:
+        if not settings.is_food_category(item.category):
             continue
         if item.is_expired(today):
             continue

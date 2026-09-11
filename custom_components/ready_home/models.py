@@ -38,16 +38,12 @@ class InventoryPriority(StrEnum):
     OPTIONAL = "optional"
 
 
-class ResourceType(StrEnum):
-    """Readiness resource classification."""
-
-    NONE = "none"
-    WATER = "water"
-    FOOD = "food"
-
-
 def _utc_now_iso() -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat()
+
+
+def _norm_cat(value: str) -> str:
+    return value.strip().lower()
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,7 +61,6 @@ class InventoryItem:
     desired_quantity: float = 0.0
     priority: InventoryPriority = InventoryPriority.IMPORTANT
     expiry_date: str | None = None  # ISO date YYYY-MM-DD
-    resource: ResourceType = ResourceType.NONE
     liters_per_unit: float | None = None
     calories_per_unit: float | None = None
     created_at: str = field(default_factory=_utc_now_iso)
@@ -83,9 +78,10 @@ class InventoryItem:
         return date.fromisoformat(self.expiry_date) < today
 
     def water_liters_on_hand(self) -> float | None:
-        """Liters contributed by current stock, or None if unmeasurable."""
-        if self.resource != ResourceType.WATER:
-            return None
+        """Liters from current stock, or None if unmeasurable.
+
+        Callers must decide whether the item counts as water (category mapping).
+        """
         if self.unit == InventoryUnit.LITER:
             return float(self.quantity)
         if self.unit == InventoryUnit.MILLILITER:
@@ -95,24 +91,36 @@ class InventoryItem:
         return None
 
     def calories_on_hand(self) -> float | None:
-        """Calories contributed by current stock, or None if unmeasurable."""
-        if self.resource != ResourceType.FOOD:
-            return None
+        """Calories from current stock, or None if unmeasurable.
+
+        Callers must decide whether the item counts as food (category mapping).
+        """
         if self.calories_per_unit is None:
             return None
         return float(self.quantity) * float(self.calories_per_unit)
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize to a JSON-compatible dict."""
+        """Serialize to a JSON-compatible dict (no legacy resource field)."""
         data = asdict(self)
         data["unit"] = self.unit.value
         data["priority"] = self.priority.value
-        data["resource"] = self.resource.value
         return data
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> InventoryItem:
-        """Deserialize from a stored dict."""
+        """Deserialize from a stored dict.
+
+        Legacy ``resource`` is used only to fill an empty category so existing
+        inventory keeps counting after the category-mapping migration.
+        """
+        category = str(data.get("category") or "")
+        if not category.strip():
+            legacy = str(data.get("resource") or "").lower()
+            if legacy == "food":
+                category = "Food"
+            elif legacy == "water":
+                category = "Water"
+
         return cls(
             id=str(data.get("id") or uuid4().hex),
             name=str(data["name"]),
@@ -120,12 +128,11 @@ class InventoryItem:
             desired_quantity=float(data.get("desired_quantity", 0)),
             unit=InventoryUnit(data.get("unit", InventoryUnit.PIECE)),
             location=str(data.get("location") or ""),
-            category=str(data.get("category") or ""),
+            category=category,
             notes=str(data.get("notes") or ""),
             barcode=str(data.get("barcode") or ""),
             priority=InventoryPriority(data.get("priority", InventoryPriority.IMPORTANT)),
             expiry_date=data.get("expiry_date"),
-            resource=ResourceType(data.get("resource", ResourceType.NONE)),
             liters_per_unit=_optional_float(data.get("liters_per_unit")),
             calories_per_unit=_optional_float(data.get("calories_per_unit")),
             created_at=str(data.get("created_at") or _utc_now_iso()),
@@ -135,12 +142,11 @@ class InventoryItem:
     def with_updates(self, **changes: Any) -> InventoryItem:
         """Return a copy with the given fields updated and updated_at refreshed."""
         changes["updated_at"] = _utc_now_iso()
+        changes.pop("resource", None)
         if "unit" in changes and isinstance(changes["unit"], str):
             changes["unit"] = InventoryUnit(changes["unit"])
         if "priority" in changes and isinstance(changes["priority"], str):
             changes["priority"] = InventoryPriority(changes["priority"])
-        if "resource" in changes and isinstance(changes["resource"], str):
-            changes["resource"] = ResourceType(changes["resource"])
         return replace(self, **changes)
 
 
@@ -154,6 +160,8 @@ class ReadinessSettings:
     calories_per_person_per_day: int = 2000
     locations: tuple[str, ...] = ()
     categories: tuple[str, ...] = ()
+    food_categories: tuple[str, ...] = ("Food",)
+    water_categories: tuple[str, ...] = ("Water",)
     expiring_days: int = 30
     urgent_days: int = 7
     attribute_item_cap: int = 100
@@ -162,6 +170,17 @@ class ReadinessSettings:
     def from_options(cls, options: dict[str, Any]) -> ReadinessSettings:
         """Build settings from a config entry options dict."""
         people = options.get("number_of_people")
+        categories = tuple(options.get("categories") or ())
+        food_categories = options.get("food_categories")
+        water_categories = options.get("water_categories")
+        if food_categories is None:
+            food_categories = ("Food",)
+        else:
+            food_categories = tuple(food_categories)
+        if water_categories is None:
+            water_categories = ("Water",)
+        else:
+            water_categories = tuple(water_categories)
         return cls(
             number_of_people=int(people) if people is not None else None,
             duration_hours=int(options.get("duration_hours", 72)),
@@ -170,11 +189,35 @@ class ReadinessSettings:
             ),
             calories_per_person_per_day=int(options.get("calories_per_person_per_day", 2000)),
             locations=tuple(options.get("locations") or ()),
-            categories=tuple(options.get("categories") or ()),
+            categories=categories,
+            food_categories=food_categories,
+            water_categories=water_categories,
             expiring_days=int(options.get("expiring_days", 30)),
             urgent_days=int(options.get("urgent_days", 7)),
             attribute_item_cap=int(options.get("attribute_item_cap", 100)),
         )
+
+    def is_food_category(self, category: str) -> bool:
+        """True when category is mapped to food readiness."""
+        key = _norm_cat(category)
+        if not key:
+            return False
+        return any(_norm_cat(c) == key for c in self.food_categories)
+
+    def is_water_category(self, category: str) -> bool:
+        """True when category is mapped to water readiness."""
+        key = _norm_cat(category)
+        if not key:
+            return False
+        return any(_norm_cat(c) == key for c in self.water_categories)
+
+    def readiness_kind(self, category: str) -> str:
+        """Return food, water, or none for a category name."""
+        if self.is_water_category(category):
+            return "water"
+        if self.is_food_category(category):
+            return "food"
+        return "none"
 
     def water_target_liters(self) -> float | None:
         """Total water liters needed for the configured duration."""

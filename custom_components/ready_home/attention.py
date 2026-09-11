@@ -93,5 +93,4 @@ def item_summary(item: InventoryItem) -> dict:
         "category": item.category,
         "priority": item.priority.value,
         "expiry_date": item.expiry_date,
-        "resource": item.resource.value,
     }

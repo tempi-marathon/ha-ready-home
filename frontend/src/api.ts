@@ -1,4 +1,4 @@
-/** Websocket helpers for Ready Home. */
+/** Shared websocket / DTO types for Ready Home. */
 
 import type { HomeAssistant } from "./types";
 
@@ -14,7 +14,6 @@ export interface InventoryItemDto {
   barcode?: string;
   priority: string;
   expiry_date: string | null;
-  resource: string;
   liters_per_unit?: number | null;
   calories_per_unit?: number | null;
 }
@@ -37,6 +36,8 @@ export interface SettingsDto {
   calories_per_person_per_day: number;
   locations: string[];
   categories: string[];
+  food_categories: string[];
+  water_categories: string[];
   expiring_days: number;
   urgent_days: number;
   attribute_item_cap: number;

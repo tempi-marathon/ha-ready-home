@@ -57,9 +57,10 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
         self._unsub_daily: CALLBACK_TYPE | None = None
         self._unsub_store: CALLBACK_TYPE | None = None
 
-    async def async_setup(self) -> None:
+    async def async_setup(self, *, skip_store_load: bool = False) -> None:
         """Load store, wire listeners, run first recompute."""
-        await self.store.async_load()
+        if not skip_store_load:
+            await self.store.async_load()
         self._unsub_store = self.store.async_add_listener(self._on_store_changed)
         self._unsub_daily = async_track_time_change(
             self.hass,

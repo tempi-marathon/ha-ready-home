@@ -17,7 +17,6 @@ from .models import (
     InventoryItem,
     InventoryPriority,
     InventoryUnit,
-    ResourceType,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,11 +39,11 @@ ATTR_NOTES = "notes"
 ATTR_BARCODE = "barcode"
 ATTR_PRIORITY = "priority"
 ATTR_EXPIRY_DATE = "expiry_date"
-ATTR_RESOURCE = "resource"
 ATTR_LITERS_PER_UNIT = "liters_per_unit"
 ATTR_CALORIES_PER_UNIT = "calories_per_unit"
 ATTR_DELTA = "delta"
 ATTR_STATUS = "status"
+ATTR_READINESS = "readiness"
 
 
 def _resolve_item(
@@ -81,9 +80,6 @@ ADD_SCHEMA = vol.Schema(
             [p.value for p in InventoryPriority]
         ),
         vol.Optional(ATTR_EXPIRY_DATE): vol.Any(None, cv.string),
-        vol.Optional(ATTR_RESOURCE, default=ResourceType.NONE.value): vol.In(
-            [r.value for r in ResourceType]
-        ),
         vol.Optional(ATTR_LITERS_PER_UNIT): vol.Any(None, vol.Coerce(float)),
         vol.Optional(ATTR_CALORIES_PER_UNIT): vol.Any(None, vol.Coerce(float)),
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
@@ -104,7 +100,6 @@ UPDATE_SCHEMA = vol.Schema(
         vol.Optional(ATTR_BARCODE): cv.string,
         vol.Optional(ATTR_PRIORITY): vol.In([p.value for p in InventoryPriority]),
         vol.Optional(ATTR_EXPIRY_DATE): vol.Any(None, cv.string),
-        vol.Optional(ATTR_RESOURCE): vol.In([r.value for r in ResourceType]),
         vol.Optional(ATTR_LITERS_PER_UNIT): vol.Any(None, vol.Coerce(float)),
         vol.Optional(ATTR_CALORIES_PER_UNIT): vol.Any(None, vol.Coerce(float)),
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
@@ -132,7 +127,7 @@ LIST_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_LOCATION): cv.string,
         vol.Optional(ATTR_CATEGORY): cv.string,
-        vol.Optional(ATTR_RESOURCE): vol.In([r.value for r in ResourceType]),
+        vol.Optional(ATTR_READINESS): vol.In(["food", "water", "none"]),
         vol.Optional(ATTR_STATUS): vol.In(
             ["expired", "expiring", "low_stock", "ok"]
         ),
@@ -183,7 +178,6 @@ def async_register_services(hass: HomeAssistant) -> None:
                 data.get(ATTR_PRIORITY, InventoryPriority.IMPORTANT)
             ),
             expiry_date=data.get(ATTR_EXPIRY_DATE),
-            resource=ResourceType(data.get(ATTR_RESOURCE, ResourceType.NONE)),
             liters_per_unit=data.get(ATTR_LITERS_PER_UNIT),
             calories_per_unit=data.get(ATTR_CALORIES_PER_UNIT),
         )
@@ -208,7 +202,6 @@ def async_register_services(hass: HomeAssistant) -> None:
             ATTR_BARCODE: "barcode",
             ATTR_PRIORITY: "priority",
             ATTR_EXPIRY_DATE: "expiry_date",
-            ATTR_RESOURCE: "resource",
             ATTR_LITERS_PER_UNIT: "liters_per_unit",
             ATTR_CALORIES_PER_UNIT: "calories_per_unit",
         }
@@ -253,8 +246,12 @@ def async_register_services(hass: HomeAssistant) -> None:
             items = [i for i in items if i.location.lower() == loc.lower()]
         if cat := data.get(ATTR_CATEGORY):
             items = [i for i in items if i.category.lower() == cat.lower()]
-        if res := data.get(ATTR_RESOURCE):
-            items = [i for i in items if i.resource.value == res]
+        if readiness := data.get(ATTR_READINESS):
+            items = [
+                i
+                for i in items
+                if settings.readiness_kind(i.category) == readiness
+            ]
         if status := data.get(ATTR_STATUS):
             filtered: list[InventoryItem] = []
             for item in items:

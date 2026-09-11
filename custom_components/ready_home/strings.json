@@ -47,9 +47,16 @@
       },
       "lists": {
         "title": "Locations and categories",
+        "description": "Categories label items. Food and water category lists decide which categories count toward readiness. A category cannot be both food and water.",
         "data": {
           "locations": "Storage locations",
-          "categories": "Categories"
+          "categories": "Categories",
+          "food_categories": "Food categories",
+          "water_categories": "Water categories"
+        },
+        "data_description": {
+          "food_categories": "Items in these categories count toward food readiness (calories).",
+          "water_categories": "Items in these categories count toward water readiness (liters)."
         }
       },
       "thresholds": {
@@ -60,6 +67,10 @@
           "attribute_item_cap": "Max items in sensor attributes"
         }
       }
+    },
+    "error": {
+      "invalid_name": "Enter a profile name",
+      "category_overlap": "A category cannot be both food and water"
     }
   },
   "entity": {

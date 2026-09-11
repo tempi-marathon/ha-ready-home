@@ -47,9 +47,16 @@
       },
       "lists": {
         "title": "Locaties en categorieën",
+        "description": "Categorieën labelen items. Voedsel- en watercategorieën bepalen welke categorieën meetellen voor paraatheid. Een categorie kan niet zowel voedsel als water zijn.",
         "data": {
           "locations": "Opslaglocaties",
-          "categories": "Categorieën"
+          "categories": "Categorieën",
+          "food_categories": "Voedselcategorieën",
+          "water_categories": "Watercategorieën"
+        },
+        "data_description": {
+          "food_categories": "Items in deze categorieën tellen mee voor voedselparaatheid (calorieën).",
+          "water_categories": "Items in deze categorieën tellen mee voor waterparaatheid (liters)."
         }
       },
       "thresholds": {
@@ -60,6 +67,10 @@
           "attribute_item_cap": "Max. items in sensorattributen"
         }
       }
+    },
+    "error": {
+      "invalid_name": "Voer een profielnaam in",
+      "category_overlap": "Een categorie kan niet zowel voedsel als water zijn"
     }
   },
   "entity": {

@@ -43,6 +43,9 @@ class InventoryStore:
         self._bucket_state: dict[str, str] = {}
         self._listeners: list[Listener] = []
         self._loaded = False
+        # Categories inferred from legacy per-item resource during load.
+        self.legacy_food_categories: set[str] = set()
+        self.legacy_water_categories: set[str] = set()
 
     def async_add_listener(self, listener: Listener) -> Callable[[], None]:
         """Register a callback invoked after mutations. Returns an unsubscribe."""
@@ -69,6 +72,9 @@ class InventoryStore:
                 data = legacy
                 migrated = True
 
+        self.legacy_food_categories = set()
+        self.legacy_water_categories = set()
+
         if data is None:
             self._items = {}
             self._bucket_state = {}
@@ -77,8 +83,17 @@ class InventoryStore:
 
         items_raw = data.get("items") or []
         self._items = {}
+        strip_resource = False
         for raw in items_raw:
             try:
+                if "resource" in raw:
+                    strip_resource = True
+                    legacy_res = str(raw.get("resource") or "").lower()
+                    cat = str(raw.get("category") or "").strip()
+                    if legacy_res == "food":
+                        self.legacy_food_categories.add(cat or "Food")
+                    elif legacy_res == "water":
+                        self.legacy_water_categories.add(cat or "Water")
                 item = InventoryItem.from_dict(raw)
                 self._items[item.id] = item
             except (KeyError, TypeError, ValueError) as err:
@@ -91,10 +106,10 @@ class InventoryStore:
         _LOGGER.debug(
             "Loaded %s inventory items for entry %s", len(self._items), self.entry_id
         )
-        if migrated:
+        if migrated or strip_resource:
             self._schedule_save()
-            # Prevent a future second profile from re-importing the same legacy data.
-            self._legacy_store.async_delay_save(lambda: {}, SAVE_DELAY)
+            if migrated:
+                self._legacy_store.async_delay_save(lambda: {}, SAVE_DELAY)
 
     def _schedule_save(self) -> None:
         self._store.async_delay_save(self._data_to_save, SAVE_DELAY)

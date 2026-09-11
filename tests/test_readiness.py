@@ -8,7 +8,6 @@ from custom_components.ready_home.models import (
     InventoryItem,
     InventoryUnit,
     ReadinessSettings,
-    ResourceType,
 )
 from custom_components.ready_home.readiness import assess
 
@@ -32,7 +31,7 @@ def test_water_from_liters_unit() -> None:
             name="Water jug",
             quantity=9.0,
             unit=InventoryUnit.LITER,
-            resource=ResourceType.WATER,
+            category="Water",
         )
     ]
     result = assess(items, settings)
@@ -50,7 +49,7 @@ def test_water_from_pieces_with_liters_per_unit() -> None:
             name="Bottles",
             quantity=6,
             unit=InventoryUnit.PIECE,
-            resource=ResourceType.WATER,
+            category="Water",
             liters_per_unit=1.5,
         )
     ]
@@ -66,7 +65,7 @@ def test_milliliters_convert_to_liters() -> None:
             name="Small bottles",
             quantity=3000,
             unit=InventoryUnit.MILLILITER,
-            resource=ResourceType.WATER,
+            category="Water",
         )
     ]
     result = assess(items, settings)
@@ -86,13 +85,55 @@ def test_food_calories() -> None:
             name="Rice",
             quantity=10,
             unit=InventoryUnit.PACK,
-            resource=ResourceType.FOOD,
+            category="Food",
             calories_per_unit=600,
         )
     ]
     result = assess(items, settings)
     assert result.food_on_hand == 6000.0
     assert result.food_percent == 100.0
+
+
+def test_custom_food_category_counts_when_mapped() -> None:
+    settings = ReadinessSettings(
+        number_of_people=1,
+        duration_hours=24,
+        calories_per_person_per_day=2000,
+        food_categories=("Vegetables",),
+        water_categories=("Water",),
+    )
+    items = [
+        InventoryItem(
+            name="Carrots",
+            quantity=2,
+            unit=InventoryUnit.PACK,
+            category="Vegetables",
+            calories_per_unit=1000,
+        )
+    ]
+    result = assess(items, settings)
+    assert result.food_on_hand == 2000.0
+    assert result.food_percent == 100.0
+
+
+def test_unmapped_category_does_not_count() -> None:
+    settings = ReadinessSettings(
+        number_of_people=1,
+        duration_hours=24,
+        food_categories=("Food",),
+        water_categories=("Water",),
+    )
+    items = [
+        InventoryItem(
+            name="Carrots",
+            quantity=10,
+            unit=InventoryUnit.PACK,
+            category="Vegetables",
+            calories_per_unit=1000,
+        )
+    ]
+    result = assess(items, settings)
+    assert result.food_on_hand == 0.0
 
 
 def test_overall_is_min_of_water_and_food() -> None:
@@ -102,13 +143,13 @@ def test_overall_is_min_of_water_and_food() -> None:
             name="Water",
             quantity=3,
             unit=InventoryUnit.LITER,
-            resource=ResourceType.WATER,
+            category="Water",
         ),
         InventoryItem(
             name="Food",
             quantity=1,
             unit=InventoryUnit.PACK,
-            resource=ResourceType.FOOD,
+            category="Food",
             calories_per_unit=1000,  # 50% of 2000
         ),
     ]
@@ -127,14 +168,14 @@ def test_expired_items_excluded() -> None:
             name="Expired water",
             quantity=10,
             unit=InventoryUnit.LITER,
-            resource=ResourceType.WATER,
+            category="Water",
             expiry_date=(today - timedelta(days=1)).isoformat(),
         ),
         InventoryItem(
             name="Fresh water",
             quantity=1.5,
             unit=InventoryUnit.LITER,
-            resource=ResourceType.WATER,
+            category="Water",
             expiry_date=(today + timedelta(days=30)).isoformat(),
         ),
     ]
@@ -149,7 +190,7 @@ def test_unmeasurable_water_counted() -> None:
             name="Mystery water",
             quantity=4,
             unit=InventoryUnit.PIECE,
-            resource=ResourceType.WATER,
+            category="Water",
             # no liters_per_unit
         )
     ]
@@ -165,7 +206,7 @@ def test_percent_capped_at_100() -> None:
             name="Lots of water",
             quantity=100,
             unit=InventoryUnit.LITER,
-            resource=ResourceType.WATER,
+            category="Water",
         )
     ]
     result = assess(items, settings)

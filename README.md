@@ -23,7 +23,7 @@ Installable through [HACS](https://hacs.xyz/) as a custom repository (category: 
 3. Settings → Devices & Services → Add Integration → **Ready Home**.
 4. Enter the number of people in the household.
 
-After setup, a **Ready Home** item appears in the sidebar for inventory management (add/edit/±/remove, filters, barcode).
+After setup, a **Ready Home** item appears in the sidebar for inventory management (add/edit/remove, filters, barcode).
 
 If you previously added a Lovelace resource for `/ready_home/ready-home.js`, you can remove it (Settings → Dashboards → ⋮ → Resources, or from YAML). Storage-mode installs clean that resource up automatically on the next load.
 
@@ -32,7 +32,7 @@ If you previously added a Lovelace resource for `/ready_home/ready-home.js`, you
 Open the integration → Configure:
 
 - **Readiness targets** — people, duration hours, liters/person/day, kcal/person/day
-- **Locations and categories** — free-text lists used when organizing items
+- **Locations and categories** — storage locations, category labels, and which categories count as **food** or **water** for readiness
 - **Thresholds** — expiring window (default 30 days), urgent window (7 days), attribute item cap (100)
 
 ## Actions
@@ -50,7 +50,6 @@ data:
   unit: piece
   location: Garage
   category: Water
-  resource: water
   liters_per_unit: 1.5
   priority: essential
 ```
@@ -64,7 +63,6 @@ data:
   quantity: 10
   unit: pack
   category: Food
-  resource: food
   calories_per_unit: 600
   expiry_date: "2027-06-01"
 ```
@@ -134,7 +132,7 @@ percent        = min(100, on_hand / target × 100)
 overall        = min(water_percent, food_percent)
 ```
 
-Expired stock is excluded. Water/food items without liters or calories are counted as unmeasurable and left out of totals.
+Expired stock is excluded. Items whose category is mapped to food or water but lack calories or liters are counted as unmeasurable and left out of totals. Configure food/water category lists under **Locations and categories**.
 
 ## Development
 

@@ -76,6 +76,8 @@ def _settings_dict(coordinator: ReadyHomeCoordinator) -> dict[str, Any]:
         "calories_per_person_per_day": s.calories_per_person_per_day,
         "locations": list(s.locations),
         "categories": list(s.categories),
+        "food_categories": list(s.food_categories),
+        "water_categories": list(s.water_categories),
         "expiring_days": s.expiring_days,
         "urgent_days": s.urgent_days,
         "attribute_item_cap": s.attribute_item_cap,
