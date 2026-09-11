@@ -35,6 +35,9 @@ def _ensure_homeassistant_stubs() -> None:
         "homeassistant.helpers.aiohttp_client": types.ModuleType(
             "homeassistant.helpers.aiohttp_client"
         ),
+        "homeassistant.helpers.device_registry": types.ModuleType(
+            "homeassistant.helpers.device_registry"
+        ),
         "homeassistant.exceptions": types.ModuleType("homeassistant.exceptions"),
         "homeassistant.config_entries": types.ModuleType(
             "homeassistant.config_entries"
@@ -60,6 +63,16 @@ def _ensure_homeassistant_stubs() -> None:
 
     modules["homeassistant.helpers.storage"].Store = Store
     modules["homeassistant.helpers.aiohttp_client"].async_get_clientsession = MagicMock()
+
+    class DeviceEntryType:  # noqa: D101
+        SERVICE = "service"
+
+    def DeviceInfo(**kwargs: Any) -> dict[str, Any]:  # noqa: N802
+        return kwargs
+
+    modules["homeassistant.helpers.device_registry"].DeviceEntryType = DeviceEntryType
+    modules["homeassistant.helpers.device_registry"].DeviceInfo = DeviceInfo
+
     modules["homeassistant.exceptions"].HomeAssistantError = type(
         "HomeAssistantError", (Exception,), {}
     )

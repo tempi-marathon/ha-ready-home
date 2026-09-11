@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Ready Home",
-        "description": "Houd noodvoorraden bij en meet paraatheid. Geef dit profiel een naam (bijvoorbeeld Home, chalet of honden) — die wordt de apparaarnaam en het voorvoegsel van de entity-id.",
+        "description": "Houd noodvoorraden bij en meet paraatheid. Geef dit profiel een naam (standaard Ready Home). Generieke namen verschijnen als Ready Home; andere namen worden een achtervoegsel, bijv. Ready Home (Chalet). Het profiel bepaalt ook het voorvoegsel van de entity-id.",
         "data": {
           "name": "Profielnaam",
           "number_of_people": "Aantal personen in het huishouden"
@@ -31,7 +31,7 @@
       },
       "profile": {
         "title": "Profiel",
-        "description": "Hernoem dit paraatheidsprofiel (bijvoorbeeld Home, chalet of honden). De naam wordt gebruikt als apparaarnaam en voorvoegsel van de entity-id.",
+        "description": "Hernoem dit paraatheidsprofiel (standaard Ready Home). Generieke namen verschijnen als Ready Home; andere namen worden een achtervoegsel, bijv. Ready Home (Chalet). Het profiel bepaalt ook het voorvoegsel van de entity-id.",
         "data": {
           "name": "Profielnaam"
         }

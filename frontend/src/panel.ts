@@ -22,6 +22,17 @@ const UNITS = [
   "milliliter",
 ] as const;
 
+/** mdi:plus path — avoids bundling @mdi/js. */
+const MDI_PLUS =
+  "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z";
+
+const STATUS_LABELS: Record<string, string> = {
+  expired: "Expired",
+  urgent: "Urgent",
+  expiring: "Expiring",
+  low: "Low stock",
+};
+
 @customElement("ready-home-panel")
 export class ReadyHomePanel extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
@@ -83,6 +94,16 @@ export class ReadyHomePanel extends LitElement {
     return (this._snapshot?.assessment ?? {}) as Record<string, number | null>;
   }
 
+  private get _bucketCounts() {
+    const b = this._snapshot?.buckets;
+    return {
+      expired: b?.expired.length ?? 0,
+      expiring:
+        (b?.within_urgent.length ?? 0) + (b?.within_expiring.length ?? 0),
+      low_stock: b?.low_stock.length ?? 0,
+    };
+  }
+
   private get _items(): InventoryItemDto[] {
     let items = [...(this._snapshot?.items ?? [])];
     const q = this._search.trim().toLowerCase();
@@ -142,6 +163,14 @@ export class ReadyHomePanel extends LitElement {
     return "";
   }
 
+  private _statusLabel(status: string): string {
+    return STATUS_LABELS[status] || status;
+  }
+
+  private _setStatusFilter(status: string) {
+    this._filterStatus = this._filterStatus === status ? "all" : status;
+  }
+
   protected render() {
     const items = this._items;
     const a = this._assessment;
@@ -150,19 +179,25 @@ export class ReadyHomePanel extends LitElement {
     const overall = a.overall_percent;
     const water = a.water_percent;
     const food = a.food_percent;
+    const counts = this._bucketCounts;
 
     return html`
-      <div class="page">
-        <header class="header">
-          <div class="header-row">
-            <div>
-              <h1>Ready Home</h1>
-              <p class="sub">Manage emergency inventory and track readiness.</p>
-            </div>
-            <button class="primary" ?disabled=${this._busy} @click=${this._openAdd}>
-              Add item
-            </button>
-          </div>
+      <ha-top-app-bar-fixed>
+        <ha-menu-button
+          slot="navigationIcon"
+          .hass=${this.hass}
+          .narrow=${this.narrow}
+        ></ha-menu-button>
+        <div slot="title">Ready Home</div>
+        <ha-icon-button
+          slot="actionItems"
+          .path=${MDI_PLUS}
+          .label=${"Add item"}
+          ?disabled=${this._busy}
+          @click=${this._openAdd}
+        ></ha-icon-button>
+
+        <div class="content">
           <div class="stats">
             <div class="stat">
               <span class="stat-label">Overall</span>
@@ -178,115 +213,202 @@ export class ReadyHomePanel extends LitElement {
             </div>
             <div class="stat">
               <span class="stat-label">Items</span>
-              <span class="stat-value">${this._snapshot?.items.length ?? 0}</span>
+              <span class="stat-value"
+                >${this._snapshot?.items.length ?? 0}</span
+              >
             </div>
           </div>
-        </header>
 
-        <div class="toolbar">
-          <input
-            class="search"
-            type="search"
-            placeholder="Search name, location, barcode…"
-            .value=${this._search}
-            @input=${(e: Event) => {
-              this._search = (e.target as HTMLInputElement).value;
-            }}
-          />
-          <div class="filters">
-            <select
-              .value=${this._filterStatus}
-              @change=${(e: Event) => {
-                this._filterStatus = (e.target as HTMLSelectElement).value;
-              }}
+          <div class="attention" role="group" aria-label="Attention filters">
+            <button
+              type="button"
+              class="chip ${this._filterStatus === "expired" ? "active" : ""}"
+              @click=${() => this._setStatusFilter("expired")}
             >
-              <option value="all">All statuses</option>
-              <option value="expired">Expired</option>
-              <option value="expiring">Expiring</option>
-              <option value="low_stock">Low stock</option>
-            </select>
-            <select
-              .value=${this._filterLocation}
-              @change=${(e: Event) => {
-                this._filterLocation = (e.target as HTMLSelectElement).value;
-              }}
+              Expired
+              <span class="chip-count">${counts.expired}</span>
+            </button>
+            <button
+              type="button"
+              class="chip ${this._filterStatus === "expiring" ? "active" : ""}"
+              @click=${() => this._setStatusFilter("expiring")}
             >
-              <option value="">All locations</option>
-              ${locations.map((l) => html`<option value=${l}>${l}</option>`)}
-            </select>
-            <select
-              .value=${this._filterCategory}
-              @change=${(e: Event) => {
-                this._filterCategory = (e.target as HTMLSelectElement).value;
-              }}
+              Expiring
+              <span class="chip-count">${counts.expiring}</span>
+            </button>
+            <button
+              type="button"
+              class="chip ${this._filterStatus === "low_stock" ? "active" : ""}"
+              @click=${() => this._setStatusFilter("low_stock")}
             >
-              <option value="">All categories</option>
-              ${categories.map((c) => html`<option value=${c}>${c}</option>`)}
-            </select>
-            <select
-              .value=${this._filterResource}
-              @change=${(e: Event) => {
-                this._filterResource = (e.target as HTMLSelectElement).value;
-              }}
-            >
-              <option value="">All resources</option>
-              <option value="water">Water</option>
-              <option value="food">Food</option>
-              <option value="none">None</option>
-            </select>
-            <select
-              .value=${this._sort}
-              @change=${(e: Event) => {
-                this._sort = (e.target as HTMLSelectElement)
-                  .value as typeof this._sort;
-              }}
-            >
-              <option value="name">Sort: name</option>
-              <option value="expiry">Sort: expiry</option>
-              <option value="quantity">Sort: quantity</option>
-            </select>
+              Low stock
+              <span class="chip-count">${counts.low_stock}</span>
+            </button>
           </div>
+
+          <div class="toolbar">
+            <input
+              class="search"
+              type="search"
+              placeholder="Search name, location, barcode…"
+              .value=${this._search}
+              @input=${(e: Event) => {
+                this._search = (e.target as HTMLInputElement).value;
+              }}
+            />
+            <div class="filters">
+              <select
+                .value=${this._filterStatus}
+                @change=${(e: Event) => {
+                  this._filterStatus = (e.target as HTMLSelectElement).value;
+                }}
+              >
+                <option value="all">All statuses</option>
+                <option value="expired">Expired</option>
+                <option value="expiring">Expiring</option>
+                <option value="low_stock">Low stock</option>
+              </select>
+              <select
+                .value=${this._filterLocation}
+                @change=${(e: Event) => {
+                  this._filterLocation = (e.target as HTMLSelectElement).value;
+                }}
+              >
+                <option value="">All locations</option>
+                ${locations.map((l) => html`<option value=${l}>${l}</option>`)}
+              </select>
+              <select
+                .value=${this._filterCategory}
+                @change=${(e: Event) => {
+                  this._filterCategory = (e.target as HTMLSelectElement).value;
+                }}
+              >
+                <option value="">All categories</option>
+                ${categories.map(
+                  (c) => html`<option value=${c}>${c}</option>`,
+                )}
+              </select>
+              <select
+                .value=${this._filterResource}
+                @change=${(e: Event) => {
+                  this._filterResource = (e.target as HTMLSelectElement).value;
+                }}
+              >
+                <option value="">All resources</option>
+                <option value="water">Water</option>
+                <option value="food">Food</option>
+                <option value="none">None</option>
+              </select>
+              <select
+                .value=${this._sort}
+                @change=${(e: Event) => {
+                  this._sort = (e.target as HTMLSelectElement)
+                    .value as typeof this._sort;
+                }}
+              >
+                <option value="name">Sort: name</option>
+                <option value="expiry">Sort: expiry</option>
+                <option value="quantity">Sort: quantity</option>
+              </select>
+            </div>
+          </div>
+
+          ${this._error
+            ? html`<div class="error" role="alert">${this._error}</div>`
+            : nothing}
+
+          ${this.narrow
+            ? this._renderCardList(items)
+            : this._renderTable(items)}
         </div>
+      </ha-top-app-bar-fixed>
 
-        ${this._error
-          ? html`<div class="error" role="alert">${this._error}</div>`
-          : nothing}
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Quantity</th>
-                <th>Location</th>
-                <th>Resource</th>
-                <th>Expiry</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              ${items.map((item) => this._renderRow(item))}
-              ${items.length === 0
-                ? html`<tr>
-                    <td colspan="6" class="empty">
-                      ${this._snapshot
-                        ? html`No items match. <button class="link" @click=${this._openAdd}>Add an item</button>`
-                        : "Loading inventory…"}
-                    </td>
-                  </tr>`
-                : nothing}
-            </tbody>
-          </table>
-        </div>
-
-        ${this._dialogOpen ? this._renderDialog() : nothing}
-      </div>
+      ${this._dialogOpen ? this._renderDialog() : nothing}
     `;
   }
 
   private _pct(value: number | null | undefined): string {
     if (value == null || Number.isNaN(Number(value))) return "—";
     return `${Math.round(Number(value))}%`;
+  }
+
+  private _renderEmpty() {
+    if (!this._snapshot) {
+      return html`<div class="empty">Loading inventory…</div>`;
+    }
+    return html`
+      <div class="empty">
+        No items match.
+        <button class="link" @click=${this._openAdd}>Add an item</button>
+      </div>
+    `;
+  }
+
+  private _renderTable(items: InventoryItemDto[]) {
+    return html`
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Quantity</th>
+              <th>Location</th>
+              <th>Resource</th>
+              <th>Expiry</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map((item) => this._renderRow(item))}
+            ${items.length === 0
+              ? html`<tr>
+                  <td colspan="6">${this._renderEmpty()}</td>
+                </tr>`
+              : nothing}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  private _renderCardList(items: InventoryItemDto[]) {
+    if (items.length === 0) {
+      return this._renderEmpty();
+    }
+    return html`
+      <div class="card-list">
+        ${items.map((item) => this._renderItemCard(item))}
+      </div>
+    `;
+  }
+
+  private _renderQty(item: InventoryItemDto) {
+    return html`
+      <div class="qty" @click=${(e: Event) => e.stopPropagation()}>
+        <button
+          type="button"
+          title="Decrease"
+          ?disabled=${this._busy || item.quantity <= 0}
+          @click=${() => this._adjust(item, -1)}
+        >
+          −
+        </button>
+        <span
+          >${item.quantity}${item.desired_quantity
+            ? html` / ${item.desired_quantity}`
+            : nothing}
+          ${item.unit}</span
+        >
+        <button
+          type="button"
+          title="Increase"
+          ?disabled=${this._busy}
+          @click=${() => this._adjust(item, 1)}
+        >
+          +
+        </button>
+      </div>
+    `;
   }
 
   private _renderRow(item: InventoryItemDto) {
@@ -300,39 +422,20 @@ export class ReadyHomePanel extends LitElement {
           <div class="meta">
             ${item.category || "—"}
             ${status
-              ? html`<span class="badge badge-${status}">${status}</span>`
+              ? html`<span class="badge badge-${status}"
+                  >${this._statusLabel(status)}</span
+                >`
               : nothing}
           </div>
         </td>
-        <td class="qty">
-          <button
-            type="button"
-            title="Decrease"
-            ?disabled=${this._busy || item.quantity <= 0}
-            @click=${() => this._adjust(item, -1)}
-          >
-            −
-          </button>
-          <span
-            >${item.quantity}${item.desired_quantity
-              ? html` / ${item.desired_quantity}`
-              : nothing}
-            ${item.unit}</span
-          >
-          <button
-            type="button"
-            title="Increase"
-            ?disabled=${this._busy}
-            @click=${() => this._adjust(item, 1)}
-          >
-            +
-          </button>
-        </td>
+        <td>${this._renderQty(item)}</td>
         <td>${item.location || "—"}</td>
         <td>${item.resource}</td>
         <td>${item.expiry_date || "—"}</td>
         <td class="actions">
-          <button type="button" @click=${() => this._openEdit(item)}>Edit</button>
+          <button type="button" @click=${() => this._openEdit(item)}>
+            Edit
+          </button>
           <button
             type="button"
             class="danger"
@@ -346,6 +449,45 @@ export class ReadyHomePanel extends LitElement {
     `;
   }
 
+  private _renderItemCard(item: InventoryItemDto) {
+    const status = this._itemStatus(item);
+    const meta = [item.location, item.category, item.expiry_date]
+      .filter(Boolean)
+      .join(" · ");
+    return html`
+      <article
+        class="item-card ${status ? `row-${status}` : ""}"
+        @click=${() => this._openEdit(item)}
+      >
+        <div class="item-card-top">
+          <div class="item-card-title">
+            <span class="item-name">${item.name}</span>
+            ${status
+              ? html`<span class="badge badge-${status}"
+                  >${this._statusLabel(status)}</span
+                >`
+              : nothing}
+          </div>
+          <button
+            type="button"
+            class="danger link-danger"
+            ?disabled=${this._busy}
+            @click=${(e: Event) => {
+              e.stopPropagation();
+              void this._remove(item);
+            }}
+          >
+            Remove
+          </button>
+        </div>
+        ${meta
+          ? html`<div class="meta">${meta}</div>`
+          : nothing}
+        <div class="item-card-bottom">${this._renderQty(item)}</div>
+      </article>
+    `;
+  }
+
   private _renderDialog() {
     const f = this._form;
     const locations = this._settings?.locations ?? [];
@@ -353,7 +495,7 @@ export class ReadyHomePanel extends LitElement {
     return html`
       <div class="dialog-backdrop" @click=${this._closeDialog}>
         <div
-          class="dialog"
+          class="dialog ${this.narrow ? "dialog-narrow" : ""}"
           role="dialog"
           aria-modal="true"
           @click=${(e: Event) => e.stopPropagation()}
@@ -361,7 +503,11 @@ export class ReadyHomePanel extends LitElement {
           <h2>${this._editing ? "Edit item" : "Add item"}</h2>
           <label
             >Name
-            <input required .value=${f.name || ""} @input=${this._onField("name")} />
+            <input
+              required
+              .value=${f.name || ""}
+              @input=${this._onField("name")}
+            />
           </label>
           <div class="row2">
             <label
@@ -415,7 +561,10 @@ export class ReadyHomePanel extends LitElement {
           </label>
           <label
             >Resource
-            <select .value=${f.resource || "none"} @change=${this._onField("resource")}>
+            <select
+              .value=${f.resource || "none"}
+              @change=${this._onField("resource")}
+            >
               <option value="none">none</option>
               <option value="water">water</option>
               <option value="food">food</option>
@@ -469,8 +618,15 @@ export class ReadyHomePanel extends LitElement {
           <label
             >Barcode
             <div class="barcode-row">
-              <input .value=${f.barcode || ""} @input=${this._onField("barcode")} />
-              <button type="button" ?disabled=${this._busy} @click=${this._scanBarcode}>
+              <input
+                .value=${f.barcode || ""}
+                @input=${this._onField("barcode")}
+              />
+              <button
+                type="button"
+                ?disabled=${this._busy}
+                @click=${this._scanBarcode}
+              >
                 Scan
               </button>
               <button
@@ -687,42 +843,29 @@ export class ReadyHomePanel extends LitElement {
   static styles = css`
     :host {
       display: block;
-      box-sizing: border-box;
-      padding: 16px 20px 32px;
+      height: 100%;
       color: var(--primary-text-color);
       font-family: var(--paper-font-body1_-_font-family, Roboto, sans-serif);
     }
-    .page {
+    ha-top-app-bar-fixed {
+      height: 100%;
+    }
+    .content {
       max-width: 1100px;
       margin: 0 auto;
-    }
-    .header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    h1 {
-      margin: 0 0 4px;
-      font-size: 1.75rem;
-      font-weight: 500;
+      padding: 16px 20px 32px;
+      box-sizing: border-box;
     }
     h2 {
       margin: 0 0 8px;
       font-size: 1.2rem;
       font-weight: 500;
     }
-    .sub {
-      margin: 0;
-      color: var(--secondary-text-color);
-      line-height: 1.4;
-    }
     .stats {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 8px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
     .stat {
       padding: 12px;
@@ -739,11 +882,45 @@ export class ReadyHomePanel extends LitElement {
       font-size: 1.35rem;
       font-weight: 600;
     }
+    .attention {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--divider-color);
+      background: var(--card-background-color, transparent);
+      color: var(--primary-text-color);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.85rem;
+    }
+    .chip.active {
+      border-color: var(--primary-color);
+      background: var(--primary-color);
+      color: var(--text-primary-color, #fff);
+    }
+    .chip-count {
+      font-weight: 600;
+      min-width: 1.2em;
+      text-align: center;
+    }
     .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 2;
       display: flex;
       flex-direction: column;
       gap: 8px;
       margin-bottom: 12px;
+      padding-bottom: 4px;
+      background: var(--primary-background-color, var(--card-background-color));
     }
     .search {
       width: 100%;
@@ -794,6 +971,12 @@ export class ReadyHomePanel extends LitElement {
       color: var(--primary-color);
       text-align: left;
     }
+    button.link-danger {
+      border: none;
+      background: none;
+      padding: 0;
+      font-size: 0.8rem;
+    }
     .table-wrap {
       overflow-x: auto;
       border: 1px solid var(--divider-color);
@@ -814,19 +997,51 @@ export class ReadyHomePanel extends LitElement {
     tbody tr:last-child td {
       border-bottom: none;
     }
+    .card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .item-card {
+      border: 1px solid var(--divider-color);
+      border-radius: 10px;
+      padding: 12px;
+      background: var(--card-background-color, var(--primary-background-color));
+      cursor: pointer;
+    }
+    .item-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .item-card-title {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+    .item-name {
+      font-weight: 500;
+      font-size: 1rem;
+    }
+    .item-card-bottom {
+      margin-top: 10px;
+    }
     .meta {
       font-size: 0.75rem;
       color: var(--secondary-text-color);
-      margin-top: 2px;
+      margin-top: 4px;
       display: flex;
       gap: 6px;
       align-items: center;
       flex-wrap: wrap;
     }
     .badge {
-      text-transform: uppercase;
       letter-spacing: 0.02em;
       font-size: 0.65rem;
+      font-weight: 600;
       padding: 1px 6px;
       border-radius: 999px;
       border: 1px solid var(--divider-color);
@@ -846,6 +1061,9 @@ export class ReadyHomePanel extends LitElement {
     }
     .qty {
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
     .qty button {
       padding: 2px 8px;
@@ -858,7 +1076,7 @@ export class ReadyHomePanel extends LitElement {
     .empty {
       text-align: center;
       color: var(--secondary-text-color);
-      padding: 28px 12px !important;
+      padding: 28px 12px;
     }
     .error {
       color: var(--error-color, #c62828);
@@ -887,6 +1105,18 @@ export class ReadyHomePanel extends LitElement {
       flex-direction: column;
       gap: 10px;
       box-sizing: border-box;
+    }
+    .dialog.dialog-narrow {
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+      border-radius: 0;
+      padding: 16px;
+      padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    }
+    .dialog-backdrop:has(.dialog-narrow) {
+      padding: 0;
+      align-items: stretch;
     }
     .dialog label {
       display: flex;
@@ -917,8 +1147,8 @@ export class ReadyHomePanel extends LitElement {
       .stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
-      .header-row {
-        flex-direction: column;
+      .content {
+        padding: 12px 12px 28px;
       }
       .actions {
         flex-direction: column;

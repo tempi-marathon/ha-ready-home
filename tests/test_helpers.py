@@ -7,8 +7,10 @@ from unittest.mock import MagicMock
 import pytest
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 
-from custom_components.ready_home.const import DOMAIN, storage_key_for_entry
+from custom_components.ready_home.const import DOMAIN, VERSION, storage_key_for_entry
 from custom_components.ready_home.helpers import (
+    device_info_for_entry,
+    device_name,
     get_coordinator,
     profile_name,
 )
@@ -23,6 +25,38 @@ def test_profile_name_prefers_data() -> None:
     entry.data = {"name": "Dogs"}
     entry.title = "House"
     assert profile_name(entry) == "Dogs"
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("Home", "Ready Home"),
+        ("home", "Ready Home"),
+        ("Ready Home", "Ready Home"),
+        ("ready home", "Ready Home"),
+        ("Cabin", "Ready Home (Cabin)"),
+        ("Dogs", "Ready Home (Dogs)"),
+    ],
+)
+def test_device_name_brands_generic_profiles(name: str, expected: str) -> None:
+    entry = MagicMock()
+    entry.data = {"name": name}
+    entry.title = name
+    assert device_name(entry) == expected
+
+
+def test_device_info_for_entry() -> None:
+    entry = MagicMock()
+    entry.entry_id = "abc"
+    entry.data = {"name": "Home"}
+    entry.title = "Home"
+    info = device_info_for_entry(entry)
+    assert info["name"] == "Ready Home"
+    assert info["manufacturer"] == "Ready Home"
+    assert info["model"] == "Emergency inventory"
+    assert info["sw_version"] == VERSION
+    assert info["entry_type"] == "service"
+    assert info["identifiers"] == {(DOMAIN, "abc")}
 
 
 def test_get_coordinator_single_entry() -> None:

@@ -9,7 +9,6 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -30,9 +29,9 @@ from .const import (
     ATTR_WATER_SUPPLY_HOURS,
     ATTR_WATER_TARGET,
     DOMAIN,
-    VERSION,
 )
 from .coordinator import ReadyHomeCoordinator
+from .helpers import device_info_for_entry
 
 
 async def async_setup_entry(
@@ -66,16 +65,7 @@ class ReadyHomeSensorBase(CoordinatorEntity[ReadyHomeCoordinator], SensorEntity)
         super().__init__(coordinator)
         self._object_id = key
         self._attr_unique_id = f"{entry.entry_id}_{key}"
-        from .helpers import profile_name
-
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, entry.entry_id)},
-            name=profile_name(entry),
-            manufacturer="Ready Home",
-            model="Emergency inventory",
-            sw_version=VERSION,
-            entry_type=DeviceEntryType.SERVICE,
-        )
+        self._attr_device_info = device_info_for_entry(entry)
 
     @property
     def suggested_object_id(self) -> str | None:

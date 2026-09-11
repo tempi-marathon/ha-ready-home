@@ -30,7 +30,7 @@ CONF_ATTRIBUTE_ITEM_CAP: Final = "attribute_item_cap"
 ATTR_CONFIG_ENTRY_ID: Final = "config_entry_id"
 
 # Defaults (match Ready Home App)
-DEFAULT_PROFILE_NAME: Final = "Home"
+DEFAULT_PROFILE_NAME: Final = "Ready Home"
 DEFAULT_DURATION_HOURS: Final = 72
 DEFAULT_WATER_LITERS_PER_PERSON_PER_DAY: Final = 3.0
 DEFAULT_CALORIES_PER_PERSON_PER_DAY: Final = 2000

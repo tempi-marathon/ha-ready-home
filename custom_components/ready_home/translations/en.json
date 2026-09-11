@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Ready Home",
-        "description": "Track emergency supplies and measure readiness. Name this profile (for example Home, cabin, or dogs) — it becomes the device name and entity id prefix.",
+        "description": "Track emergency supplies and measure readiness. Name this profile (default Ready Home). Generic names appear as Ready Home in the UI; other names become a suffix, e.g. Ready Home (Cabin). The profile also sets the entity id prefix.",
         "data": {
           "name": "Profile name",
           "number_of_people": "Number of people in the household"
@@ -31,7 +31,7 @@
       },
       "profile": {
         "title": "Profile",
-        "description": "Rename this readiness profile (for example Home, cabin, or dogs). The name is used as the device name and entity id prefix.",
+        "description": "Rename this readiness profile (default Ready Home). Generic names appear as Ready Home; other names become a suffix, e.g. Ready Home (Cabin). The profile also sets the entity id prefix.",
         "data": {
           "name": "Profile name"
         }
