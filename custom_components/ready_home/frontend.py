@@ -13,9 +13,12 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-URL_BASE = f"/{DOMAIN}"
+# Serve assets under /ready_home/static so they do not collide with the
+# sidebar panel route at /ready_home (Nabu Casa SW fetches the panel URL).
+URL_BASE = f"/{DOMAIN}/static"
+# Pre-panel Lovelace card path (cleaned up on upgrade).
+_LEGACY_URL_BASE = f"/{DOMAIN}"
 DIST_DIR = Path(__file__).parent / "dist"
-# Legacy Lovelace card bundle — remove leftover resource entries on upgrade.
 _LEGACY_CARD_FILENAME = "ready-home.js"
 
 
@@ -87,10 +90,13 @@ async def _async_remove_legacy_lovelace_resource(hass: HomeAssistant) -> None:
         _LOGGER.exception("Failed to list Lovelace resources for cleanup")
         return
 
-    prefix = f"{URL_BASE}/{_LEGACY_CARD_FILENAME}"
+    prefixes = (
+        f"{_LEGACY_URL_BASE}/{_LEGACY_CARD_FILENAME}",
+        f"{URL_BASE}/{_LEGACY_CARD_FILENAME}",
+    )
     for item in items:
         url = item.get("url", "")
-        if not url.startswith(prefix):
+        if not any(url.startswith(prefix) for prefix in prefixes):
             continue
         item_id = item.get("id")
         if item_id is None:

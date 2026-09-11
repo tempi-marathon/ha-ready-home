@@ -94,7 +94,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         options, store.legacy_food_categories, store.legacy_water_categories
     )
     if migrated is not None:
-        hass.config_entries.async_update_entry(entry, options=migrated)
         options = migrated
         _LOGGER.info(
             "Migrated Ready Home category mapping for entry %s", entry.entry_id
@@ -117,11 +116,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async_register_websocket(hass)
     await async_setup_panel(hass)
 
-    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
-
     await hass.config_entries.async_forward_entry_setups(
         entry, [Platform(p) for p in PLATFORMS]
     )
+
+    # Persist option migration after platforms are up, before registering the
+    # update listener, so we do not reload or notify mid-setup.
+    if migrated is not None:
+        hass.config_entries.async_update_entry(entry, options=migrated)
+
+    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     return True
 
 
