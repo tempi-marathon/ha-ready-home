@@ -19,6 +19,9 @@ const BRAND_ICON_URL = "/api/ready_home/brand/icon.png";
 /** mdi:menu — open HA sidebar on narrow layouts. */
 const MDI_MENU =
   "M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z";
+/** mdi:close — dismiss dialog. */
+const MDI_CLOSE =
+  "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z";
 /** mdi:shield-check — overall readiness. */
 const MDI_SHIELD_CHECK =
   "M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1Z";
@@ -74,12 +77,14 @@ export class ReadyHomePanel extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
     this._connected = true;
+    window.addEventListener("keydown", this._onWindowKeyDown);
     void this._connect();
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     this._connected = false;
+    window.removeEventListener("keydown", this._onWindowKeyDown);
     this._unsub?.();
     this._unsub = null;
   }
@@ -876,9 +881,22 @@ export class ReadyHomePanel extends LitElement {
           class="dialog ${this.narrow ? "dialog-narrow" : ""}"
           role="dialog"
           aria-modal="true"
+          aria-label=${this._editing ? "Edit item" : "Add item"}
           @click=${(e: Event) => e.stopPropagation()}
         >
-          <h2>${this._editing ? "Edit item" : "Add item"}</h2>
+          <div class="dialog-header">
+            <h2>${this._editing ? "Edit item" : "Add item"}</h2>
+            <button
+              type="button"
+              class="icon-btn dialog-close"
+              aria-label="Close"
+              @click=${this._closeDialog}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d=${MDI_CLOSE} />
+              </svg>
+            </button>
+          </div>
 
           <div class="form-section">
             <div class="form-section-title">Details</div>
@@ -1216,6 +1234,13 @@ export class ReadyHomePanel extends LitElement {
   private _closeDialog = () => {
     this._dialogOpen = false;
     this._fieldErrors = {};
+    this._error = "";
+  };
+
+  private _onWindowKeyDown = (e: KeyboardEvent) => {
+    if (e.key !== "Escape" || !this._dialogOpen) return;
+    e.preventDefault();
+    this._closeDialog();
   };
 
   private async _run(action: () => Promise<unknown>) {
@@ -1781,6 +1806,21 @@ export class ReadyHomePanel extends LitElement {
       flex-direction: column;
       gap: 12px;
       box-sizing: border-box;
+    }
+    .dialog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .dialog-header h2 {
+      margin: 0;
+      flex: 1;
+      min-width: 0;
+    }
+    .dialog-close {
+      flex-shrink: 0;
+      margin: -8px -8px -8px 0;
     }
     .dialog.dialog-narrow {
       width: 100%;
