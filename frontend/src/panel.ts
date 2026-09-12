@@ -115,6 +115,12 @@ export class ReadyHomePanel extends LitElement {
     return n;
   }
 
+  private _resetFilters = () => {
+    this._filterLocation = "";
+    this._filterCategory = "";
+    this._filterReadiness = "";
+  };
+
   private _readinessKind(category: string): "food" | "water" | "none" {
     const key = category.trim().toLowerCase();
     if (!key || !this._settings) return "none";
@@ -483,6 +489,12 @@ export class ReadyHomePanel extends LitElement {
                         <option value="food">Food</option>
                         <option value="none">Neither</option>
                       </select>
+                      ${this._activeFilterCount
+                        ? this._mdButton("Reset", {
+                            variant: "text",
+                            onClick: this._resetFilters,
+                          })
+                        : nothing}
                     </div>
                   `
                 : nothing}
@@ -534,6 +546,43 @@ export class ReadyHomePanel extends LitElement {
     `;
   }
 
+  private _renderMeasure(item: InventoryItemDto) {
+    const kind = this._readinessKind(item.category);
+    if (kind === "food") {
+      if (item.calories_per_unit == null) return "";
+      return `${this._formatMeasureNumber(item.calories_per_unit)} kcal`;
+    }
+    if (kind === "water") {
+      if (item.liters_per_unit != null) {
+        return `${this._formatMeasureNumber(item.liters_per_unit)} L`;
+      }
+      const unit = (item.unit || "").toLowerCase();
+      if (unit === "liter") {
+        return `${this._formatMeasureNumber(item.quantity)} L`;
+      }
+      if (unit === "milliliter") {
+        return `${this._formatMeasureNumber(item.quantity / 1000)} L`;
+      }
+      return "";
+    }
+    return "";
+  }
+
+  private _formatMeasureNumber(value: number): string {
+    const n = Number(value);
+    if (Number.isNaN(n)) return "—";
+    return Math.abs(n - Math.round(n)) < 0.05
+      ? String(Math.round(n))
+      : String(Math.round(n * 100) / 100);
+  }
+
+  private _renderStatusBadge(status: string) {
+    if (!status) return nothing;
+    return html`<span class="badge badge-${status}"
+      >${this._statusLabel(status)}</span
+    >`;
+  }
+
   private _renderTable(items: InventoryItemDto[]) {
     return html`
       <div class="table-wrap">
@@ -541,18 +590,20 @@ export class ReadyHomePanel extends LitElement {
           <thead>
             <tr>
               <th>Name</th>
+              <th>Status</th>
               <th>Quantity</th>
+              <th>L / kcal</th>
               <th>Location</th>
               <th>Category</th>
               <th>Expiry</th>
-              <th></th>
+              <th class="actions-col"></th>
             </tr>
           </thead>
           <tbody>
             ${items.map((item) => this._renderRow(item))}
             ${items.length === 0
               ? html`<tr>
-                  <td colspan="6">${this._renderEmpty()}</td>
+                  <td colspan="8">${this._renderEmpty()}</td>
                 </tr>`
               : nothing}
           </tbody>
@@ -574,21 +625,17 @@ export class ReadyHomePanel extends LitElement {
 
   private _renderRow(item: InventoryItemDto) {
     const status = this._itemStatus(item);
+    const measure = this._renderMeasure(item);
     return html`
       <tr class=${status ? `row-${status}` : ""}>
         <td>
           <button class="link" @click=${() => this._openEdit(item)}>
             ${item.name}
           </button>
-          <div class="meta">
-            ${status
-              ? html`<span class="badge badge-${status}"
-                  >${this._statusLabel(status)}</span
-                >`
-              : nothing}
-          </div>
         </td>
+        <td class="status-col">${this._renderStatusBadge(status)}</td>
         <td>${this._renderQtyText(item)}</td>
+        <td class="measure-col">${measure}</td>
         <td>${item.location || "—"}</td>
         <td>${item.category || "—"}</td>
         <td class=${this._expiryClass(status)}>
@@ -611,7 +658,10 @@ export class ReadyHomePanel extends LitElement {
 
   private _renderItemCard(item: InventoryItemDto) {
     const status = this._itemStatus(item);
-    const meta = [item.location, item.category].filter(Boolean).join(" · ");
+    const measure = this._renderMeasure(item);
+    const meta = [item.location, item.category, measure]
+      .filter(Boolean)
+      .join(" · ");
     return html`
       <article
         class="item-card ${status ? `row-${status}` : ""}"
@@ -620,11 +670,7 @@ export class ReadyHomePanel extends LitElement {
         <div class="item-card-top">
           <div class="item-card-title">
             <span class="item-name">${item.name}</span>
-            ${status
-              ? html`<span class="badge badge-${status}"
-                  >${this._statusLabel(status)}</span
-                >`
-              : nothing}
+            ${this._renderStatusBadge(status)}
           </div>
           <button
             type="button"
@@ -1224,6 +1270,7 @@ export class ReadyHomePanel extends LitElement {
     .filters {
       display: flex;
       flex-wrap: wrap;
+      align-items: center;
       gap: 6px;
     }
     .filters-btn.active {
@@ -1309,7 +1356,19 @@ export class ReadyHomePanel extends LitElement {
       text-align: left;
       padding: 10px 12px;
       border-bottom: 1px solid var(--divider-color);
-      vertical-align: top;
+      vertical-align: middle;
+    }
+    th.actions-col,
+    td.actions {
+      text-align: right;
+    }
+    .status-col {
+      white-space: nowrap;
+    }
+    .measure-col {
+      white-space: nowrap;
+      color: var(--secondary-text-color);
+      font-size: 0.9rem;
     }
     tbody tr:last-child td {
       border-bottom: none;
@@ -1395,6 +1454,7 @@ export class ReadyHomePanel extends LitElement {
       display: flex;
       gap: 6px;
       align-items: center;
+      justify-content: flex-end;
     }
     .empty {
       text-align: center;
