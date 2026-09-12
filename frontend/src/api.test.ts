@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, type Mock } from "vitest";
 import {
   getSettings,
   listItems,
@@ -8,9 +8,10 @@ import {
 import type { HomeAssistant } from "./types";
 
 function mockHass(
-  sendMessagePromise: ReturnType<typeof vi.fn>,
-  subscribeMessage: ReturnType<typeof vi.fn> = vi.fn(),
+  sendMessagePromise: Mock,
+  subscribeMessage: Mock = vi.fn(),
 ): HomeAssistant {
+  // Vitest 5 Mock types are not assignable to HA's generic connection methods.
   return {
     states: {},
     callService: vi.fn(),
@@ -19,7 +20,7 @@ function mockHass(
       subscribeMessage,
     },
     localize: (key: string) => key,
-  };
+  } as HomeAssistant;
 }
 
 describe("api websocket payloads", () => {
