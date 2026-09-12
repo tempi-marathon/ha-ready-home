@@ -4,8 +4,16 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from custom_components.ready_home.attention import build_buckets, expiry_severity
-from custom_components.ready_home.models import InventoryItem
+from custom_components.ready_home.attention import (
+    build_buckets,
+    expiry_severity,
+    item_summary,
+)
+from custom_components.ready_home.models import (
+    InventoryItem,
+    InventoryPriority,
+    InventoryUnit,
+)
 
 TODAY = date(2026, 9, 4)
 
@@ -84,3 +92,27 @@ def test_low_stock_rule() -> None:
     assert _item("x", quantity=4, desired=5).is_low_stock() is True
     assert _item("y", quantity=5, desired=5).is_low_stock() is False
     assert _item("z", quantity=0, desired=0).is_low_stock() is False
+
+
+def test_item_summary() -> None:
+    item = InventoryItem(
+        name="Beans",
+        quantity=3,
+        desired_quantity=6,
+        unit=InventoryUnit.BOX,
+        location="Pantry",
+        category="Food",
+        priority=InventoryPriority.ESSENTIAL,
+        expiry_date="2027-01-15",
+    )
+    assert item_summary(item) == {
+        "id": item.id,
+        "name": "Beans",
+        "quantity": 3,
+        "desired_quantity": 6,
+        "unit": "box",
+        "location": "Pantry",
+        "category": "Food",
+        "priority": "essential",
+        "expiry_date": "2027-01-15",
+    }

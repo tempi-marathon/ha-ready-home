@@ -2,6 +2,9 @@ import { defineConfig } from "vite";
 import { resolve } from "node:path";
 
 export default defineConfig({
+  test: {
+    environment: "jsdom",
+  },
   build: {
     outDir: resolve(__dirname, "custom_components/ready_home/dist"),
     emptyOutDir: true,

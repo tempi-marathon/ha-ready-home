@@ -38,6 +38,12 @@ def _ensure_homeassistant_stubs() -> None:
         "homeassistant.helpers.device_registry": types.ModuleType(
             "homeassistant.helpers.device_registry"
         ),
+        "homeassistant.helpers.config_validation": types.ModuleType(
+            "homeassistant.helpers.config_validation"
+        ),
+        "homeassistant.helpers.selector": types.ModuleType(
+            "homeassistant.helpers.selector"
+        ),
         "homeassistant.exceptions": types.ModuleType("homeassistant.exceptions"),
         "homeassistant.config_entries": types.ModuleType(
             "homeassistant.config_entries"
@@ -115,7 +121,49 @@ def _ensure_homeassistant_stubs() -> None:
     modules["homeassistant.core"].HomeAssistant = MagicMock
     modules["homeassistant.core"].callback = lambda f: f
     modules["homeassistant.core"].CALLBACK_TYPE = object
+    modules["homeassistant.core"].ServiceCall = MagicMock
+    modules["homeassistant.core"].SupportsResponse = MagicMock
+
+    # Minimal cv stubs used by service schemas at import time.
+    cv = modules["homeassistant.helpers.config_validation"]
+    cv.string = str
+
+    # Selector stubs so config_flow can import without real HA.
+    selector = modules["homeassistant.helpers.selector"]
+
+    class _SelectorStub:  # noqa: D101
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            pass
+
+    class _ConfigStub:  # noqa: D101
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            pass
+
+    class _ModeStub:  # noqa: D101
+        BOX = "box"
+        DROPDOWN = "dropdown"
+        SLIDER = "slider"
+
+    selector.NumberSelector = _SelectorStub
+    selector.NumberSelectorConfig = _ConfigStub
+    selector.NumberSelectorMode = _ModeStub
+    selector.SelectSelector = _SelectorStub
+    selector.SelectSelectorConfig = _ConfigStub
+    selector.SelectSelectorMode = _ModeStub
+    selector.TextSelector = _SelectorStub
+
+    class ConfigFlow:  # noqa: D101
+        def __init_subclass__(cls, domain: str | None = None, **kwargs: Any) -> None:
+            super().__init_subclass__(**kwargs)
+            cls.DOMAIN = domain  # type: ignore[attr-defined]
+
+    class OptionsFlow:  # noqa: D101
+        pass
+
     modules["homeassistant.config_entries"].ConfigEntry = MagicMock
+    modules["homeassistant.config_entries"].ConfigFlow = ConfigFlow
+    modules["homeassistant.config_entries"].ConfigFlowResult = dict
+    modules["homeassistant.config_entries"].OptionsFlow = OptionsFlow
 
     for name, mod in modules.items():
         sys.modules.setdefault(name, mod)

@@ -156,7 +156,7 @@ npm test
 Before submitting to [hacs/default](https://github.com/hacs/default):
 
 1. Push a public GitHub repository under the intended owner
-2. Ensure CI is green (hassfest, HACS action, pytest)
+2. Ensure CI is green (hassfest, HACS action, pytest, Vitest / `npm test`)
 3. Publish a GitHub Release (not only a tag), e.g. `v0.1.0`
 4. Open a PR adding this repo to the `integration` list in hacs/default
 

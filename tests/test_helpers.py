@@ -11,6 +11,7 @@ from custom_components.ready_home.const import DOMAIN, VERSION, storage_key_for_
 from custom_components.ready_home.helpers import (
     device_info_for_entry,
     device_name,
+    entry_id_from_call_data,
     get_coordinator,
     profile_name,
 )
@@ -79,3 +80,17 @@ def test_get_coordinator_not_setup() -> None:
     hass.data = {}
     with pytest.raises(HomeAssistantError):
         get_coordinator(hass)
+
+
+@pytest.mark.parametrize(
+    ("data", "expected"),
+    [
+        ({}, None),
+        ({"config_entry_id": None}, None),
+        ({"config_entry_id": ""}, None),
+        ({"config_entry_id": "abc"}, "abc"),
+        ({"config_entry_id": 12}, "12"),
+    ],
+)
+def test_entry_id_from_call_data(data: dict, expected: str | None) -> None:
+    assert entry_id_from_call_data(data) == expected

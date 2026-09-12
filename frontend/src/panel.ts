@@ -11,6 +11,11 @@ import {
   lookupBarcode,
   subscribeInventory,
 } from "./api";
+import {
+  filterAndSortItems,
+  itemStatus,
+  readinessKind,
+} from "./inventory_view";
 import type { HomeAssistant } from "./types";
 
 const PANEL_TAG = "ready-home-panel";
@@ -137,84 +142,27 @@ export class ReadyHomePanel extends LitElement {
   };
 
   private _readinessKind(category: string): "food" | "water" | "none" {
-    const key = category.trim().toLowerCase();
-    if (!key || !this._settings) return "none";
-    if (
-      (this._settings.water_categories ?? []).some(
-        (c) => c.trim().toLowerCase() === key,
-      )
-    ) {
-      return "water";
-    }
-    if (
-      (this._settings.food_categories ?? []).some(
-        (c) => c.trim().toLowerCase() === key,
-      )
-    ) {
-      return "food";
-    }
-    return "none";
+    return readinessKind(category, this._settings);
   }
 
   private get _items(): InventoryItemDto[] {
-    let items = [...(this._snapshot?.items ?? [])];
-    const q = this._search.trim().toLowerCase();
-    if (q) {
-      items = items.filter(
-        (i) =>
-          i.name.toLowerCase().includes(q) ||
-          i.location.toLowerCase().includes(q) ||
-          i.category.toLowerCase().includes(q) ||
-          (i.barcode || "").toLowerCase().includes(q) ||
-          (i.notes || "").toLowerCase().includes(q),
-      );
-    }
-    if (this._filterLocation) {
-      items = items.filter(
-        (i) => i.location.toLowerCase() === this._filterLocation.toLowerCase(),
-      );
-    }
-    if (this._filterCategory) {
-      items = items.filter(
-        (i) => i.category.toLowerCase() === this._filterCategory.toLowerCase(),
-      );
-    }
-    if (this._filterReadiness) {
-      items = items.filter(
-        (i) => this._readinessKind(i.category) === this._filterReadiness,
-      );
-    }
-    if (this._filterStatus !== "all") {
-      const b = this._snapshot?.buckets;
-      const ids = new Set<string>();
-      if (this._filterStatus === "expired") {
-        b?.expired.forEach((i) => ids.add(i.id));
-      } else if (this._filterStatus === "expiring") {
-        b?.within_urgent.forEach((i) => ids.add(i.id));
-        b?.within_expiring.forEach((i) => ids.add(i.id));
-      } else if (this._filterStatus === "low_stock") {
-        b?.low_stock.forEach((i) => ids.add(i.id));
-      }
-      items = items.filter((i) => ids.has(i.id));
-    }
-    items.sort((a, b) => {
-      if (this._sort === "quantity") return a.quantity - b.quantity;
-      if (this._sort === "expiry") {
-        return (a.expiry_date || "9999").localeCompare(b.expiry_date || "9999");
-      }
-      return a.name.localeCompare(b.name);
-    });
-    return items;
+    return filterAndSortItems(
+      this._snapshot?.items ?? [],
+      this._snapshot?.buckets,
+      this._settings,
+      {
+        search: this._search,
+        filterStatus: this._filterStatus,
+        filterLocation: this._filterLocation,
+        filterCategory: this._filterCategory,
+        filterReadiness: this._filterReadiness,
+        sort: this._sort,
+      },
+    );
   }
 
   private _itemStatus(item: InventoryItemDto): string {
-    const b = this._snapshot?.buckets;
-    if (!b) return "";
-    if (b.expired.some((i) => i.id === item.id)) return "expired";
-    if (b.within_urgent.some((i) => i.id === item.id)) return "urgent";
-    if (b.within_expiring.some((i) => i.id === item.id)) return "expiring";
-    if (b.low_stock.some((i) => i.id === item.id)) return "low";
-    return "";
+    return itemStatus(item, this._snapshot?.buckets);
   }
 
   private _statusLabel(status: string): string {
