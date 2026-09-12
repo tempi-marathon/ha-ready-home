@@ -145,6 +145,14 @@ class ReadyHomeConfigFlow(ConfigFlow, domain=DOMAIN):
 class ReadyHomeOptionsFlow(OptionsFlow):
     """Options menu for readiness targets, lists, and thresholds."""
 
+    async def _async_save_and_menu(self, **update_kwargs: Any) -> ConfigFlowResult:
+        """Persist entry updates and return to the options menu."""
+        if update_kwargs:
+            self.hass.config_entries.async_update_entry(
+                self.config_entry, **update_kwargs
+            )
+        return await self.async_step_init()
+
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -174,13 +182,9 @@ class ReadyHomeOptionsFlow(OptionsFlow):
                     ),
                     errors={"base": "invalid_name"},
                 )
-            self.hass.config_entries.async_update_entry(
-                self.config_entry,
+            return await self._async_save_and_menu(
                 title=name,
                 data={**dict(self.config_entry.data), CONF_NAME: name},
-            )
-            return self.async_create_entry(
-                title="", data=dict(self.config_entry.options)
             )
 
         schema = vol.Schema(
@@ -209,7 +213,7 @@ class ReadyHomeOptionsFlow(OptionsFlow):
                     ),
                 }
             )
-            return self.async_create_entry(title="", data=options)
+            return await self._async_save_and_menu(options=options)
 
         schema = vol.Schema(
             {
@@ -290,7 +294,7 @@ class ReadyHomeOptionsFlow(OptionsFlow):
                         CONF_WATER_CATEGORIES: water_categories,
                     }
                 )
-                return self.async_create_entry(title="", data=options)
+                return await self._async_save_and_menu(options=options)
 
         # Selector options include current categories plus any mapped names.
         selector_options = _merge_category_lists(
@@ -355,7 +359,7 @@ class ReadyHomeOptionsFlow(OptionsFlow):
                     CONF_ATTRIBUTE_ITEM_CAP: int(user_input[CONF_ATTRIBUTE_ITEM_CAP]),
                 }
             )
-            return self.async_create_entry(title="", data=options)
+            return await self._async_save_and_menu(options=options)
 
         schema = vol.Schema(
             {

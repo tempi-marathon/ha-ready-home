@@ -22,6 +22,7 @@
     "step": {
       "init": {
         "title": "Ready Home options",
+        "description": "Submit saves and returns here. Close when finished.",
         "menu_options": {
           "profile": "Profile",
           "targets": "Readiness targets",

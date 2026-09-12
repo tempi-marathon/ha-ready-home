@@ -22,6 +22,7 @@
     "step": {
       "init": {
         "title": "Ready Home-opties",
+        "description": "Opslaan brengt je terug naar dit menu. Sluit af wanneer je klaar bent.",
         "menu_options": {
           "profile": "Profiel",
           "targets": "Paraatheidsdoelen",
