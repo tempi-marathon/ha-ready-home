@@ -1,4 +1,4 @@
-"""Sidebar panel registration for Ready Home."""
+"""Sidebar panel registration for Ready Home (Alarmo-style)."""
 
 from __future__ import annotations
 
@@ -6,18 +6,19 @@ import logging
 from pathlib import Path
 
 from homeassistant.components import frontend, panel_custom
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
 
 from .const import (
     DOMAIN,
     PANEL_FILENAME,
     PANEL_ICON,
+    PANEL_MODULE_URL,
     PANEL_TITLE,
     PANEL_URL_PATH,
     PANEL_WEBCOMPONENT,
     VERSION,
 )
-from .frontend import URL_BASE, async_setup_frontend
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,11 +27,14 @@ DIST_DIR = Path(__file__).parent / "dist"
 
 
 async def async_setup_panel(hass: HomeAssistant) -> None:
-    """Serve frontend assets and register the sidebar panel once."""
+    """Serve the panel JS as a single file and register the sidebar panel.
+
+    Matches Alarmo: the SPA lives at ``/ready_home``, while the module is
+    served from ``/api/panel_custom/ready_home`` so the two URLs never collide
+    (important for Nabu Casa service-worker fetches of the panel route).
+    """
     if hass.data.get(_PANEL_KEY):
         return
-
-    await async_setup_frontend(hass)
 
     panel_path = DIST_DIR / PANEL_FILENAME
     if not panel_path.is_file():
@@ -45,7 +49,24 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
     except OSError:
         cache_bust = 0
 
-    module_url = f"{URL_BASE}/{PANEL_FILENAME}?v={VERSION}&m={cache_bust}"
+    try:
+        await hass.http.async_register_static_paths(
+            [
+                StaticPathConfig(
+                    url_path=PANEL_MODULE_URL,
+                    path=str(panel_path),
+                    cache_headers=False,
+                )
+            ]
+        )
+    except RuntimeError:
+        _LOGGER.debug("Static path %s already registered", PANEL_MODULE_URL)
+
+    from .frontend import async_cleanup_legacy_lovelace_resource
+
+    await async_cleanup_legacy_lovelace_resource(hass)
+
+    module_url = f"{PANEL_MODULE_URL}?v={VERSION}&m={cache_bust}"
 
     await panel_custom.async_register_panel(
         hass,
@@ -57,6 +78,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         embed_iframe=False,
         require_admin=False,
         config={},
+        config_panel_domain=DOMAIN,
     )
     hass.data[_PANEL_KEY] = True
     _LOGGER.info("Registered Ready Home sidebar panel (%s)", module_url)

@@ -28,22 +28,6 @@ const UNITS = [
 const MDI_PLUS =
   "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z";
 
-/** mdi:filter-variant */
-const MDI_FILTER =
-  "M6,13H18V11H6M3,6V8H21V6M10,18H14V16H10V18Z";
-
-/** mdi:shield-check */
-const MDI_SHIELD =
-  "M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9L10,17Z";
-
-/** mdi:water */
-const MDI_WATER =
-  "M12,20A6,6 0 0,1 6,14C6,10 12,3.25 12,3.25C12,3.25 18,10 18,14A6,6 0 0,1 12,20Z";
-
-/** mdi:food-apple */
-const MDI_FOOD =
-  "M20,10C22,13 17,22 15,22C13,22 13,21 12,21C11,21 11,22 9,22C7,22 2,13 4,10C6,7 9,7 11,8V5C11,3.9 11.9,3 13,3H14V5H13V8C15,7 18,7 20,10Z";
-
 const STATUS_LABELS: Record<string, string> = {
   expired: "Expired",
   urgent: "Urgent",
@@ -227,24 +211,32 @@ export class ReadyHomePanel extends LitElement {
   private _formatHours(hours: number | null | undefined): string {
     if (hours == null || Number.isNaN(Number(hours))) return "—";
     const h = Math.max(0, Math.round(Number(hours)));
-    if (h < 48) return `${h} hour${h === 1 ? "" : "s"}`;
+    if (h < 48) return `${h}h`;
     const days = Math.round(h / 24);
-    return `${days} day${days === 1 ? "" : "s"}`;
+    return `${days}d`;
   }
 
   private _formatAmount(value: number | null | undefined, unit: string): string {
     if (value == null || Number.isNaN(Number(value))) return "—";
     const n = Number(value);
-    const rounded = Math.abs(n - Math.round(n)) < 0.05 ? Math.round(n) : Math.round(n * 10) / 10;
+    const rounded =
+      Math.abs(n - Math.round(n)) < 0.05 ? Math.round(n) : Math.round(n * 10) / 10;
     return `${rounded} ${unit}`;
   }
 
   private _durationClass(hours: number | null | undefined): string {
-    const duration = this._assessment.duration_hours ?? this._settings?.duration_hours ?? 72;
+    const duration =
+      this._assessment.duration_hours ?? this._settings?.duration_hours ?? 72;
     if (hours == null || Number.isNaN(Number(hours))) return "";
     if (Number(hours) <= 0) return "duration-bad";
     if (Number(hours) < Number(duration)) return "duration-warn";
-    return "duration-ok";
+    return "";
+  }
+
+  private _expiryClass(status: string): string {
+    if (status === "expired") return "expiry-expired";
+    if (status === "urgent" || status === "expiring") return "expiry-warn";
+    return "";
   }
 
   protected render() {
@@ -278,65 +270,41 @@ export class ReadyHomePanel extends LitElement {
         ></ha-icon-button>
 
         <div class="content">
-          <div class="section-head">
-            <h1>Home readiness</h1>
-            <p class="subtitle">${duration}-hour readiness</p>
-          </div>
-
+          <p class="subtitle">${duration}-hour readiness</p>
           <div class="stats">
-            <ha-card class="stat-card">
-              <div class="stat-inner">
-                <div class="stat-title">
-                  <ha-svg-icon .path=${MDI_SHIELD}></ha-svg-icon>
-                  Overall readiness
-                </div>
-                <div class="stat-value">${this._pct(overall)}</div>
-                <div class="stat-duration ${this._durationClass(supply)}">
-                  Lasts ${this._formatHours(supply)}
-                  · Lowest of food and water
-                </div>
-              </div>
-            </ha-card>
-            <ha-card class="stat-card">
-              <div class="stat-inner">
-                <div class="stat-title">
-                  <ha-svg-icon .path=${MDI_WATER}></ha-svg-icon>
-                  Water
-                </div>
-                <div class="stat-row">
-                  <span class="stat-value"
-                    >${this._formatAmount(a.water_on_hand, "L")}</span
-                  >
-                  <span class="stat-goal"
-                    >Goal ${this._formatAmount(a.water_target, "L")}</span
-                  >
-                </div>
-                <div class="stat-meta">${this._pct(water)} ready</div>
-                <div class="stat-duration ${this._durationClass(waterSupply)}">
-                  Lasts ${this._formatHours(waterSupply)}
-                </div>
-              </div>
-            </ha-card>
-            <ha-card class="stat-card">
-              <div class="stat-inner">
-                <div class="stat-title">
-                  <ha-svg-icon .path=${MDI_FOOD}></ha-svg-icon>
-                  Food
-                </div>
-                <div class="stat-row">
-                  <span class="stat-value"
-                    >${this._formatAmount(a.food_on_hand, "kcal")}</span
-                  >
-                  <span class="stat-goal"
-                    >Goal ${this._formatAmount(a.food_target, "kcal")}</span
-                  >
-                </div>
-                <div class="stat-meta">${this._pct(food)} ready</div>
-                <div class="stat-duration ${this._durationClass(foodSupply)}">
-                  Lasts ${this._formatHours(foodSupply)}
-                </div>
-              </div>
-            </ha-card>
+            <div class="stat">
+              <span class="stat-label">Overall</span>
+              <span class="stat-value">${this._pct(overall)}</span>
+              <span class="stat-duration ${this._durationClass(supply)}"
+                >Lasts ${this._formatHours(supply)}</span
+              >
+            </div>
+            <div class="stat">
+              <span class="stat-label">Water</span>
+              <span class="stat-value"
+                >${this._formatAmount(a.water_on_hand, "L")}</span
+              >
+              <span class="stat-meta"
+                >${this._pct(water)} · goal
+                ${this._formatAmount(a.water_target, "L")}</span
+              >
+              <span class="stat-duration ${this._durationClass(waterSupply)}"
+                >Lasts ${this._formatHours(waterSupply)}</span
+              >
+            </div>
+            <div class="stat">
+              <span class="stat-label">Food</span>
+              <span class="stat-value"
+                >${this._formatAmount(a.food_on_hand, "kcal")}</span
+              >
+              <span class="stat-meta"
+                >${this._pct(food)} · goal
+                ${this._formatAmount(a.food_target, "kcal")}</span
+              >
+              <span class="stat-duration ${this._durationClass(foodSupply)}"
+                >Lasts ${this._formatHours(foodSupply)}</span
+              >
+            </div>
           </div>
 
           <div class="attention" role="group" aria-label="Attention filters">
@@ -378,7 +346,6 @@ export class ReadyHomePanel extends LitElement {
             />
             <div class="toolbar-row">
               <select
-                class="sort"
                 .value=${this._sort}
                 @change=${(e: Event) => {
                   this._sort = (e.target as HTMLSelectElement)
@@ -391,19 +358,19 @@ export class ReadyHomePanel extends LitElement {
               </select>
               <button
                 type="button"
-                class="filters-btn ${this._filtersOpen || this._activeFilterCount ? "active" : ""}"
+                class="filters-btn ${this._filtersOpen || this._activeFilterCount
+                  ? "active"
+                  : ""}"
                 @click=${() => {
                   this._filtersOpen = !this._filtersOpen;
                 }}
               >
-                <ha-svg-icon .path=${MDI_FILTER}></ha-svg-icon>
-                Filters
-                ${this._activeFilterCount
-                  ? html`<span class="filter-badge">${this._activeFilterCount}</span>`
+                Filters${this._activeFilterCount
+                  ? html` (${this._activeFilterCount})`
                   : nothing}
               </button>
               <span class="item-count"
-                >${items.length} of ${this._snapshot?.items.length ?? 0}</span
+                >${items.length}/${this._snapshot?.items.length ?? 0}</span
               >
             </div>
             ${this._filtersOpen
@@ -448,19 +415,6 @@ export class ReadyHomePanel extends LitElement {
                       <option value="food">Food</option>
                       <option value="none">Neither</option>
                     </select>
-                    ${this._activeFilterCount
-                      ? html`<button
-                          type="button"
-                          class="link"
-                          @click=${() => {
-                            this._filterLocation = "";
-                            this._filterCategory = "";
-                            this._filterReadiness = "";
-                          }}
-                        >
-                          Clear filters
-                        </button>`
-                      : nothing}
                   </div>
                 `
               : nothing}
@@ -501,12 +455,6 @@ export class ReadyHomePanel extends LitElement {
         ${item.unit}</span
       >
     `;
-  }
-
-  private _expiryClass(status: string): string {
-    if (status === "expired") return "expiry-expired";
-    if (status === "urgent" || status === "expiring") return "expiry-warn";
-    return "";
   }
 
   private _renderTable(items: InventoryItemDto[]) {
@@ -588,9 +536,7 @@ export class ReadyHomePanel extends LitElement {
 
   private _renderItemCard(item: InventoryItemDto) {
     const status = this._itemStatus(item);
-    const meta = [item.location, item.category]
-      .filter(Boolean)
-      .join(" · ");
+    const meta = [item.location, item.category].filter(Boolean).join(" · ");
     return html`
       <article
         class="item-card ${status ? `row-${status}` : ""}"
@@ -621,7 +567,7 @@ export class ReadyHomePanel extends LitElement {
         <div class="item-card-bottom">
           ${this._renderQtyText(item)}
           ${item.expiry_date
-            ? html`<span class="expiry ${this._expiryClass(status)}"
+            ? html`<span class="${this._expiryClass(status)}"
                 >${item.expiry_date}</span
               >`
             : nothing}
@@ -658,8 +604,8 @@ export class ReadyHomePanel extends LitElement {
         >
           <h2>${this._editing ? "Edit item" : "Add item"}</h2>
 
-          <section class="form-section">
-            <h3>Details</h3>
+          <div class="form-section">
+            <div class="form-section-title">Details</div>
             <label
               >Name
               <input
@@ -705,11 +651,7 @@ export class ReadyHomePanel extends LitElement {
             </label>
             <label
               >Notes
-              <textarea
-                rows="2"
-                .value=${f.notes || ""}
-                @input=${this._onField("notes")}
-              ></textarea>
+              <input .value=${f.notes || ""} @input=${this._onField("notes")} />
             </label>
             <label
               >Barcode
@@ -734,10 +676,10 @@ export class ReadyHomePanel extends LitElement {
                 </button>
               </div>
             </label>
-          </section>
+          </div>
 
-          <section class="form-section">
-            <h3>Stock</h3>
+          <div class="form-section">
+            <div class="form-section-title">Stock</div>
             <div class="row2">
               <label
                 >Quantity
@@ -762,7 +704,10 @@ export class ReadyHomePanel extends LitElement {
             </div>
             <label
               >Unit
-              <select .value=${f.unit || "piece"} @change=${this._onField("unit")}>
+              <select
+                .value=${f.unit || "piece"}
+                @change=${this._onField("unit")}
+              >
                 ${UNITS.map((u) => html`<option value=${u}>${u}</option>`)}
               </select>
             </label>
@@ -777,10 +722,6 @@ export class ReadyHomePanel extends LitElement {
                       .value=${f.liters_per_unit || ""}
                       @input=${this._onField("liters_per_unit")}
                     />
-                    <span class="hint"
-                      >Required for water readiness when unit is not
-                      liter/milliliter.</span
-                    >
                   </label>
                 `
               : nothing}
@@ -795,16 +736,13 @@ export class ReadyHomePanel extends LitElement {
                       .value=${f.calories_per_unit || ""}
                       @input=${this._onField("calories_per_unit")}
                     />
-                    <span class="hint"
-                      >Used for food readiness totals.</span
-                    >
                   </label>
                 `
               : nothing}
-          </section>
+          </div>
 
-          <section class="form-section">
-            <h3>Dates</h3>
+          <div class="form-section">
+            <div class="form-section-title">Dates</div>
             <label
               >Expiry
               <input
@@ -813,7 +751,7 @@ export class ReadyHomePanel extends LitElement {
                 @input=${this._onField("expiry_date")}
               />
             </label>
-          </section>
+          </div>
 
           <div class="dialog-actions">
             <button type="button" @click=${this._closeDialog}>Cancel</button>
@@ -833,7 +771,10 @@ export class ReadyHomePanel extends LitElement {
 
   private _onField(key: string) {
     return (e: Event) => {
-      const target = e.target as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+      const target = e.target as
+        | HTMLInputElement
+        | HTMLSelectElement
+        | HTMLTextAreaElement;
       this._form = { ...this._form, [key]: target.value };
     };
   }
@@ -1029,16 +970,8 @@ export class ReadyHomePanel extends LitElement {
       padding: 16px 20px 32px;
       box-sizing: border-box;
     }
-    .section-head {
-      margin-bottom: 12px;
-    }
-    .section-head h1 {
-      margin: 0;
-      font-size: 1.35rem;
-      font-weight: 500;
-    }
     .subtitle {
-      margin: 4px 0 0;
+      margin: 0 0 10px;
       font-size: 0.85rem;
       color: var(--secondary-text-color);
     }
@@ -1050,49 +983,31 @@ export class ReadyHomePanel extends LitElement {
     .stats {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .stat-card {
-      border-left: 3px solid var(--primary-color);
-    }
-    .stat-inner {
-      padding: 14px 16px;
-    }
-    .stat-title {
-      display: flex;
-      align-items: center;
       gap: 8px;
-      font-size: 0.8rem;
-      color: var(--secondary-text-color);
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
-    .stat-title ha-svg-icon {
-      --mdc-icon-size: 18px;
-      color: var(--primary-color);
+    .stat {
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 3px solid var(--primary-color);
+      background: var(--secondary-background-color, rgba(0, 0, 0, 0.04));
+    }
+    .stat-label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--secondary-text-color);
+      margin-bottom: 4px;
     }
     .stat-value {
-      font-size: 1.6rem;
+      display: block;
+      font-size: 1.35rem;
       font-weight: 600;
-      line-height: 1.15;
     }
-    .stat-row {
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .stat-goal,
-    .stat-meta {
-      font-size: 0.8rem;
-      color: var(--secondary-text-color);
-    }
-    .stat-meta {
-      margin-top: 4px;
-    }
+    .stat-meta,
     .stat-duration {
-      margin-top: 8px;
-      font-size: 0.8rem;
+      display: block;
+      margin-top: 4px;
+      font-size: 0.75rem;
       color: var(--secondary-text-color);
     }
     .stat-duration.duration-warn {
@@ -1160,51 +1075,23 @@ export class ReadyHomePanel extends LitElement {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      align-items: center;
-    }
-    .filters-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .filters-btn ha-svg-icon {
-      --mdc-icon-size: 18px;
     }
     .filters-btn.active {
       border-color: var(--primary-color);
       color: var(--primary-color);
     }
-    .filter-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 1.25em;
-      height: 1.25em;
-      padding: 0 4px;
-      border-radius: 999px;
-      background: var(--primary-color);
-      color: var(--text-primary-color, #fff);
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
     select,
     input,
-    textarea,
     button {
       font: inherit;
     }
     select,
-    input,
-    textarea {
+    input {
       padding: 8px 10px;
       border-radius: 6px;
       border: 1px solid var(--divider-color);
       background: var(--card-background-color, var(--primary-background-color));
       color: var(--primary-text-color);
-    }
-    textarea {
-      resize: vertical;
-      min-height: 2.5rem;
     }
     button {
       padding: 8px 12px;
@@ -1243,7 +1130,6 @@ export class ReadyHomePanel extends LitElement {
       overflow-x: auto;
       border: 1px solid var(--divider-color);
       border-radius: 8px;
-      background: var(--card-background-color, transparent);
     }
     table {
       width: 100%;
@@ -1293,7 +1179,6 @@ export class ReadyHomePanel extends LitElement {
       margin-top: 10px;
       display: flex;
       justify-content: space-between;
-      align-items: center;
       gap: 8px;
     }
     .meta {
@@ -1326,13 +1211,11 @@ export class ReadyHomePanel extends LitElement {
       color: var(--info-color, #1976d2);
       border-color: currentColor;
     }
-    .expiry-expired,
-    .expiry.expiry-expired {
+    .expiry-expired {
       color: var(--error-color, #c62828);
       font-weight: 600;
     }
-    .expiry-warn,
-    .expiry.expiry-warn {
+    .expiry-warn {
       color: var(--warning-color, #f57c00);
       font-weight: 600;
     }
@@ -1374,7 +1257,7 @@ export class ReadyHomePanel extends LitElement {
       overflow: auto;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       box-sizing: border-box;
     }
     .dialog.dialog-narrow {
@@ -1397,9 +1280,8 @@ export class ReadyHomePanel extends LitElement {
       border: 1px solid var(--divider-color);
       border-radius: 8px;
     }
-    .form-section h3 {
-      margin: 0;
-      font-size: 0.85rem;
+    .form-section-title {
+      font-size: 0.75rem;
       font-weight: 600;
       color: var(--primary-color);
       text-transform: uppercase;
@@ -1410,10 +1292,6 @@ export class ReadyHomePanel extends LitElement {
       flex-direction: column;
       gap: 4px;
       font-size: 0.85rem;
-    }
-    .hint {
-      font-size: 0.75rem;
-      color: var(--secondary-text-color);
     }
     .row2 {
       display: grid;
@@ -1449,7 +1327,6 @@ export class ReadyHomePanel extends LitElement {
       }
       .item-count {
         margin-left: 0;
-        width: 100%;
       }
     }
   `;
@@ -1461,8 +1338,7 @@ declare global {
   }
 }
 
-// HA (and Nabu Casa) can load the panel module more than once after a
-// cache-bust URL change; defining twice throws and leaves the panel blank.
+// HA can load the panel module more than once after a cache-bust URL change.
 if (!customElements.get(PANEL_TAG)) {
   customElements.define(PANEL_TAG, ReadyHomePanel);
 }
