@@ -670,6 +670,10 @@ export class ReadyHomePanel extends LitElement {
     return msg ? html`<div class="field-error">${msg}</div>` : nothing;
   }
 
+  private _fieldInvalid(key: string): boolean {
+    return Boolean(this._fieldErrors[key]);
+  }
+
   private _validateForm(): Record<string, string> {
     const f = this._form;
     const errors: Record<string, string> = {};
@@ -903,6 +907,7 @@ export class ReadyHomePanel extends LitElement {
             <label
               >${this._fieldLabel("Name", true)}
               <input
+                class=${this._fieldInvalid("name") ? "invalid" : ""}
                 .value=${f.name || ""}
                 @input=${this._onField("name")}
               />
@@ -912,6 +917,7 @@ export class ReadyHomePanel extends LitElement {
               <label
                 >${this._fieldLabel("Location", true)}
                 <select
+                  class=${this._fieldInvalid("location") ? "invalid" : ""}
                   .value=${live(f.location || "")}
                   @change=${this._onField("location")}
                 >
@@ -933,6 +939,7 @@ export class ReadyHomePanel extends LitElement {
               <label
                 >${this._fieldLabel("Category", true)}
                 <select
+                  class=${this._fieldInvalid("category") ? "invalid" : ""}
                   .value=${live(f.category || "")}
                   @change=${this._onField("category")}
                 >
@@ -1000,6 +1007,7 @@ export class ReadyHomePanel extends LitElement {
               <label
                 >${this._fieldLabel("Quantity", true)}
                 <input
+                  class=${this._fieldInvalid("quantity") ? "invalid" : ""}
                   type="number"
                   min="0"
                   step="0.01"
@@ -1024,6 +1032,7 @@ export class ReadyHomePanel extends LitElement {
               <label
                 >${this._fieldLabel("Unit", true)}
                 <select
+                  class=${this._fieldInvalid("unit") ? "invalid" : ""}
                   .value=${live(f.unit || "piece")}
                   @change=${this._onField("unit")}
                 >
@@ -1046,6 +1055,9 @@ export class ReadyHomePanel extends LitElement {
                     <label
                       >${this._fieldLabel("Contents per unit", true)}
                       <input
+                        class=${this._fieldInvalid("contents_per_unit")
+                          ? "invalid"
+                          : ""}
                         type="number"
                         min="0"
                         step="0.01"
@@ -1060,6 +1072,9 @@ export class ReadyHomePanel extends LitElement {
                     <label
                       >${this._fieldLabel("Contents unit", true)}
                       <select
+                        class=${this._fieldInvalid("contents_unit")
+                          ? "invalid"
+                          : ""}
                         .value=${live(f.contents_unit || "")}
                         @change=${this._onField("contents_unit")}
                       >
@@ -1092,6 +1107,9 @@ export class ReadyHomePanel extends LitElement {
                       true,
                     )}
                     <input
+                      class=${this._fieldInvalid("calories_per_content")
+                        ? "invalid"
+                        : ""}
                       type="number"
                       min="0"
                       step="0.01"
@@ -1169,8 +1187,8 @@ export class ReadyHomePanel extends LitElement {
       quantity: "1",
       desired_quantity: "0",
       unit: "piece",
-      location: this._settings?.locations?.[0] ?? "",
-      category: this._settings?.categories?.[0] ?? "",
+      location: "",
+      category: "",
       priority: "important",
       notes: "",
       barcode: "",
@@ -1266,7 +1284,6 @@ export class ReadyHomePanel extends LitElement {
     const errors = this._validateForm();
     this._fieldErrors = errors;
     if (Object.keys(errors).length) {
-      this._error = "Please fix the highlighted fields";
       return;
     }
 
@@ -1880,6 +1897,16 @@ export class ReadyHomePanel extends LitElement {
       color: var(--error-color, #c62828);
       font-size: 0.75rem;
       margin-top: 2px;
+    }
+    .dialog input.invalid,
+    .dialog select.invalid {
+      border-color: var(--error-color, #c62828);
+    }
+    .dialog input.invalid:focus,
+    .dialog select.invalid:focus {
+      outline: none;
+      border-color: var(--error-color, #c62828);
+      box-shadow: 0 0 0 1px var(--error-color, #c62828);
     }
     .field-hint {
       color: var(--secondary-text-color);
