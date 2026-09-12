@@ -1,7 +1,7 @@
 /** Ready Home sidebar management panel. */
 
 import { LitElement, css, html, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { property, state } from "lit/decorators.js";
 import {
   type InventoryItemDto,
   type SettingsDto,
@@ -11,6 +11,8 @@ import {
   subscribeInventory,
 } from "./api";
 import type { HomeAssistant } from "./types";
+
+const PANEL_TAG = "ready-home-panel";
 
 const UNITS = [
   "piece",
@@ -49,7 +51,6 @@ const STATUS_LABELS: Record<string, string> = {
   low: "Low stock",
 };
 
-@customElement("ready-home-panel")
 export class ReadyHomePanel extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ type: Boolean }) public narrow = false;
@@ -1458,4 +1459,10 @@ declare global {
   interface HTMLElementTagNameMap {
     "ready-home-panel": ReadyHomePanel;
   }
+}
+
+// HA (and Nabu Casa) can load the panel module more than once after a
+// cache-bust URL change; defining twice throws and leaves the panel blank.
+if (!customElements.get(PANEL_TAG)) {
+  customElements.define(PANEL_TAG, ReadyHomePanel);
 }
