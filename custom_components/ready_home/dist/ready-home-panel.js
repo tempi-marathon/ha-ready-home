@@ -2,29 +2,29 @@
  * @license
  * Copyright 2019 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */const U=globalThis,j=U.ShadowRoot&&(U.ShadyCSS===void 0||U.ShadyCSS.nativeShadow)&&"adoptedStyleSheets"in Document.prototype&&"replace"in CSSStyleSheet.prototype,D=Symbol(),Q=new WeakMap;let nt=class{constructor(t,e,i){if(this._$cssResult$=!0,i!==D)throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");this.cssText=t,this.t=e}get styleSheet(){let t=this.o;const e=this.t;if(j&&t===void 0){const i=e!==void 0&&e.length===1;i&&(t=Q.get(e)),t===void 0&&((this.o=t=new CSSStyleSheet).replaceSync(this.cssText),i&&Q.set(e,t))}return t}toString(){return this.cssText}};const ht=o=>new nt(typeof o=="string"?o:o+"",void 0,D),ut=(o,...t)=>{const e=o.length===1?o[0]:t.reduce((i,r,s)=>i+(n=>{if(n._$cssResult$===!0)return n.cssText;if(typeof n=="number")return n;throw Error("Value passed to 'css' function must be a 'css' function result: "+n+". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.")})(r)+o[s+1],o[0]);return new nt(e,o,D)},pt=(o,t)=>{if(j)o.adoptedStyleSheets=t.map(e=>e instanceof CSSStyleSheet?e:e.styleSheet);else for(const e of t){const i=document.createElement("style"),r=U.litNonce;r!==void 0&&i.setAttribute("nonce",r),i.textContent=e.cssText,o.appendChild(i)}},Z=j?o=>o:o=>o instanceof CSSStyleSheet?(t=>{let e="";for(const i of t.cssRules)e+=i.cssText;return ht(e)})(o):o;/**
+ */const T=globalThis,D=T.ShadowRoot&&(T.ShadyCSS===void 0||T.ShadyCSS.nativeShadow)&&"adoptedStyleSheets"in Document.prototype&&"replace"in CSSStyleSheet.prototype,j=Symbol(),Z=new WeakMap;let nt=class{constructor(t,e,i){if(this._$cssResult$=!0,i!==j)throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");this.cssText=t,this.t=e}get styleSheet(){let t=this.o;const e=this.t;if(D&&t===void 0){const i=e!==void 0&&e.length===1;i&&(t=Z.get(e)),t===void 0&&((this.o=t=new CSSStyleSheet).replaceSync(this.cssText),i&&Z.set(e,t))}return t}toString(){return this.cssText}};const ht=o=>new nt(typeof o=="string"?o:o+"",void 0,j),pt=(o,...t)=>{const e=o.length===1?o[0]:t.reduce((i,r,s)=>i+(n=>{if(n._$cssResult$===!0)return n.cssText;if(typeof n=="number")return n;throw Error("Value passed to 'css' function must be a 'css' function result: "+n+". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.")})(r)+o[s+1],o[0]);return new nt(e,o,j)},ut=(o,t)=>{if(D)o.adoptedStyleSheets=t.map(e=>e instanceof CSSStyleSheet?e:e.styleSheet);else for(const e of t){const i=document.createElement("style"),r=T.litNonce;r!==void 0&&i.setAttribute("nonce",r),i.textContent=e.cssText,o.appendChild(i)}},Q=D?o=>o:o=>o instanceof CSSStyleSheet?(t=>{let e="";for(const i of t.cssRules)e+=i.cssText;return ht(e)})(o):o;/**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */const{is:_t,defineProperty:ft,getOwnPropertyDescriptor:mt,getOwnPropertyNames:gt,getOwnPropertySymbols:bt,getPrototypeOf:yt}=Object,H=globalThis,J=H.trustedTypes,$t=J?J.emptyScript:"",vt=H.reactiveElementPolyfillSupport,S=(o,t)=>o,q={toAttribute(o,t){switch(t){case Boolean:o=o?$t:null;break;case Object:case Array:o=o==null?o:JSON.stringify(o)}return o},fromAttribute(o,t){let e=o;switch(t){case Boolean:e=o!==null;break;case Number:e=o===null?null:Number(o);break;case Object:case Array:try{e=JSON.parse(o)}catch{e=null}}return e}},I=(o,t)=>!_t(o,t),G={attribute:!0,type:String,converter:q,reflect:!1,useDefault:!1,hasChanged:I};Symbol.metadata??=Symbol("metadata"),H.litPropertyMetadata??=new WeakMap;let w=class extends HTMLElement{static addInitializer(t){this._$Ei(),(this.l??=[]).push(t)}static get observedAttributes(){return this.finalize(),this._$Eh&&[...this._$Eh.keys()]}static createProperty(t,e=G){if(e.state&&(e.attribute=!1),this._$Ei(),this.prototype.hasOwnProperty(t)&&((e=Object.create(e)).wrapped=!0),this.elementProperties.set(t,e),!e.noAccessor){const i=Symbol(),r=this.getPropertyDescriptor(t,i,e);r!==void 0&&ft(this.prototype,t,r)}}static getPropertyDescriptor(t,e,i){const{get:r,set:s}=mt(this.prototype,t)??{get(){return this[e]},set(n){this[e]=n}};return{get:r,set(n){const l=r?.call(this);s?.call(this,n),this.requestUpdate(t,l,i)},configurable:!0,enumerable:!0}}static getPropertyOptions(t){return this.elementProperties.get(t)??G}static _$Ei(){if(this.hasOwnProperty(S("elementProperties")))return;const t=yt(this);t.finalize(),t.l!==void 0&&(this.l=[...t.l]),this.elementProperties=new Map(t.elementProperties)}static finalize(){if(this.hasOwnProperty(S("finalized")))return;if(this.finalized=!0,this._$Ei(),this.hasOwnProperty(S("properties"))){const e=this.properties,i=[...gt(e),...bt(e)];for(const r of i)this.createProperty(r,e[r])}const t=this[Symbol.metadata];if(t!==null){const e=litPropertyMetadata.get(t);if(e!==void 0)for(const[i,r]of e)this.elementProperties.set(i,r)}this._$Eh=new Map;for(const[e,i]of this.elementProperties){const r=this._$Eu(e,i);r!==void 0&&this._$Eh.set(r,e)}this.elementStyles=this.finalizeStyles(this.styles)}static finalizeStyles(t){const e=[];if(Array.isArray(t)){const i=new Set(t.flat(1/0).reverse());for(const r of i)e.unshift(Z(r))}else t!==void 0&&e.push(Z(t));return e}static _$Eu(t,e){const i=e.attribute;return i===!1?void 0:typeof i=="string"?i:typeof t=="string"?t.toLowerCase():void 0}constructor(){super(),this._$Ep=void 0,this.isUpdatePending=!1,this.hasUpdated=!1,this._$Em=null,this._$Ev()}_$Ev(){this._$ES=new Promise(t=>this.enableUpdating=t),this._$AL=new Map,this._$E_(),this.requestUpdate(),this.constructor.l?.forEach(t=>t(this))}addController(t){(this._$EO??=new Set).add(t),this.renderRoot!==void 0&&this.isConnected&&t.hostConnected?.()}removeController(t){this._$EO?.delete(t)}_$E_(){const t=new Map,e=this.constructor.elementProperties;for(const i of e.keys())this.hasOwnProperty(i)&&(t.set(i,this[i]),delete this[i]);t.size>0&&(this._$Ep=t)}createRenderRoot(){const t=this.shadowRoot??this.attachShadow(this.constructor.shadowRootOptions);return pt(t,this.constructor.elementStyles),t}connectedCallback(){this.renderRoot??=this.createRenderRoot(),this.enableUpdating(!0),this._$EO?.forEach(t=>t.hostConnected?.())}enableUpdating(t){}disconnectedCallback(){this._$EO?.forEach(t=>t.hostDisconnected?.())}attributeChangedCallback(t,e,i){this._$AK(t,i)}_$ET(t,e){const i=this.constructor.elementProperties.get(t),r=this.constructor._$Eu(t,i);if(r!==void 0&&i.reflect===!0){const s=(i.converter?.toAttribute!==void 0?i.converter:q).toAttribute(e,i.type);this._$Em=t,s==null?this.removeAttribute(r):this.setAttribute(r,s),this._$Em=null}}_$AK(t,e){const i=this.constructor,r=i._$Eh.get(t);if(r!==void 0&&this._$Em!==r){const s=i.getPropertyOptions(r),n=typeof s.converter=="function"?{fromAttribute:s.converter}:s.converter?.fromAttribute!==void 0?s.converter:q;this._$Em=r;const l=n.fromAttribute(e,s.type);this[r]=l??this._$Ej?.get(r)??l,this._$Em=null}}requestUpdate(t,e,i,r=!1,s){if(t!==void 0){const n=this.constructor;if(r===!1&&(s=this[t]),i??=n.getPropertyOptions(t),!((i.hasChanged??I)(s,e)||i.useDefault&&i.reflect&&s===this._$Ej?.get(t)&&!this.hasAttribute(n._$Eu(t,i))))return;this.C(t,e,i)}this.isUpdatePending===!1&&(this._$ES=this._$EP())}C(t,e,{useDefault:i,reflect:r,wrapped:s},n){i&&!(this._$Ej??=new Map).has(t)&&(this._$Ej.set(t,n??e??this[t]),s!==!0||n!==void 0)||(this._$AL.has(t)||(this.hasUpdated||i||(e=void 0),this._$AL.set(t,e)),r===!0&&this._$Em!==t&&(this._$Eq??=new Set).add(t))}async _$EP(){this.isUpdatePending=!0;try{await this._$ES}catch(e){Promise.reject(e)}const t=this.scheduleUpdate();return t!=null&&await t,!this.isUpdatePending}scheduleUpdate(){return this.performUpdate()}performUpdate(){if(!this.isUpdatePending)return;if(!this.hasUpdated){if(this.renderRoot??=this.createRenderRoot(),this._$Ep){for(const[r,s]of this._$Ep)this[r]=s;this._$Ep=void 0}const i=this.constructor.elementProperties;if(i.size>0)for(const[r,s]of i){const{wrapped:n}=s,l=this[r];n!==!0||this._$AL.has(r)||l===void 0||this.C(r,void 0,s,l)}}let t=!1;const e=this._$AL;try{t=this.shouldUpdate(e),t?(this.willUpdate(e),this._$EO?.forEach(i=>i.hostUpdate?.()),this.update(e)):this._$EM()}catch(i){throw t=!1,this._$EM(),i}t&&this._$AE(e)}willUpdate(t){}_$AE(t){this._$EO?.forEach(e=>e.hostUpdated?.()),this.hasUpdated||(this.hasUpdated=!0,this.firstUpdated(t)),this.updated(t)}_$EM(){this._$AL=new Map,this.isUpdatePending=!1}get updateComplete(){return this.getUpdateComplete()}getUpdateComplete(){return this._$ES}shouldUpdate(t){return!0}update(t){this._$Eq&&=this._$Eq.forEach(e=>this._$ET(e,this[e])),this._$EM()}updated(t){}firstUpdated(t){}};w.elementStyles=[],w.shadowRootOptions={mode:"open"},w[S("elementProperties")]=new Map,w[S("finalized")]=new Map,vt?.({ReactiveElement:w}),(H.reactiveElementVersions??=[]).push("2.1.2");/**
+ */const{is:_t,defineProperty:ft,getOwnPropertyDescriptor:mt,getOwnPropertyNames:gt,getOwnPropertySymbols:bt,getPrototypeOf:$t}=Object,q=globalThis,J=q.trustedTypes,yt=J?J.emptyScript:"",vt=q.reactiveElementPolyfillSupport,S=(o,t)=>o,R={toAttribute(o,t){switch(t){case Boolean:o=o?yt:null;break;case Object:case Array:o=o==null?o:JSON.stringify(o)}return o},fromAttribute(o,t){let e=o;switch(t){case Boolean:e=o!==null;break;case Number:e=o===null?null:Number(o);break;case Object:case Array:try{e=JSON.parse(o)}catch{e=null}}return e}},I=(o,t)=>!_t(o,t),G={attribute:!0,type:String,converter:R,reflect:!1,useDefault:!1,hasChanged:I};Symbol.metadata??=Symbol("metadata"),q.litPropertyMetadata??=new WeakMap;let w=class extends HTMLElement{static addInitializer(t){this._$Ei(),(this.l??=[]).push(t)}static get observedAttributes(){return this.finalize(),this._$Eh&&[...this._$Eh.keys()]}static createProperty(t,e=G){if(e.state&&(e.attribute=!1),this._$Ei(),this.prototype.hasOwnProperty(t)&&((e=Object.create(e)).wrapped=!0),this.elementProperties.set(t,e),!e.noAccessor){const i=Symbol(),r=this.getPropertyDescriptor(t,i,e);r!==void 0&&ft(this.prototype,t,r)}}static getPropertyDescriptor(t,e,i){const{get:r,set:s}=mt(this.prototype,t)??{get(){return this[e]},set(n){this[e]=n}};return{get:r,set(n){const l=r?.call(this);s?.call(this,n),this.requestUpdate(t,l,i)},configurable:!0,enumerable:!0}}static getPropertyOptions(t){return this.elementProperties.get(t)??G}static _$Ei(){if(this.hasOwnProperty(S("elementProperties")))return;const t=$t(this);t.finalize(),t.l!==void 0&&(this.l=[...t.l]),this.elementProperties=new Map(t.elementProperties)}static finalize(){if(this.hasOwnProperty(S("finalized")))return;if(this.finalized=!0,this._$Ei(),this.hasOwnProperty(S("properties"))){const e=this.properties,i=[...gt(e),...bt(e)];for(const r of i)this.createProperty(r,e[r])}const t=this[Symbol.metadata];if(t!==null){const e=litPropertyMetadata.get(t);if(e!==void 0)for(const[i,r]of e)this.elementProperties.set(i,r)}this._$Eh=new Map;for(const[e,i]of this.elementProperties){const r=this._$Eu(e,i);r!==void 0&&this._$Eh.set(r,e)}this.elementStyles=this.finalizeStyles(this.styles)}static finalizeStyles(t){const e=[];if(Array.isArray(t)){const i=new Set(t.flat(1/0).reverse());for(const r of i)e.unshift(Q(r))}else t!==void 0&&e.push(Q(t));return e}static _$Eu(t,e){const i=e.attribute;return i===!1?void 0:typeof i=="string"?i:typeof t=="string"?t.toLowerCase():void 0}constructor(){super(),this._$Ep=void 0,this.isUpdatePending=!1,this.hasUpdated=!1,this._$Em=null,this._$Ev()}_$Ev(){this._$ES=new Promise(t=>this.enableUpdating=t),this._$AL=new Map,this._$E_(),this.requestUpdate(),this.constructor.l?.forEach(t=>t(this))}addController(t){(this._$EO??=new Set).add(t),this.renderRoot!==void 0&&this.isConnected&&t.hostConnected?.()}removeController(t){this._$EO?.delete(t)}_$E_(){const t=new Map,e=this.constructor.elementProperties;for(const i of e.keys())this.hasOwnProperty(i)&&(t.set(i,this[i]),delete this[i]);t.size>0&&(this._$Ep=t)}createRenderRoot(){const t=this.shadowRoot??this.attachShadow(this.constructor.shadowRootOptions);return ut(t,this.constructor.elementStyles),t}connectedCallback(){this.renderRoot??=this.createRenderRoot(),this.enableUpdating(!0),this._$EO?.forEach(t=>t.hostConnected?.())}enableUpdating(t){}disconnectedCallback(){this._$EO?.forEach(t=>t.hostDisconnected?.())}attributeChangedCallback(t,e,i){this._$AK(t,i)}_$ET(t,e){const i=this.constructor.elementProperties.get(t),r=this.constructor._$Eu(t,i);if(r!==void 0&&i.reflect===!0){const s=(i.converter?.toAttribute!==void 0?i.converter:R).toAttribute(e,i.type);this._$Em=t,s==null?this.removeAttribute(r):this.setAttribute(r,s),this._$Em=null}}_$AK(t,e){const i=this.constructor,r=i._$Eh.get(t);if(r!==void 0&&this._$Em!==r){const s=i.getPropertyOptions(r),n=typeof s.converter=="function"?{fromAttribute:s.converter}:s.converter?.fromAttribute!==void 0?s.converter:R;this._$Em=r;const l=n.fromAttribute(e,s.type);this[r]=l??this._$Ej?.get(r)??l,this._$Em=null}}requestUpdate(t,e,i,r=!1,s){if(t!==void 0){const n=this.constructor;if(r===!1&&(s=this[t]),i??=n.getPropertyOptions(t),!((i.hasChanged??I)(s,e)||i.useDefault&&i.reflect&&s===this._$Ej?.get(t)&&!this.hasAttribute(n._$Eu(t,i))))return;this.C(t,e,i)}this.isUpdatePending===!1&&(this._$ES=this._$EP())}C(t,e,{useDefault:i,reflect:r,wrapped:s},n){i&&!(this._$Ej??=new Map).has(t)&&(this._$Ej.set(t,n??e??this[t]),s!==!0||n!==void 0)||(this._$AL.has(t)||(this.hasUpdated||i||(e=void 0),this._$AL.set(t,e)),r===!0&&this._$Em!==t&&(this._$Eq??=new Set).add(t))}async _$EP(){this.isUpdatePending=!0;try{await this._$ES}catch(e){Promise.reject(e)}const t=this.scheduleUpdate();return t!=null&&await t,!this.isUpdatePending}scheduleUpdate(){return this.performUpdate()}performUpdate(){if(!this.isUpdatePending)return;if(!this.hasUpdated){if(this.renderRoot??=this.createRenderRoot(),this._$Ep){for(const[r,s]of this._$Ep)this[r]=s;this._$Ep=void 0}const i=this.constructor.elementProperties;if(i.size>0)for(const[r,s]of i){const{wrapped:n}=s,l=this[r];n!==!0||this._$AL.has(r)||l===void 0||this.C(r,void 0,s,l)}}let t=!1;const e=this._$AL;try{t=this.shouldUpdate(e),t?(this.willUpdate(e),this._$EO?.forEach(i=>i.hostUpdate?.()),this.update(e)):this._$EM()}catch(i){throw t=!1,this._$EM(),i}t&&this._$AE(e)}willUpdate(t){}_$AE(t){this._$EO?.forEach(e=>e.hostUpdated?.()),this.hasUpdated||(this.hasUpdated=!0,this.firstUpdated(t)),this.updated(t)}_$EM(){this._$AL=new Map,this.isUpdatePending=!1}get updateComplete(){return this.getUpdateComplete()}getUpdateComplete(){return this._$ES}shouldUpdate(t){return!0}update(t){this._$Eq&&=this._$Eq.forEach(e=>this._$ET(e,this[e])),this._$EM()}updated(t){}firstUpdated(t){}};w.elementStyles=[],w.shadowRootOptions={mode:"open"},w[S("elementProperties")]=new Map,w[S("finalized")]=new Map,vt?.({ReactiveElement:w}),(q.reactiveElementVersions??=[]).push("2.1.2");/**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */const V=globalThis,X=o=>o,R=V.trustedTypes,Y=R?R.createPolicy("lit-html",{createHTML:o=>o}):void 0,at="$lit$",y=`lit$${Math.random().toFixed(9).slice(2)}$`,lt="?"+y,xt=`<${lt}>`,x=document,N=()=>x.createComment(""),L=o=>o===null||typeof o!="object"&&typeof o!="function",W=Array.isArray,wt=o=>W(o)||typeof o?.[Symbol.iterator]=="function",F=`[ 	
-\f\r]`,E=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,tt=/-->/g,et=/>/g,$=RegExp(`>|${F}(?:([^\\s"'>=/]+)(${F}*=${F}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`,"g"),it=/'/g,rt=/"/g,ct=/^(?:script|style|textarea|title)$/i,At=o=>(t,...e)=>({_$litType$:o,strings:t,values:e}),h=At(1),A=Symbol.for("lit-noChange"),c=Symbol.for("lit-nothing"),st=new WeakMap,v=x.createTreeWalker(x,129);function dt(o,t){if(!W(o)||!o.hasOwnProperty("raw"))throw Error("invalid template strings array");return Y!==void 0?Y.createHTML(t):t}const Ct=(o,t)=>{const e=o.length-1,i=[];let r,s=t===2?"<svg>":t===3?"<math>":"",n=E;for(let l=0;l<e;l++){const a=o[l];let p,d,u=-1,b=0;for(;b<a.length&&(n.lastIndex=b,d=n.exec(a),d!==null);)b=n.lastIndex,n===E?d[1]==="!--"?n=tt:d[1]!==void 0?n=et:d[2]!==void 0?(ct.test(d[2])&&(r=RegExp("</"+d[2],"g")),n=$):d[3]!==void 0&&(n=$):n===$?d[0]===">"?(n=r??E,u=-1):d[1]===void 0?u=-2:(u=n.lastIndex-d[2].length,p=d[1],n=d[3]===void 0?$:d[3]==='"'?rt:it):n===rt||n===it?n=$:n===tt||n===et?n=E:(n=$,r=void 0);const _=n===$&&o[l+1].startsWith("/>")?" ":"";s+=n===E?a+xt:u>=0?(i.push(p),a.slice(0,u)+at+a.slice(u)+y+_):a+y+(u===-2?l:_)}return[dt(o,s+(o[e]||"<?>")+(t===2?"</svg>":t===3?"</math>":"")),i]};class M{constructor({strings:t,_$litType$:e},i){let r;this.parts=[];let s=0,n=0;const l=t.length-1,a=this.parts,[p,d]=Ct(t,e);if(this.el=M.createElement(p,i),v.currentNode=this.el.content,e===2||e===3){const u=this.el.content.firstChild;u.replaceWith(...u.childNodes)}for(;(r=v.nextNode())!==null&&a.length<l;){if(r.nodeType===1){if(r.hasAttributes())for(const u of r.getAttributeNames())if(u.endsWith(at)){const b=d[n++],_=r.getAttribute(u).split(y),O=/([.?@])?(.*)/.exec(b);a.push({type:1,index:s,name:O[2],strings:_,ctor:O[1]==="."?St:O[1]==="?"?kt:O[1]==="@"?Nt:z}),r.removeAttribute(u)}else u.startsWith(y)&&(a.push({type:6,index:s}),r.removeAttribute(u));if(ct.test(r.tagName)){const u=r.textContent.split(y),b=u.length-1;if(b>0){r.textContent=R?R.emptyScript:"";for(let _=0;_<b;_++)r.append(u[_],N()),v.nextNode(),a.push({type:2,index:++s});r.append(u[b],N())}}}else if(r.nodeType===8)if(r.data===lt)a.push({type:2,index:s});else{let u=-1;for(;(u=r.data.indexOf(y,u+1))!==-1;)a.push({type:7,index:s}),u+=y.length-1}s++}}static createElement(t,e){const i=x.createElement("template");return i.innerHTML=t,i}}function C(o,t,e=o,i){if(t===A)return t;let r=i!==void 0?e._$Co?.[i]:e._$Cl;const s=L(t)?void 0:t._$litDirective$;return r?.constructor!==s&&(r?._$AO?.(!1),s===void 0?r=void 0:(r=new s(o),r._$AT(o,e,i)),i!==void 0?(e._$Co??=[])[i]=r:e._$Cl=r),r!==void 0&&(t=C(o,r._$AS(o,t.values),r,i)),t}class Et{constructor(t,e){this._$AV=[],this._$AN=void 0,this._$AD=t,this._$AM=e}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(t){const{el:{content:e},parts:i}=this._$AD,r=(t?.creationScope??x).importNode(e,!0);v.currentNode=r;let s=v.nextNode(),n=0,l=0,a=i[0];for(;a!==void 0;){if(n===a.index){let p;a.type===2?p=new P(s,s.nextSibling,this,t):a.type===1?p=new a.ctor(s,a.name,a.strings,this,t):a.type===6&&(p=new Lt(s,this,t)),this._$AV.push(p),a=i[++l]}n!==a?.index&&(s=v.nextNode(),n++)}return v.currentNode=x,r}p(t){let e=0;for(const i of this._$AV)i!==void 0&&(i.strings!==void 0?(i._$AI(t,i,e),e+=i.strings.length-2):i._$AI(t[e])),e++}}class P{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(t,e,i,r){this.type=2,this._$AH=c,this._$AN=void 0,this._$AA=t,this._$AB=e,this._$AM=i,this.options=r,this._$Cv=r?.isConnected??!0}get parentNode(){let t=this._$AA.parentNode;const e=this._$AM;return e!==void 0&&t?.nodeType===11&&(t=e.parentNode),t}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(t,e=this){t=C(this,t,e),L(t)?t===c||t==null||t===""?(this._$AH!==c&&this._$AR(),this._$AH=c):t!==this._$AH&&t!==A&&this._(t):t._$litType$!==void 0?this.$(t):t.nodeType!==void 0?this.T(t):wt(t)?this.k(t):this._(t)}O(t){return this._$AA.parentNode.insertBefore(t,this._$AB)}T(t){this._$AH!==t&&(this._$AR(),this._$AH=this.O(t))}_(t){this._$AH!==c&&L(this._$AH)?this._$AA.nextSibling.data=t:this.T(x.createTextNode(t)),this._$AH=t}$(t){const{values:e,_$litType$:i}=t,r=typeof i=="number"?this._$AC(t):(i.el===void 0&&(i.el=M.createElement(dt(i.h,i.h[0]),this.options)),i);if(this._$AH?._$AD===r)this._$AH.p(e);else{const s=new Et(r,this),n=s.u(this.options);s.p(e),this.T(n),this._$AH=s}}_$AC(t){let e=st.get(t.strings);return e===void 0&&st.set(t.strings,e=new M(t)),e}k(t){W(this._$AH)||(this._$AH=[],this._$AR());const e=this._$AH;let i,r=0;for(const s of t)r===e.length?e.push(i=new P(this.O(N()),this.O(N()),this,this.options)):i=e[r],i._$AI(s),r++;r<e.length&&(this._$AR(i&&i._$AB.nextSibling,r),e.length=r)}_$AR(t=this._$AA.nextSibling,e){for(this._$AP?.(!1,!0,e);t!==this._$AB;){const i=X(t).nextSibling;X(t).remove(),t=i}}setConnected(t){this._$AM===void 0&&(this._$Cv=t,this._$AP?.(t))}}class z{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(t,e,i,r,s){this.type=1,this._$AH=c,this._$AN=void 0,this.element=t,this.name=e,this._$AM=r,this.options=s,i.length>2||i[0]!==""||i[1]!==""?(this._$AH=Array(i.length-1).fill(new String),this.strings=i):this._$AH=c}_$AI(t,e=this,i,r){const s=this.strings;let n=!1;if(s===void 0)t=C(this,t,e,0),n=!L(t)||t!==this._$AH&&t!==A,n&&(this._$AH=t);else{const l=t;let a,p;for(t=s[0],a=0;a<s.length-1;a++)p=C(this,l[i+a],e,a),p===A&&(p=this._$AH[a]),n||=!L(p)||p!==this._$AH[a],p===c?t=c:t!==c&&(t+=(p??"")+s[a+1]),this._$AH[a]=p}n&&!r&&this.j(t)}j(t){t===c?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,t??"")}}class St extends z{constructor(){super(...arguments),this.type=3}j(t){this.element[this.name]=t===c?void 0:t}}class kt extends z{constructor(){super(...arguments),this.type=4}j(t){this.element.toggleAttribute(this.name,!!t&&t!==c)}}class Nt extends z{constructor(t,e,i,r,s){super(t,e,i,r,s),this.type=5}_$AI(t,e=this){if((t=C(this,t,e,0)??c)===A)return;const i=this._$AH,r=t===c&&i!==c||t.capture!==i.capture||t.once!==i.once||t.passive!==i.passive,s=t!==c&&(i===c||r);r&&this.element.removeEventListener(this.name,this,i),s&&this.element.addEventListener(this.name,this,t),this._$AH=t}handleEvent(t){typeof this._$AH=="function"?this._$AH.call(this.options?.host??this.element,t):this._$AH.handleEvent(t)}}class Lt{constructor(t,e,i){this.element=t,this.type=6,this._$AN=void 0,this._$AM=e,this.options=i}get _$AU(){return this._$AM._$AU}_$AI(t){C(this,t)}}const Mt=V.litHtmlPolyfillSupport;Mt?.(M,P),(V.litHtmlVersions??=[]).push("3.3.3");const Pt=(o,t,e)=>{const i=e?.renderBefore??t;let r=i._$litPart$;if(r===void 0){const s=e?.renderBefore??null;i._$litPart$=r=new P(t.insertBefore(N(),s),s,void 0,e??{})}return r._$AI(o),r};/**
+ */const V=globalThis,X=o=>o,U=V.trustedTypes,Y=U?U.createPolicy("lit-html",{createHTML:o=>o}):void 0,at="$lit$",$=`lit$${Math.random().toFixed(9).slice(2)}$`,lt="?"+$,xt=`<${lt}>`,x=document,N=()=>x.createComment(""),L=o=>o===null||typeof o!="object"&&typeof o!="function",W=Array.isArray,wt=o=>W(o)||typeof o?.[Symbol.iterator]=="function",F=`[ 	
+\f\r]`,E=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,tt=/-->/g,et=/>/g,y=RegExp(`>|${F}(?:([^\\s"'>=/]+)(${F}*=${F}*(?:[^ 	
+\f\r"'\`<>=]|("|')|))|$)`,"g"),it=/'/g,rt=/"/g,ct=/^(?:script|style|textarea|title)$/i,Ct=o=>(t,...e)=>({_$litType$:o,strings:t,values:e}),h=Ct(1),C=Symbol.for("lit-noChange"),c=Symbol.for("lit-nothing"),st=new WeakMap,v=x.createTreeWalker(x,129);function dt(o,t){if(!W(o)||!o.hasOwnProperty("raw"))throw Error("invalid template strings array");return Y!==void 0?Y.createHTML(t):t}const At=(o,t)=>{const e=o.length-1,i=[];let r,s=t===2?"<svg>":t===3?"<math>":"",n=E;for(let l=0;l<e;l++){const a=o[l];let u,d,p=-1,b=0;for(;b<a.length&&(n.lastIndex=b,d=n.exec(a),d!==null);)b=n.lastIndex,n===E?d[1]==="!--"?n=tt:d[1]!==void 0?n=et:d[2]!==void 0?(ct.test(d[2])&&(r=RegExp("</"+d[2],"g")),n=y):d[3]!==void 0&&(n=y):n===y?d[0]===">"?(n=r??E,p=-1):d[1]===void 0?p=-2:(p=n.lastIndex-d[2].length,u=d[1],n=d[3]===void 0?y:d[3]==='"'?rt:it):n===rt||n===it?n=y:n===tt||n===et?n=E:(n=y,r=void 0);const _=n===y&&o[l+1].startsWith("/>")?" ":"";s+=n===E?a+xt:p>=0?(i.push(u),a.slice(0,p)+at+a.slice(p)+$+_):a+$+(p===-2?l:_)}return[dt(o,s+(o[e]||"<?>")+(t===2?"</svg>":t===3?"</math>":"")),i]};class M{constructor({strings:t,_$litType$:e},i){let r;this.parts=[];let s=0,n=0;const l=t.length-1,a=this.parts,[u,d]=At(t,e);if(this.el=M.createElement(u,i),v.currentNode=this.el.content,e===2||e===3){const p=this.el.content.firstChild;p.replaceWith(...p.childNodes)}for(;(r=v.nextNode())!==null&&a.length<l;){if(r.nodeType===1){if(r.hasAttributes())for(const p of r.getAttributeNames())if(p.endsWith(at)){const b=d[n++],_=r.getAttribute(p).split($),O=/([.?@])?(.*)/.exec(b);a.push({type:1,index:s,name:O[2],strings:_,ctor:O[1]==="."?St:O[1]==="?"?kt:O[1]==="@"?Nt:B}),r.removeAttribute(p)}else p.startsWith($)&&(a.push({type:6,index:s}),r.removeAttribute(p));if(ct.test(r.tagName)){const p=r.textContent.split($),b=p.length-1;if(b>0){r.textContent=U?U.emptyScript:"";for(let _=0;_<b;_++)r.append(p[_],N()),v.nextNode(),a.push({type:2,index:++s});r.append(p[b],N())}}}else if(r.nodeType===8)if(r.data===lt)a.push({type:2,index:s});else{let p=-1;for(;(p=r.data.indexOf($,p+1))!==-1;)a.push({type:7,index:s}),p+=$.length-1}s++}}static createElement(t,e){const i=x.createElement("template");return i.innerHTML=t,i}}function A(o,t,e=o,i){if(t===C)return t;let r=i!==void 0?e._$Co?.[i]:e._$Cl;const s=L(t)?void 0:t._$litDirective$;return r?.constructor!==s&&(r?._$AO?.(!1),s===void 0?r=void 0:(r=new s(o),r._$AT(o,e,i)),i!==void 0?(e._$Co??=[])[i]=r:e._$Cl=r),r!==void 0&&(t=A(o,r._$AS(o,t.values),r,i)),t}class Et{constructor(t,e){this._$AV=[],this._$AN=void 0,this._$AD=t,this._$AM=e}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(t){const{el:{content:e},parts:i}=this._$AD,r=(t?.creationScope??x).importNode(e,!0);v.currentNode=r;let s=v.nextNode(),n=0,l=0,a=i[0];for(;a!==void 0;){if(n===a.index){let u;a.type===2?u=new P(s,s.nextSibling,this,t):a.type===1?u=new a.ctor(s,a.name,a.strings,this,t):a.type===6&&(u=new Lt(s,this,t)),this._$AV.push(u),a=i[++l]}n!==a?.index&&(s=v.nextNode(),n++)}return v.currentNode=x,r}p(t){let e=0;for(const i of this._$AV)i!==void 0&&(i.strings!==void 0?(i._$AI(t,i,e),e+=i.strings.length-2):i._$AI(t[e])),e++}}class P{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(t,e,i,r){this.type=2,this._$AH=c,this._$AN=void 0,this._$AA=t,this._$AB=e,this._$AM=i,this.options=r,this._$Cv=r?.isConnected??!0}get parentNode(){let t=this._$AA.parentNode;const e=this._$AM;return e!==void 0&&t?.nodeType===11&&(t=e.parentNode),t}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(t,e=this){t=A(this,t,e),L(t)?t===c||t==null||t===""?(this._$AH!==c&&this._$AR(),this._$AH=c):t!==this._$AH&&t!==C&&this._(t):t._$litType$!==void 0?this.$(t):t.nodeType!==void 0?this.T(t):wt(t)?this.k(t):this._(t)}O(t){return this._$AA.parentNode.insertBefore(t,this._$AB)}T(t){this._$AH!==t&&(this._$AR(),this._$AH=this.O(t))}_(t){this._$AH!==c&&L(this._$AH)?this._$AA.nextSibling.data=t:this.T(x.createTextNode(t)),this._$AH=t}$(t){const{values:e,_$litType$:i}=t,r=typeof i=="number"?this._$AC(t):(i.el===void 0&&(i.el=M.createElement(dt(i.h,i.h[0]),this.options)),i);if(this._$AH?._$AD===r)this._$AH.p(e);else{const s=new Et(r,this),n=s.u(this.options);s.p(e),this.T(n),this._$AH=s}}_$AC(t){let e=st.get(t.strings);return e===void 0&&st.set(t.strings,e=new M(t)),e}k(t){W(this._$AH)||(this._$AH=[],this._$AR());const e=this._$AH;let i,r=0;for(const s of t)r===e.length?e.push(i=new P(this.O(N()),this.O(N()),this,this.options)):i=e[r],i._$AI(s),r++;r<e.length&&(this._$AR(i&&i._$AB.nextSibling,r),e.length=r)}_$AR(t=this._$AA.nextSibling,e){for(this._$AP?.(!1,!0,e);t!==this._$AB;){const i=X(t).nextSibling;X(t).remove(),t=i}}setConnected(t){this._$AM===void 0&&(this._$Cv=t,this._$AP?.(t))}}class B{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(t,e,i,r,s){this.type=1,this._$AH=c,this._$AN=void 0,this.element=t,this.name=e,this._$AM=r,this.options=s,i.length>2||i[0]!==""||i[1]!==""?(this._$AH=Array(i.length-1).fill(new String),this.strings=i):this._$AH=c}_$AI(t,e=this,i,r){const s=this.strings;let n=!1;if(s===void 0)t=A(this,t,e,0),n=!L(t)||t!==this._$AH&&t!==C,n&&(this._$AH=t);else{const l=t;let a,u;for(t=s[0],a=0;a<s.length-1;a++)u=A(this,l[i+a],e,a),u===C&&(u=this._$AH[a]),n||=!L(u)||u!==this._$AH[a],u===c?t=c:t!==c&&(t+=(u??"")+s[a+1]),this._$AH[a]=u}n&&!r&&this.j(t)}j(t){t===c?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,t??"")}}class St extends B{constructor(){super(...arguments),this.type=3}j(t){this.element[this.name]=t===c?void 0:t}}class kt extends B{constructor(){super(...arguments),this.type=4}j(t){this.element.toggleAttribute(this.name,!!t&&t!==c)}}class Nt extends B{constructor(t,e,i,r,s){super(t,e,i,r,s),this.type=5}_$AI(t,e=this){if((t=A(this,t,e,0)??c)===C)return;const i=this._$AH,r=t===c&&i!==c||t.capture!==i.capture||t.once!==i.once||t.passive!==i.passive,s=t!==c&&(i===c||r);r&&this.element.removeEventListener(this.name,this,i),s&&this.element.addEventListener(this.name,this,t),this._$AH=t}handleEvent(t){typeof this._$AH=="function"?this._$AH.call(this.options?.host??this.element,t):this._$AH.handleEvent(t)}}class Lt{constructor(t,e,i){this.element=t,this.type=6,this._$AN=void 0,this._$AM=e,this.options=i}get _$AU(){return this._$AM._$AU}_$AI(t){A(this,t)}}const Mt=V.litHtmlPolyfillSupport;Mt?.(M,P),(V.litHtmlVersions??=[]).push("3.3.3");const Pt=(o,t,e)=>{const i=e?.renderBefore??t;let r=i._$litPart$;if(r===void 0){const s=e?.renderBefore??null;i._$litPart$=r=new P(t.insertBefore(N(),s),s,void 0,e??{})}return r._$AI(o),r};/**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */const K=globalThis;class k extends w{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const t=super.createRenderRoot();return this.renderOptions.renderBefore??=t.firstChild,t}update(t){const e=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(t),this._$Do=Pt(e,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return A}}k._$litElement$=!0,k.finalized=!0,K.litElementHydrateSupport?.({LitElement:k});const Ot=K.litElementPolyfillSupport;Ot?.({LitElement:k});(K.litElementVersions??=[]).push("4.2.2");/**
+ */const K=globalThis;class k extends w{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const t=super.createRenderRoot();return this.renderOptions.renderBefore??=t.firstChild,t}update(t){const e=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(t),this._$Do=Pt(e,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return C}}k._$litElement$=!0,k.finalized=!0,K.litElementHydrateSupport?.({LitElement:k});const Ot=K.litElementPolyfillSupport;Ot?.({LitElement:k});(K.litElementVersions??=[]).push("4.2.2");/**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */const Tt={attribute:!0,type:String,converter:q,reflect:!1,hasChanged:I},Ut=(o=Tt,t,e)=>{const{kind:i,metadata:r}=e;let s=globalThis.litPropertyMetadata.get(r);if(s===void 0&&globalThis.litPropertyMetadata.set(r,s=new Map),i==="setter"&&((o=Object.create(o)).wrapped=!0),s.set(e.name,o),i==="accessor"){const{name:n}=e;return{set(l){const a=t.get.call(this);t.set.call(this,l),this.requestUpdate(n,a,o,!0,l)},init(l){return l!==void 0&&this.C(n,void 0,o,l),l}}}if(i==="setter"){const{name:n}=e;return function(l){const a=this[n];t.call(this,l),this.requestUpdate(n,a,o,!0,l)}}throw Error("Unsupported decorator location: "+i)};function B(o){return(t,e)=>typeof e=="object"?Ut(o,t,e):((i,r,s)=>{const n=r.hasOwnProperty(s);return r.constructor.createProperty(s,i),n?Object.getOwnPropertyDescriptor(r,s):void 0})(o,t,e)}/**
+ */const Ht={attribute:!0,type:String,converter:R,reflect:!1,hasChanged:I},Tt=(o=Ht,t,e)=>{const{kind:i,metadata:r}=e;let s=globalThis.litPropertyMetadata.get(r);if(s===void 0&&globalThis.litPropertyMetadata.set(r,s=new Map),i==="setter"&&((o=Object.create(o)).wrapped=!0),s.set(e.name,o),i==="accessor"){const{name:n}=e;return{set(l){const a=t.get.call(this);t.set.call(this,l),this.requestUpdate(n,a,o,!0,l)},init(l){return l!==void 0&&this.C(n,void 0,o,l),l}}}if(i==="setter"){const{name:n}=e;return function(l){const a=this[n];t.call(this,l),this.requestUpdate(n,a,o,!0,l)}}throw Error("Unsupported decorator location: "+i)};function z(o){return(t,e)=>typeof e=="object"?Tt(o,t,e):((i,r,s)=>{const n=r.hasOwnProperty(s);return r.constructor.createProperty(s,i),n?Object.getOwnPropertyDescriptor(r,s):void 0})(o,t,e)}/**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */function g(o){return B({...o,state:!0,attribute:!1})}async function qt(o){return o.connection.sendMessagePromise({type:"ready_home/settings"})}async function Rt(o,t){return o.connection.subscribeMessage(t,{type:"ready_home/subscribe"})}async function Ht(o,t){return o.connection.sendMessagePromise({type:"ready_home/barcode/lookup",barcode:t})}var zt=Object.defineProperty,m=(o,t,e,i)=>{for(var r=void 0,s=o.length-1,n;s>=0;s--)(n=o[s])&&(r=n(t,e,r)||r);return r&&zt(t,e,r),r};const Bt="ready-home-panel",Ft="/api/ready_home/brand/icon.png",jt="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z",ot=["box","pack","piece"],Dt=["gram","kilogram","liter","milliliter"],It=["essential","important","optional"],Vt={expired:"Expired",urgent:"Urgent",expiring:"Expiring",low:"Low stock"};function T(o){return o&&o.charAt(0).toUpperCase()+o.slice(1)}class f extends k{constructor(){super(...arguments),this.narrow=!1,this._snapshot=null,this._settings=null,this._search="",this._filterStatus="all",this._filterLocation="",this._filterCategory="",this._filterReadiness="",this._filtersOpen=!1,this._sort="name",this._dialogOpen=!1,this._editing=null,this._form={},this._error="",this._fieldErrors={},this._busy=!1,this._unsub=null,this._connected=!1,this._resetFilters=()=>{this._filterLocation="",this._filterCategory="",this._filterReadiness=""},this._toggleMenu=t=>{t?.stopPropagation(),this.dispatchEvent(new CustomEvent("hass-toggle-menu",{bubbles:!0,composed:!0}))},this._openAdd=()=>{this._editing=null,this._form=this._blankForm(),this._fieldErrors={},this._error="",this._dialogOpen=!0},this._openEdit=t=>{this._editing=t;const e=ot.includes(t.unit)?t.unit:"piece";let i=t.contents_per_unit,r=t.contents_unit||"",s=t.calories_per_content;i==null&&t.liters_per_unit!=null&&(i=t.liters_per_unit,r="liter"),s==null&&t.calories_per_unit!=null&&i==null&&(i=1,r=r||"gram",s=t.calories_per_unit),this._form={name:t.name,quantity:String(t.quantity),desired_quantity:String(t.desired_quantity),unit:e,location:t.location,category:t.category,priority:t.priority,notes:t.notes||"",barcode:t.barcode||"",expiry_date:t.expiry_date||"",contents_per_unit:i!=null?String(i):"",contents_unit:r,calories_per_content:s!=null?String(s):""},this._fieldErrors={},this._error="",this._dialogOpen=!0},this._closeDialog=()=>{this._dialogOpen=!1,this._fieldErrors={}}}connectedCallback(){super.connectedCallback(),this._connected=!0,this._connect()}disconnectedCallback(){super.disconnectedCallback(),this._connected=!1,this._unsub?.(),this._unsub=null}updated(t){t.has("hass")&&this.hass&&!this._unsub&&this._connected&&this._connect()}async _connect(){if(!(!this.hass||this._unsub))try{this._settings=await qt(this.hass),this._unsub=await Rt(this.hass,t=>{this._snapshot=t}),this._error=""}catch(t){this._error=String(t)}}get _assessment(){return this._snapshot?.assessment??{}}get _bucketCounts(){const t=this._snapshot?.buckets;return{expired:t?.expired.length??0,expiring:(t?.within_urgent.length??0)+(t?.within_expiring.length??0),low_stock:t?.low_stock.length??0}}get _activeFilterCount(){let t=0;return this._filterLocation&&(t+=1),this._filterCategory&&(t+=1),this._filterReadiness&&(t+=1),t}_readinessKind(t){const e=t.trim().toLowerCase();return!e||!this._settings?"none":(this._settings.water_categories??[]).some(i=>i.trim().toLowerCase()===e)?"water":(this._settings.food_categories??[]).some(i=>i.trim().toLowerCase()===e)?"food":"none"}get _items(){let t=[...this._snapshot?.items??[]];const e=this._search.trim().toLowerCase();if(e&&(t=t.filter(i=>i.name.toLowerCase().includes(e)||i.location.toLowerCase().includes(e)||i.category.toLowerCase().includes(e)||(i.barcode||"").toLowerCase().includes(e)||(i.notes||"").toLowerCase().includes(e))),this._filterLocation&&(t=t.filter(i=>i.location.toLowerCase()===this._filterLocation.toLowerCase())),this._filterCategory&&(t=t.filter(i=>i.category.toLowerCase()===this._filterCategory.toLowerCase())),this._filterReadiness&&(t=t.filter(i=>this._readinessKind(i.category)===this._filterReadiness)),this._filterStatus!=="all"){const i=this._snapshot?.buckets,r=new Set;this._filterStatus==="expired"?i?.expired.forEach(s=>r.add(s.id)):this._filterStatus==="expiring"?(i?.within_urgent.forEach(s=>r.add(s.id)),i?.within_expiring.forEach(s=>r.add(s.id))):this._filterStatus==="low_stock"&&i?.low_stock.forEach(s=>r.add(s.id)),t=t.filter(s=>r.has(s.id))}return t.sort((i,r)=>this._sort==="quantity"?i.quantity-r.quantity:this._sort==="expiry"?(i.expiry_date||"9999").localeCompare(r.expiry_date||"9999"):i.name.localeCompare(r.name)),t}_itemStatus(t){const e=this._snapshot?.buckets;return e?e.expired.some(i=>i.id===t.id)?"expired":e.within_urgent.some(i=>i.id===t.id)?"urgent":e.within_expiring.some(i=>i.id===t.id)?"expiring":e.low_stock.some(i=>i.id===t.id)?"low":"":""}_statusLabel(t){return Vt[t]||t}_setStatusFilter(t){this._filterStatus=this._filterStatus===t?"all":t}_pct(t){return t==null||Number.isNaN(Number(t))?"—":`${Math.round(Number(t))}%`}_formatHours(t){if(t==null||Number.isNaN(Number(t)))return"—";const e=Math.max(0,Math.round(Number(t)));return e<48?`${e}h`:`${Math.round(e/24)}d`}_formatAmount(t,e){if(t==null||Number.isNaN(Number(t)))return"—";const i=Number(t);return`${Math.abs(i-Math.round(i))<.05?Math.round(i):Math.round(i*10)/10} ${e}`}_durationClass(t){const e=this._assessment.duration_hours??this._settings?.duration_hours??72;return t==null||Number.isNaN(Number(t))?"":Number(t)<=0?"duration-bad":Number(t)<Number(e)?"duration-warn":""}_expiryClass(t){return t==="expired"?"expiry-expired":t==="urgent"||t==="expiring"?"expiry-warn":""}_optionList(t,e){const i=new Set,r=[];for(const s of[...t,e]){const n=s?.trim();if(!n)continue;const l=n.toLowerCase();i.has(l)||(i.add(l),r.push(n))}return r}_mdButton(t,e){const i=e.variant??"outlined";return h`
+ */function g(o){return z({...o,state:!0,attribute:!1})}async function Rt(o){return o.connection.sendMessagePromise({type:"ready_home/settings"})}async function Ut(o,t){return o.connection.subscribeMessage(t,{type:"ready_home/subscribe"})}async function qt(o,t){return o.connection.sendMessagePromise({type:"ready_home/barcode/lookup",barcode:t})}var Bt=Object.defineProperty,m=(o,t,e,i)=>{for(var r=void 0,s=o.length-1,n;s>=0;s--)(n=o[s])&&(r=n(t,e,r)||r);return r&&Bt(t,e,r),r};const zt="ready-home-panel",Ft="/api/ready_home/brand/icon.png",Dt="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z",jt="M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1Z",It="M12,20A6,6 0 0,1 6,14C6,10 12,3.25 12,3.25C12,3.25 18,10 18,14A6,6 0 0,1 12,20Z",Vt="M18.06 23H19.72C20.56 23 21.25 22.35 21.35 21.53L23 5.05H18V1H16.03V5.05H11.06L11.36 7.39C13.07 7.86 14.67 8.71 15.63 9.65C17.07 11.07 18.06 12.54 18.06 14.94V23M1 22V21H16.03V22C16.03 22.54 15.58 23 15 23H2C1.45 23 1 22.54 1 22M16.03 15C16.03 7 1 7 1 15H16.03M1 17H16V19H1V17Z",ot=["box","pack","piece"],Wt=["gram","kilogram","liter","milliliter"],Kt=["essential","important","optional"],Zt={expired:"Expired",urgent:"Urgent",expiring:"Expiring",low:"Low stock"};function H(o){return o&&o.charAt(0).toUpperCase()+o.slice(1)}class f extends k{constructor(){super(...arguments),this.narrow=!1,this._snapshot=null,this._settings=null,this._search="",this._filterStatus="all",this._filterLocation="",this._filterCategory="",this._filterReadiness="",this._filtersOpen=!1,this._sort="name",this._dialogOpen=!1,this._editing=null,this._form={},this._error="",this._fieldErrors={},this._busy=!1,this._unsub=null,this._connected=!1,this._resetFilters=()=>{this._filterLocation="",this._filterCategory="",this._filterReadiness=""},this._toggleMenu=t=>{t?.stopPropagation(),this.dispatchEvent(new CustomEvent("hass-toggle-menu",{bubbles:!0,composed:!0}))},this._openAdd=()=>{this._editing=null,this._form=this._blankForm(),this._fieldErrors={},this._error="",this._dialogOpen=!0},this._openEdit=t=>{this._editing=t;const e=ot.includes(t.unit)?t.unit:"piece";let i=t.contents_per_unit,r=t.contents_unit||"",s=t.calories_per_content;i==null&&t.liters_per_unit!=null&&(i=t.liters_per_unit,r="liter"),s==null&&t.calories_per_unit!=null&&i==null&&(i=1,r=r||"gram",s=t.calories_per_unit),this._form={name:t.name,quantity:String(t.quantity),desired_quantity:String(t.desired_quantity),unit:e,location:t.location,category:t.category,priority:t.priority,notes:t.notes||"",barcode:t.barcode||"",expiry_date:t.expiry_date||"",contents_per_unit:i!=null?String(i):"",contents_unit:r,calories_per_content:s!=null?String(s):""},this._fieldErrors={},this._error="",this._dialogOpen=!0},this._closeDialog=()=>{this._dialogOpen=!1,this._fieldErrors={}}}connectedCallback(){super.connectedCallback(),this._connected=!0,this._connect()}disconnectedCallback(){super.disconnectedCallback(),this._connected=!1,this._unsub?.(),this._unsub=null}updated(t){t.has("hass")&&this.hass&&!this._unsub&&this._connected&&this._connect()}async _connect(){if(!(!this.hass||this._unsub))try{this._settings=await Rt(this.hass),this._unsub=await Ut(this.hass,t=>{this._snapshot=t}),this._error=""}catch(t){this._error=String(t)}}get _assessment(){return this._snapshot?.assessment??{}}get _bucketCounts(){const t=this._snapshot?.buckets;return{expired:t?.expired.length??0,expiring:(t?.within_urgent.length??0)+(t?.within_expiring.length??0),low_stock:t?.low_stock.length??0}}get _activeFilterCount(){let t=0;return this._filterLocation&&(t+=1),this._filterCategory&&(t+=1),this._filterReadiness&&(t+=1),t}_readinessKind(t){const e=t.trim().toLowerCase();return!e||!this._settings?"none":(this._settings.water_categories??[]).some(i=>i.trim().toLowerCase()===e)?"water":(this._settings.food_categories??[]).some(i=>i.trim().toLowerCase()===e)?"food":"none"}get _items(){let t=[...this._snapshot?.items??[]];const e=this._search.trim().toLowerCase();if(e&&(t=t.filter(i=>i.name.toLowerCase().includes(e)||i.location.toLowerCase().includes(e)||i.category.toLowerCase().includes(e)||(i.barcode||"").toLowerCase().includes(e)||(i.notes||"").toLowerCase().includes(e))),this._filterLocation&&(t=t.filter(i=>i.location.toLowerCase()===this._filterLocation.toLowerCase())),this._filterCategory&&(t=t.filter(i=>i.category.toLowerCase()===this._filterCategory.toLowerCase())),this._filterReadiness&&(t=t.filter(i=>this._readinessKind(i.category)===this._filterReadiness)),this._filterStatus!=="all"){const i=this._snapshot?.buckets,r=new Set;this._filterStatus==="expired"?i?.expired.forEach(s=>r.add(s.id)):this._filterStatus==="expiring"?(i?.within_urgent.forEach(s=>r.add(s.id)),i?.within_expiring.forEach(s=>r.add(s.id))):this._filterStatus==="low_stock"&&i?.low_stock.forEach(s=>r.add(s.id)),t=t.filter(s=>r.has(s.id))}return t.sort((i,r)=>this._sort==="quantity"?i.quantity-r.quantity:this._sort==="expiry"?(i.expiry_date||"9999").localeCompare(r.expiry_date||"9999"):i.name.localeCompare(r.name)),t}_itemStatus(t){const e=this._snapshot?.buckets;return e?e.expired.some(i=>i.id===t.id)?"expired":e.within_urgent.some(i=>i.id===t.id)?"urgent":e.within_expiring.some(i=>i.id===t.id)?"expiring":e.low_stock.some(i=>i.id===t.id)?"low":"":""}_statusLabel(t){return Zt[t]||t}_setStatusFilter(t){this._filterStatus=this._filterStatus===t?"all":t}_pct(t){return t==null||Number.isNaN(Number(t))?"—":`${Math.round(Number(t))}%`}_formatHours(t){if(t==null||Number.isNaN(Number(t)))return"—";const e=Math.max(0,Math.round(Number(t)));return e<48?`${e}h`:`${Math.round(e/24)}d`}_formatAmount(t,e){if(t==null||Number.isNaN(Number(t)))return"—";const i=Number(t);return`${Math.abs(i-Math.round(i))<.05?Math.round(i):Math.round(i*10)/10} ${e}`}_durationClass(t){const e=this._assessment.duration_hours??this._settings?.duration_hours??72;return t==null||Number.isNaN(Number(t))?"":Number(t)<=0?"duration-bad":Number(t)<Number(e)?"duration-warn":""}_expiryClass(t){return t==="expired"?"expiry-expired":t==="urgent"||t==="expiring"?"expiry-warn":""}_optionList(t,e){const i=new Set,r=[];for(const s of[...t,e]){const n=s?.trim();if(!n)continue;const l=n.toLowerCase();i.has(l)||(i.add(l),r.push(n))}return r}_mdButton(t,e){const i=e.variant??"outlined";return h`
       <button
         type="button"
         class="md-btn md-btn-${i}"
@@ -33,7 +33,7 @@
       >
         ${t}
       </button>
-    `}render(){const t=this._items,e=this._assessment,i=this._settings?.locations??[],r=this._settings?.categories??[],s=e.overall_percent,n=e.water_percent,l=e.food_percent,a=this._bucketCounts,p=e.duration_hours??this._settings?.duration_hours??72,d=e.supply_hours,u=e.water_supply_hours,b=e.food_supply_hours;return h`
+    `}render(){const t=this._items,e=this._assessment,i=this._settings?.locations??[],r=this._settings?.categories??[],s=e.overall_percent,n=e.water_percent,l=e.food_percent,a=this._bucketCounts,u=e.duration_hours??this._settings?.duration_hours??72,d=e.supply_hours,p=e.water_supply_hours,b=e.food_supply_hours;return h`
       <div class="page">
         <header class="header">
           <div class="header-row">
@@ -46,7 +46,7 @@
                       @click=${this._toggleMenu}
                     >
                       <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path fill="currentColor" d=${jt} />
+                        <path fill="currentColor" d=${Dt} />
                       </svg>
                     </button>
                   `:c}
@@ -54,12 +54,12 @@
                 class="brand-icon"
                 src=${Ft}
                 alt=""
-                width="32"
-                height="32"
+                width="40"
+                height="40"
               />
               <div class="brand-text">
                 <h1>Ready Home</h1>
-                <p class="subtitle">${p}-hour readiness</p>
+                <p class="subtitle">${u}-hour emergency readiness</p>
               </div>
             </div>
             ${this._mdButton("Add item",{variant:"filled",disabled:this._busy,onClick:this._openAdd})}
@@ -69,14 +69,24 @@
         <div class="content">
           <div class="stats">
             <div class="stat">
-              <span class="stat-label">Overall</span>
+              <span class="stat-label">
+                <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor" d=${jt} />
+                </svg>
+                Overall
+              </span>
               <span class="stat-value">${this._pct(s)}</span>
               <span class="stat-duration ${this._durationClass(d)}"
                 >Lasts ${this._formatHours(d)}</span
               >
             </div>
             <div class="stat">
-              <span class="stat-label">Water</span>
+              <span class="stat-label">
+                <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor" d=${It} />
+                </svg>
+                Water
+              </span>
               <span class="stat-value"
                 >${this._formatAmount(e.water_on_hand,"L")}</span
               >
@@ -84,12 +94,17 @@
                 >${this._pct(n)} · goal
                 ${this._formatAmount(e.water_target,"L")}</span
               >
-              <span class="stat-duration ${this._durationClass(u)}"
-                >Lasts ${this._formatHours(u)}</span
+              <span class="stat-duration ${this._durationClass(p)}"
+                >Lasts ${this._formatHours(p)}</span
               >
             </div>
             <div class="stat">
-              <span class="stat-label">Food</span>
+              <span class="stat-label">
+                <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor" d=${Vt} />
+                </svg>
+                Food
+              </span>
               <span class="stat-value"
                 >${this._formatAmount(e.food_on_hand,"kcal")}</span
               >
@@ -210,7 +225,7 @@
         >${t.quantity}${t.desired_quantity?h` / ${t.desired_quantity}`:c}
         ${t.unit}</span
       >
-    `}_renderMeasure(t){const e=this._readinessKind(t.category);if(e==="food"){const i=this._itemCaloriesOnHand(t);return i==null?"":`${this._formatMeasureNumber(i)} kcal`}if(e==="water"){const i=this._itemLitersOnHand(t);return i==null?"":`${this._formatMeasureNumber(i)} L`}return""}_itemLitersOnHand(t){if(t.contents_per_unit!=null&&t.contents_unit){const e=this._contentsToLiters(t.contents_per_unit,t.contents_unit);if(e!=null)return t.quantity*e}return t.unit==="liter"?t.quantity:t.unit==="milliliter"?t.quantity/1e3:t.liters_per_unit!=null?t.quantity*t.liters_per_unit:null}_itemCaloriesOnHand(t){return t.contents_per_unit!=null&&t.calories_per_content!=null?t.quantity*t.contents_per_unit*t.calories_per_content:t.calories_per_unit!=null?t.quantity*t.calories_per_unit:null}_contentsToLiters(t,e){return e==="liter"?t:e==="milliliter"?t/1e3:null}_formatMeasureNumber(t){const e=Number(t);return Number.isNaN(e)?"—":Math.abs(e-Math.round(e))<.05?String(Math.round(e)):String(Math.round(e*100)/100)}_contentsUnitLabel(t){return T(t||"unit")}_formTotalContents(){const t=Number(this._form.quantity||0),e=Number(this._form.contents_per_unit||"");return!this._form.contents_per_unit||Number.isNaN(e)?null:t*e}_formTotalCalories(){const t=this._formTotalContents(),e=Number(this._form.calories_per_content||"");return t==null||!this._form.calories_per_content||Number.isNaN(e)?null:t*e}_formTotalLiters(){const t=this._formTotalContents();return t==null||!this._form.contents_unit?null:this._contentsToLiters(t,this._form.contents_unit)}_fieldLabel(t,e=!1){return h`${t}${e?h`<span class="req" aria-hidden="true">*</span>`:c}`}_fieldError(t){const e=this._fieldErrors[t];return e?h`<div class="field-error">${e}</div>`:c}_validateForm(){const t=this._form,e={};(t.name||"").trim()||(e.name="Name is required"),(t.location||"").trim()||(e.location="Location is required"),(t.category||"").trim()||(e.category="Category is required");const i=Number(t.quantity);(t.quantity===""||Number.isNaN(i)||i<0)&&(e.quantity="Enter a valid quantity"),(t.unit||"").trim()||(e.unit="Unit is required");const r=this._formReadiness();if(r==="food"||r==="water"){const s=Number(t.contents_per_unit);(t.contents_per_unit===""||Number.isNaN(s)||s<=0)&&(e.contents_per_unit="Contents per unit is required"),(t.contents_unit||"").trim()?r==="water"&&t.contents_unit!=="liter"&&t.contents_unit!=="milliliter"&&(e.contents_unit="Water contents must be liter or milliliter"):e.contents_unit="Contents unit is required"}if(r==="food"){const s=Number(t.calories_per_content);(t.calories_per_content===""||Number.isNaN(s)||s<0)&&(e.calories_per_content="Calories per contents unit is required")}return e}_renderStatusBadge(t){return t?h`<span class="badge badge-${t}"
+    `}_renderMeasure(t){const e=this._readinessKind(t.category);if(e==="food"){const i=this._itemCaloriesOnHand(t);return i==null?"":`${this._formatMeasureNumber(i)} kcal`}if(e==="water"){const i=this._itemLitersOnHand(t);return i==null?"":`${this._formatMeasureNumber(i)} L`}return""}_itemLitersOnHand(t){if(t.contents_per_unit!=null&&t.contents_unit){const e=this._contentsToLiters(t.contents_per_unit,t.contents_unit);if(e!=null)return t.quantity*e}return t.unit==="liter"?t.quantity:t.unit==="milliliter"?t.quantity/1e3:t.liters_per_unit!=null?t.quantity*t.liters_per_unit:null}_itemCaloriesOnHand(t){return t.contents_per_unit!=null&&t.calories_per_content!=null?t.quantity*t.contents_per_unit*t.calories_per_content:t.calories_per_unit!=null?t.quantity*t.calories_per_unit:null}_contentsToLiters(t,e){return e==="liter"?t:e==="milliliter"?t/1e3:null}_formatMeasureNumber(t){const e=Number(t);return Number.isNaN(e)?"—":Math.abs(e-Math.round(e))<.05?String(Math.round(e)):String(Math.round(e*100)/100)}_contentsUnitLabel(t){return H(t||"unit")}_formTotalContents(){const t=Number(this._form.quantity||0),e=Number(this._form.contents_per_unit||"");return!this._form.contents_per_unit||Number.isNaN(e)?null:t*e}_formTotalCalories(){const t=this._formTotalContents(),e=Number(this._form.calories_per_content||"");return t==null||!this._form.calories_per_content||Number.isNaN(e)?null:t*e}_formTotalLiters(){const t=this._formTotalContents();return t==null||!this._form.contents_unit?null:this._contentsToLiters(t,this._form.contents_unit)}_fieldLabel(t,e=!1){return h`${t}${e?h`<span class="req" aria-hidden="true">*</span>`:c}`}_fieldError(t){const e=this._fieldErrors[t];return e?h`<div class="field-error">${e}</div>`:c}_validateForm(){const t=this._form,e={};(t.name||"").trim()||(e.name="Name is required"),(t.location||"").trim()||(e.location="Location is required"),(t.category||"").trim()||(e.category="Category is required");const i=Number(t.quantity);(t.quantity===""||Number.isNaN(i)||i<0)&&(e.quantity="Enter a valid quantity"),(t.unit||"").trim()||(e.unit="Unit is required");const r=this._formReadiness();if(r==="food"||r==="water"){const s=Number(t.contents_per_unit);(t.contents_per_unit===""||Number.isNaN(s)||s<=0)&&(e.contents_per_unit="Contents per unit is required"),(t.contents_unit||"").trim()?r==="water"&&t.contents_unit!=="liter"&&t.contents_unit!=="milliliter"&&(e.contents_unit="Water contents must be liter or milliliter"):e.contents_unit="Contents unit is required"}if(r==="food"){const s=Number(t.calories_per_content);(t.calories_per_content===""||Number.isNaN(s)||s<0)&&(e.calories_per_content="Calories per contents unit is required")}return e}_renderStatusBadge(t){return t?h`<span class="badge badge-${t}"
       >${this._statusLabel(t)}</span
     >`:c}_renderTable(t){return h`
       <div class="table-wrap">
@@ -286,7 +301,7 @@
               >`:c}
         </div>
       </article>
-    `}_formReadiness(){return this._readinessKind(this._form.category||"")}_showContentsFields(){const t=this._formReadiness();return t==="food"||t==="water"}_showCaloriesField(){return this._formReadiness()==="food"}_renderDialog(){const t=this._form,e=this._optionList(this._settings?.locations??[],t.location||""),i=this._optionList(this._settings?.categories??[],t.category||""),r=this._formReadiness(),s=this._formTotalContents(),n=this._formTotalLiters(),l=this._formTotalCalories(),a=this._contentsUnitLabel(t.contents_unit||"unit");let p="";return s!=null&&t.contents_unit&&(p=`Total on hand: ${this._formatMeasureNumber(s)} ${a}`,n!=null&&(p+=` · ${this._formatMeasureNumber(n)} L`),l!=null&&(p+=` · ${this._formatMeasureNumber(l)} kcal`)),h`
+    `}_formReadiness(){return this._readinessKind(this._form.category||"")}_showContentsFields(){const t=this._formReadiness();return t==="food"||t==="water"}_showCaloriesField(){return this._formReadiness()==="food"}_renderDialog(){const t=this._form,e=this._optionList(this._settings?.locations??[],t.location||""),i=this._optionList(this._settings?.categories??[],t.category||""),r=this._formReadiness(),s=this._formTotalContents(),n=this._formTotalLiters(),l=this._formTotalCalories(),a=this._contentsUnitLabel(t.contents_unit||"unit");let u="";return s!=null&&t.contents_unit&&(u=`Total on hand: ${this._formatMeasureNumber(s)} ${a}`,n!=null&&(u+=` · ${this._formatMeasureNumber(n)} L`),l!=null&&(u+=` · ${this._formatMeasureNumber(l)} kcal`)),h`
       <div class="dialog-backdrop" @click=${this._closeDialog}>
         <div
           class="dialog ${this.narrow?"dialog-narrow":""}"
@@ -336,7 +351,7 @@
                 .value=${t.priority||"important"}
                 @change=${this._onField("priority")}
               >
-                ${It.map(d=>h`<option value=${d}>${T(d)}</option>`)}
+                ${Kt.map(d=>h`<option value=${d}>${H(d)}</option>`)}
               </select>
             </label>
             <label
@@ -369,7 +384,7 @@
                   @input=${this._onField("quantity")}
                 />
                 ${this._fieldError("quantity")}
-                ${p?h`<div class="field-hint">${p}</div>`:c}
+                ${u?h`<div class="field-hint">${u}</div>`:c}
               </label>
               <label
                 >Desired quantity
@@ -387,7 +402,7 @@
                   .value=${t.unit||"piece"}
                   @change=${this._onField("unit")}
                 >
-                  ${ot.map(d=>h`<option value=${d}>${T(d)}</option>`)}
+                  ${ot.map(d=>h`<option value=${d}>${H(d)}</option>`)}
                 </select>
                 ${this._fieldError("unit")}
               </label>
@@ -415,7 +430,7 @@
                         @change=${this._onField("contents_unit")}
                       >
                         <option value="">Select unit</option>
-                        ${Dt.map(d=>h`<option value=${d}>${T(d)}</option>`)}
+                        ${Wt.map(d=>h`<option value=${d}>${H(d)}</option>`)}
                       </select>
                       ${this._fieldError("contents_unit")}
                       <div class="field-hint">
@@ -467,7 +482,7 @@
           </div>
         </div>
       </div>
-    `}_onField(t){return e=>{const i=e.target;if(this._form={...this._form,[t]:i.value},this._fieldErrors[t]){const r={...this._fieldErrors};delete r[t],this._fieldErrors=r}}}_blankForm(){return{name:"",quantity:"1",desired_quantity:"0",unit:"piece",location:this._settings?.locations?.[0]??"",category:this._settings?.categories?.[0]??"",priority:"important",notes:"",barcode:"",expiry_date:"",contents_per_unit:"",contents_unit:"",calories_per_content:""}}async _run(t){this._busy=!0,this._error="";try{await t()}catch(e){this._error=String(e)}finally{this._busy=!1}}async _remove(t){confirm(`Remove “${t.name}”?`)&&await this._run(()=>this.hass.callService("ready_home","remove_item",{item_id:t.id}))}async _save(){const t=this._validateForm();if(this._fieldErrors=t,Object.keys(t).length){this._error="Please fix the highlighted fields";return}const e=this._form,i=(e.name||"").trim(),r=this._formReadiness(),s={quantity:Number(e.quantity||0),desired_quantity:Number(e.desired_quantity||0),unit:e.unit||"piece",location:e.location||"",category:e.category||"",priority:e.priority||"important",barcode:e.barcode||"",notes:e.notes||""};e.expiry_date&&(s.expiry_date=e.expiry_date),r==="food"||r==="water"?(s.contents_per_unit=Number(e.contents_per_unit),s.contents_unit=e.contents_unit):(s.contents_per_unit=null,s.contents_unit=null,s.calories_per_content=null,s.liters_per_unit=null,s.calories_per_unit=null),r==="food"?s.calories_per_content=Number(e.calories_per_content):r==="water"&&(s.calories_per_content=null,s.calories_per_unit=null),await this._run(async()=>{this._editing?await this.hass.callService("ready_home","update_item",{item_id:this._editing.id,new_name:i,...s}):await this.hass.callService("ready_home","add_item",{name:i,...s}),this._dialogOpen=!1,this._fieldErrors={}})}async _lookupBarcode(){const t=this._form.barcode?.trim();if(t){this._busy=!0,this._error="";try{const e=await Ht(this.hass,t),i=[e.brand,e.name].filter(Boolean).join(" ").trim(),r=this._form.category?.trim()||(this._settings?.food_categories?.[0]??"Food");this._form={...this._form,name:i||this._form.name,category:r,contents_unit:this._form.contents_unit||"gram",calories_per_content:e.calories_per_100g!=null?String(Math.round(e.calories_per_100g/100*1e4)/1e4):this._form.calories_per_content}}catch(e){this._error=`Barcode lookup failed: ${e}`}finally{this._busy=!1}}}async _scanBarcode(){if(typeof BarcodeDetector>"u"){this._error="BarcodeDetector not supported in this browser — enter the code manually.";return}this._busy=!0,this._error="";try{const t=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}),e=document.createElement("video");e.srcObject=t,await e.play();const i=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128"]});await new Promise(s=>setTimeout(s,700));const r=await i.detect(e);t.getTracks().forEach(s=>s.stop()),r[0]?.rawValue?(this._form={...this._form,barcode:r[0].rawValue},this._busy=!1,await this._lookupBarcode()):this._error="No barcode detected — try again or enter manually."}catch(t){this._error=`Camera scan failed: ${t}`}finally{this._busy=!1}}static{this.styles=ut`
+    `}_onField(t){return e=>{const i=e.target;if(this._form={...this._form,[t]:i.value},this._fieldErrors[t]){const r={...this._fieldErrors};delete r[t],this._fieldErrors=r}}}_blankForm(){return{name:"",quantity:"1",desired_quantity:"0",unit:"piece",location:this._settings?.locations?.[0]??"",category:this._settings?.categories?.[0]??"",priority:"important",notes:"",barcode:"",expiry_date:"",contents_per_unit:"",contents_unit:"",calories_per_content:""}}async _run(t){this._busy=!0,this._error="";try{await t()}catch(e){this._error=String(e)}finally{this._busy=!1}}async _remove(t){confirm(`Remove “${t.name}”?`)&&await this._run(()=>this.hass.callService("ready_home","remove_item",{item_id:t.id}))}async _save(){const t=this._validateForm();if(this._fieldErrors=t,Object.keys(t).length){this._error="Please fix the highlighted fields";return}const e=this._form,i=(e.name||"").trim(),r=this._formReadiness(),s={quantity:Number(e.quantity||0),desired_quantity:Number(e.desired_quantity||0),unit:e.unit||"piece",location:e.location||"",category:e.category||"",priority:e.priority||"important",barcode:e.barcode||"",notes:e.notes||""};e.expiry_date&&(s.expiry_date=e.expiry_date),r==="food"||r==="water"?(s.contents_per_unit=Number(e.contents_per_unit),s.contents_unit=e.contents_unit):(s.contents_per_unit=null,s.contents_unit=null,s.calories_per_content=null,s.liters_per_unit=null,s.calories_per_unit=null),r==="food"?s.calories_per_content=Number(e.calories_per_content):r==="water"&&(s.calories_per_content=null,s.calories_per_unit=null),await this._run(async()=>{this._editing?await this.hass.callService("ready_home","update_item",{item_id:this._editing.id,new_name:i,...s}):await this.hass.callService("ready_home","add_item",{name:i,...s}),this._dialogOpen=!1,this._fieldErrors={}})}async _lookupBarcode(){const t=this._form.barcode?.trim();if(t){this._busy=!0,this._error="";try{const e=await qt(this.hass,t),i=[e.brand,e.name].filter(Boolean).join(" ").trim(),r=this._form.category?.trim()||(this._settings?.food_categories?.[0]??"Food");this._form={...this._form,name:i||this._form.name,category:r,contents_unit:this._form.contents_unit||"gram",calories_per_content:e.calories_per_100g!=null?String(Math.round(e.calories_per_100g/100*1e4)/1e4):this._form.calories_per_content}}catch(e){this._error=`Barcode lookup failed: ${e}`}finally{this._busy=!1}}}async _scanBarcode(){if(typeof BarcodeDetector>"u"){this._error="BarcodeDetector not supported in this browser — enter the code manually.";return}this._busy=!0,this._error="";try{const t=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}),e=document.createElement("video");e.srcObject=t,await e.play();const i=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128"]});await new Promise(s=>setTimeout(s,700));const r=await i.detect(e);t.getTracks().forEach(s=>s.stop()),r[0]?.rawValue?(this._form={...this._form,barcode:r[0].rawValue},this._busy=!1,await this._lookupBarcode()):this._error="No barcode detected — try again or enter manually."}catch(t){this._error=`Camera scan failed: ${t}`}finally{this._busy=!1}}static{this.styles=pt`
     :host {
       display: block;
       height: 100%;
@@ -483,7 +498,7 @@
     .header {
       max-width: 1100px;
       margin: 0 auto;
-      padding: 16px 20px 0;
+      padding: 20px 24px 4px;
       box-sizing: border-box;
     }
     .header-row {
@@ -495,29 +510,28 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 14px;
       min-width: 0;
     }
     .brand-icon {
-      width: 32px;
-      height: 32px;
+      width: 40px;
+      height: 40px;
       border-radius: 6px;
       flex-shrink: 0;
       object-fit: contain;
-      background: #111;
     }
     .brand-text {
       min-width: 0;
     }
     .header h1 {
       margin: 0;
-      font-size: 1.35rem;
+      font-size: 1.5rem;
       font-weight: 500;
       line-height: 1.2;
     }
     .subtitle {
-      margin: 2px 0 0;
-      font-size: 0.8rem;
+      margin: 4px 0 0;
+      font-size: 0.9rem;
       color: var(--secondary-text-color);
     }
     .icon-btn {
@@ -544,43 +558,51 @@
     .content {
       max-width: 1100px;
       margin: 0 auto;
-      padding: 16px 20px 32px;
+      padding: 20px 24px 40px;
       box-sizing: border-box;
     }
     h2 {
-      margin: 0 0 8px;
-      font-size: 1.2rem;
+      margin: 0 0 12px;
+      font-size: 1.3rem;
       font-weight: 500;
     }
     .stats {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-      margin-bottom: 12px;
+      gap: 12px;
+      margin-bottom: 16px;
     }
     .stat {
-      padding: 12px;
+      padding: 16px;
       border-radius: 8px;
       border-left: 3px solid var(--primary-color);
       background: var(--card-background-color, #fff);
       box-shadow: var(--ha-card-box-shadow, none);
     }
     .stat-label {
-      display: block;
-      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
       color: var(--secondary-text-color);
       margin-bottom: 4px;
     }
+    .stat-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      color: var(--primary-color);
+    }
     .stat-value {
       display: block;
-      font-size: 1.35rem;
+      font-size: 1.5rem;
       font-weight: 600;
     }
     .stat-meta,
     .stat-duration {
       display: block;
       margin-top: 4px;
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       color: var(--secondary-text-color);
     }
     .stat-duration.duration-warn {
@@ -592,21 +614,21 @@
     .attention {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 12px;
+      gap: 10px;
+      margin-bottom: 16px;
     }
     .chip {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 12px;
+      padding: 8px 14px;
       border-radius: 999px;
       border: 1px solid var(--divider-color);
       background: var(--card-background-color, transparent);
       color: var(--primary-text-color);
       cursor: pointer;
       font: inherit;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
     }
     .chip.active {
       border-color: var(--primary-color);
@@ -623,20 +645,20 @@
       border-radius: var(--ha-card-border-radius, 12px);
       border: 1px solid var(--divider-color);
       box-shadow: var(--ha-card-box-shadow, none);
-      padding: 12px;
+      padding: 16px;
       box-sizing: border-box;
     }
     .toolbar {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-bottom: 12px;
+      gap: 10px;
+      margin-bottom: 16px;
     }
     .toolbar-row {
       display: flex;
       flex-wrap: nowrap;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
     .search {
       flex: 1 1 auto;
@@ -659,7 +681,7 @@
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 6px;
+      gap: 10px;
     }
     .filters-btn.active {
       border-color: var(--primary-color);
@@ -737,12 +759,12 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.92rem;
+      font-size: 1rem;
     }
     th,
     td {
       text-align: left;
-      padding: 10px 12px;
+      padding: 12px 14px;
       border-bottom: 1px solid var(--divider-color);
       vertical-align: middle;
     }
@@ -764,12 +786,12 @@
     .card-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
     .item-card {
       border: 1px solid var(--divider-color);
       border-radius: 10px;
-      padding: 12px;
+      padding: 16px;
       background: var(--secondary-background-color, rgba(0, 0, 0, 0.03));
       cursor: pointer;
     }
@@ -788,7 +810,7 @@
     }
     .item-name {
       font-weight: 500;
-      font-size: 1rem;
+      font-size: 1.05rem;
     }
     .item-card-bottom {
       margin-top: 10px;
@@ -797,7 +819,7 @@
       gap: 8px;
     }
     .meta {
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       color: var(--secondary-text-color);
       margin-top: 4px;
       display: flex;
@@ -807,9 +829,9 @@
     }
     .badge {
       letter-spacing: 0.02em;
-      font-size: 0.65rem;
+      font-size: 0.75rem;
       font-weight: 600;
-      padding: 1px 6px;
+      padding: 2px 8px;
       border-radius: 999px;
       border: 1px solid var(--divider-color);
     }
@@ -872,22 +894,22 @@
     .dialog {
       background: var(--card-background-color, #fff);
       color: var(--primary-text-color);
-      padding: 16px;
+      padding: 20px;
       border-radius: 12px;
       width: min(520px, 100%);
       max-height: 90vh;
       overflow: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       box-sizing: border-box;
     }
     .dialog.dialog-narrow {
       width: 100%;
       max-height: 100%;
       border-radius: 12px;
-      padding: 16px;
-      padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      padding: 20px;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
     }
     .dialog-backdrop:has(.dialog-narrow) {
       align-items: stretch;
@@ -899,7 +921,7 @@
     .form-section {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       padding: 12px;
       border: 1px solid var(--divider-color);
       border-radius: 8px;
@@ -916,17 +938,17 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
     }
     .row2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap: 12px;
     }
     .row3 {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
+      gap: 12px;
     }
     .req {
       color: var(--error-color, #c62828);
@@ -946,7 +968,7 @@
     .dialog-actions {
       display: flex;
       justify-content: flex-end;
-      gap: 8px;
+      gap: 12px;
       margin-top: 4px;
     }
     .barcode-row {
@@ -993,5 +1015,5 @@
         grid-template-columns: 1fr;
       }
     }
-  `}}m([B({attribute:!1})],f.prototype,"hass");m([B({type:Boolean})],f.prototype,"narrow");m([B({attribute:!1})],f.prototype,"panel");m([g()],f.prototype,"_snapshot");m([g()],f.prototype,"_settings");m([g()],f.prototype,"_search");m([g()],f.prototype,"_filterStatus");m([g()],f.prototype,"_filterLocation");m([g()],f.prototype,"_filterCategory");m([g()],f.prototype,"_filterReadiness");m([g()],f.prototype,"_filtersOpen");m([g()],f.prototype,"_sort");m([g()],f.prototype,"_dialogOpen");m([g()],f.prototype,"_editing");m([g()],f.prototype,"_form");m([g()],f.prototype,"_error");m([g()],f.prototype,"_fieldErrors");m([g()],f.prototype,"_busy");try{customElements.define(Bt,f)}catch{}
+  `}}m([z({attribute:!1})],f.prototype,"hass");m([z({type:Boolean})],f.prototype,"narrow");m([z({attribute:!1})],f.prototype,"panel");m([g()],f.prototype,"_snapshot");m([g()],f.prototype,"_settings");m([g()],f.prototype,"_search");m([g()],f.prototype,"_filterStatus");m([g()],f.prototype,"_filterLocation");m([g()],f.prototype,"_filterCategory");m([g()],f.prototype,"_filterReadiness");m([g()],f.prototype,"_filtersOpen");m([g()],f.prototype,"_sort");m([g()],f.prototype,"_dialogOpen");m([g()],f.prototype,"_editing");m([g()],f.prototype,"_form");m([g()],f.prototype,"_error");m([g()],f.prototype,"_fieldErrors");m([g()],f.prototype,"_busy");try{customElements.define(zt,f)}catch{}
 //# sourceMappingURL=ready-home-panel.js.map

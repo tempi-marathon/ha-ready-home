@@ -18,6 +18,15 @@ const BRAND_ICON_URL = "/api/ready_home/brand/icon.png";
 /** mdi:menu — open HA sidebar on narrow layouts. */
 const MDI_MENU =
   "M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z";
+/** mdi:shield-check — overall readiness. */
+const MDI_SHIELD_CHECK =
+  "M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1Z";
+/** mdi:water — water readiness. */
+const MDI_WATER =
+  "M12,20A6,6 0 0,1 6,14C6,10 12,3.25 12,3.25C12,3.25 18,10 18,14A6,6 0 0,1 12,20Z";
+/** mdi:food — food readiness. */
+const MDI_FOOD =
+  "M18.06 23H19.72C20.56 23 21.25 22.35 21.35 21.53L23 5.05H18V1H16.03V5.05H11.06L11.36 7.39C13.07 7.86 14.67 8.71 15.63 9.65C17.07 11.07 18.06 12.54 18.06 14.94V23M1 22V21H16.03V22C16.03 22.54 15.58 23 15 23H2C1.45 23 1 22.54 1 22M16.03 15C16.03 7 1 7 1 15H16.03M1 17H16V19H1V17Z";
 
 const STOCK_UNITS = ["box", "pack", "piece"] as const;
 const CONTENTS_UNITS = ["gram", "kilogram", "liter", "milliliter"] as const;
@@ -328,12 +337,12 @@ export class ReadyHomePanel extends LitElement {
                 class="brand-icon"
                 src=${BRAND_ICON_URL}
                 alt=""
-                width="32"
-                height="32"
+                width="40"
+                height="40"
               />
               <div class="brand-text">
                 <h1>Ready Home</h1>
-                <p class="subtitle">${duration}-hour readiness</p>
+                <p class="subtitle">${duration}-hour emergency readiness</p>
               </div>
             </div>
             ${this._mdButton("Add item", {
@@ -347,14 +356,24 @@ export class ReadyHomePanel extends LitElement {
         <div class="content">
           <div class="stats">
             <div class="stat">
-              <span class="stat-label">Overall</span>
+              <span class="stat-label">
+                <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor" d=${MDI_SHIELD_CHECK} />
+                </svg>
+                Overall
+              </span>
               <span class="stat-value">${this._pct(overall)}</span>
               <span class="stat-duration ${this._durationClass(supply)}"
                 >Lasts ${this._formatHours(supply)}</span
               >
             </div>
             <div class="stat">
-              <span class="stat-label">Water</span>
+              <span class="stat-label">
+                <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor" d=${MDI_WATER} />
+                </svg>
+                Water
+              </span>
               <span class="stat-value"
                 >${this._formatAmount(a.water_on_hand, "L")}</span
               >
@@ -367,7 +386,12 @@ export class ReadyHomePanel extends LitElement {
               >
             </div>
             <div class="stat">
-              <span class="stat-label">Food</span>
+              <span class="stat-label">
+                <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor" d=${MDI_FOOD} />
+                </svg>
+                Food
+              </span>
               <span class="stat-value"
                 >${this._formatAmount(a.food_on_hand, "kcal")}</span
               >
@@ -1314,7 +1338,7 @@ export class ReadyHomePanel extends LitElement {
     .header {
       max-width: 1100px;
       margin: 0 auto;
-      padding: 16px 20px 0;
+      padding: 20px 24px 4px;
       box-sizing: border-box;
     }
     .header-row {
@@ -1326,29 +1350,28 @@ export class ReadyHomePanel extends LitElement {
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 14px;
       min-width: 0;
     }
     .brand-icon {
-      width: 32px;
-      height: 32px;
+      width: 40px;
+      height: 40px;
       border-radius: 6px;
       flex-shrink: 0;
       object-fit: contain;
-      background: #111;
     }
     .brand-text {
       min-width: 0;
     }
     .header h1 {
       margin: 0;
-      font-size: 1.35rem;
+      font-size: 1.5rem;
       font-weight: 500;
       line-height: 1.2;
     }
     .subtitle {
-      margin: 2px 0 0;
-      font-size: 0.8rem;
+      margin: 4px 0 0;
+      font-size: 0.9rem;
       color: var(--secondary-text-color);
     }
     .icon-btn {
@@ -1375,43 +1398,51 @@ export class ReadyHomePanel extends LitElement {
     .content {
       max-width: 1100px;
       margin: 0 auto;
-      padding: 16px 20px 32px;
+      padding: 20px 24px 40px;
       box-sizing: border-box;
     }
     h2 {
-      margin: 0 0 8px;
-      font-size: 1.2rem;
+      margin: 0 0 12px;
+      font-size: 1.3rem;
       font-weight: 500;
     }
     .stats {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-      margin-bottom: 12px;
+      gap: 12px;
+      margin-bottom: 16px;
     }
     .stat {
-      padding: 12px;
+      padding: 16px;
       border-radius: 8px;
       border-left: 3px solid var(--primary-color);
       background: var(--card-background-color, #fff);
       box-shadow: var(--ha-card-box-shadow, none);
     }
     .stat-label {
-      display: block;
-      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
       color: var(--secondary-text-color);
       margin-bottom: 4px;
     }
+    .stat-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      color: var(--primary-color);
+    }
     .stat-value {
       display: block;
-      font-size: 1.35rem;
+      font-size: 1.5rem;
       font-weight: 600;
     }
     .stat-meta,
     .stat-duration {
       display: block;
       margin-top: 4px;
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       color: var(--secondary-text-color);
     }
     .stat-duration.duration-warn {
@@ -1423,21 +1454,21 @@ export class ReadyHomePanel extends LitElement {
     .attention {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 12px;
+      gap: 10px;
+      margin-bottom: 16px;
     }
     .chip {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 12px;
+      padding: 8px 14px;
       border-radius: 999px;
       border: 1px solid var(--divider-color);
       background: var(--card-background-color, transparent);
       color: var(--primary-text-color);
       cursor: pointer;
       font: inherit;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
     }
     .chip.active {
       border-color: var(--primary-color);
@@ -1454,20 +1485,20 @@ export class ReadyHomePanel extends LitElement {
       border-radius: var(--ha-card-border-radius, 12px);
       border: 1px solid var(--divider-color);
       box-shadow: var(--ha-card-box-shadow, none);
-      padding: 12px;
+      padding: 16px;
       box-sizing: border-box;
     }
     .toolbar {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-bottom: 12px;
+      gap: 10px;
+      margin-bottom: 16px;
     }
     .toolbar-row {
       display: flex;
       flex-wrap: nowrap;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
     .search {
       flex: 1 1 auto;
@@ -1490,7 +1521,7 @@ export class ReadyHomePanel extends LitElement {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 6px;
+      gap: 10px;
     }
     .filters-btn.active {
       border-color: var(--primary-color);
@@ -1568,12 +1599,12 @@ export class ReadyHomePanel extends LitElement {
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.92rem;
+      font-size: 1rem;
     }
     th,
     td {
       text-align: left;
-      padding: 10px 12px;
+      padding: 12px 14px;
       border-bottom: 1px solid var(--divider-color);
       vertical-align: middle;
     }
@@ -1595,12 +1626,12 @@ export class ReadyHomePanel extends LitElement {
     .card-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
     .item-card {
       border: 1px solid var(--divider-color);
       border-radius: 10px;
-      padding: 12px;
+      padding: 16px;
       background: var(--secondary-background-color, rgba(0, 0, 0, 0.03));
       cursor: pointer;
     }
@@ -1619,7 +1650,7 @@ export class ReadyHomePanel extends LitElement {
     }
     .item-name {
       font-weight: 500;
-      font-size: 1rem;
+      font-size: 1.05rem;
     }
     .item-card-bottom {
       margin-top: 10px;
@@ -1628,7 +1659,7 @@ export class ReadyHomePanel extends LitElement {
       gap: 8px;
     }
     .meta {
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       color: var(--secondary-text-color);
       margin-top: 4px;
       display: flex;
@@ -1638,9 +1669,9 @@ export class ReadyHomePanel extends LitElement {
     }
     .badge {
       letter-spacing: 0.02em;
-      font-size: 0.65rem;
+      font-size: 0.75rem;
       font-weight: 600;
-      padding: 1px 6px;
+      padding: 2px 8px;
       border-radius: 999px;
       border: 1px solid var(--divider-color);
     }
@@ -1703,22 +1734,22 @@ export class ReadyHomePanel extends LitElement {
     .dialog {
       background: var(--card-background-color, #fff);
       color: var(--primary-text-color);
-      padding: 16px;
+      padding: 20px;
       border-radius: 12px;
       width: min(520px, 100%);
       max-height: 90vh;
       overflow: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       box-sizing: border-box;
     }
     .dialog.dialog-narrow {
       width: 100%;
       max-height: 100%;
       border-radius: 12px;
-      padding: 16px;
-      padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      padding: 20px;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
     }
     .dialog-backdrop:has(.dialog-narrow) {
       align-items: stretch;
@@ -1730,7 +1761,7 @@ export class ReadyHomePanel extends LitElement {
     .form-section {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       padding: 12px;
       border: 1px solid var(--divider-color);
       border-radius: 8px;
@@ -1747,17 +1778,17 @@ export class ReadyHomePanel extends LitElement {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
     }
     .row2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap: 12px;
     }
     .row3 {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
+      gap: 12px;
     }
     .req {
       color: var(--error-color, #c62828);
@@ -1777,7 +1808,7 @@ export class ReadyHomePanel extends LitElement {
     .dialog-actions {
       display: flex;
       justify-content: flex-end;
-      gap: 8px;
+      gap: 12px;
       margin-top: 4px;
     }
     .barcode-row {
