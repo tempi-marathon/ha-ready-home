@@ -10,6 +10,7 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
 
 from .const import (
+    BRAND_URL_PATH,
     DOMAIN,
     PANEL_FILENAME,
     PANEL_ICON,
@@ -24,6 +25,7 @@ _LOGGER = logging.getLogger(__name__)
 
 _PANEL_KEY = f"{DOMAIN}_panel_registered"
 DIST_DIR = Path(__file__).parent / "dist"
+BRAND_DIR = Path(__file__).parent / "brand"
 
 
 async def async_setup_panel(hass: HomeAssistant) -> None:
@@ -31,7 +33,8 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
 
     The SPA route is ``/ready_home``; the module is served from
     ``/api/panel_custom/ready_home`` so those URLs never collide (important for
-    Nabu Casa service-worker fetches of the panel route).
+    Nabu Casa service-worker fetches of the panel route). Brand assets are
+    served from ``/api/ready_home/brand``.
     """
     if hass.data.get(_PANEL_KEY):
         return
@@ -49,18 +52,26 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
     except OSError:
         cache_bust = 0
 
-    try:
-        await hass.http.async_register_static_paths(
-            [
-                StaticPathConfig(
-                    url_path=PANEL_MODULE_URL,
-                    path=str(panel_path),
-                    cache_headers=False,
-                )
-            ]
+    static_paths = [
+        StaticPathConfig(
+            url_path=PANEL_MODULE_URL,
+            path=str(panel_path),
+            cache_headers=False,
         )
+    ]
+    if BRAND_DIR.is_dir():
+        static_paths.append(
+            StaticPathConfig(
+                url_path=BRAND_URL_PATH,
+                path=str(BRAND_DIR),
+                cache_headers=True,
+            )
+        )
+
+    try:
+        await hass.http.async_register_static_paths(static_paths)
     except RuntimeError:
-        _LOGGER.debug("Static path %s already registered", PANEL_MODULE_URL)
+        _LOGGER.debug("Static paths already registered for Ready Home panel")
 
     from .frontend import async_cleanup_legacy_lovelace_resource
 

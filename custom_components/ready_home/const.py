@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Final
 
 DOMAIN: Final = "ready_home"
-VERSION: Final = "0.1.8"
+VERSION: Final = "0.1.9"
 STORAGE_KEY_LEGACY: Final = f"{DOMAIN}.inventory"
 STORAGE_VERSION: Final = 1
 SAVE_DELAY: Final = 1.0
@@ -57,6 +57,8 @@ PANEL_URL_PATH: Final = DOMAIN
 PANEL_WEBCOMPONENT: Final = "ready-home-panel"
 PANEL_FILENAME: Final = "ready-home-panel.js"
 PANEL_MODULE_URL: Final = f"/api/panel_custom/{DOMAIN}"
+# Brand assets must not share the SPA path (/ready_home)
+BRAND_URL_PATH: Final = f"/api/{DOMAIN}/brand"
 PANEL_ICON: Final = "mdi:shield-home"
 PANEL_TITLE: Final = "Ready Home"
 
