@@ -173,14 +173,12 @@ class ReadinessSettings:
         categories = tuple(options.get("categories") or ())
         food_categories = options.get("food_categories")
         water_categories = options.get("water_categories")
-        if food_categories is None:
-            food_categories = ("Food",)
-        else:
-            food_categories = tuple(food_categories)
-        if water_categories is None:
-            water_categories = ("Water",)
-        else:
-            water_categories = tuple(water_categories)
+        food_categories = (
+            ("Food",) if food_categories is None else tuple(food_categories)
+        )
+        water_categories = (
+            ("Water",) if water_categories is None else tuple(water_categories)
+        )
         return cls(
             number_of_people=int(people) if people is not None else None,
             duration_hours=int(options.get("duration_hours", 72)),
