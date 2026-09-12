@@ -2,29 +2,41 @@
  * @license
  * Copyright 2019 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */const T=globalThis,D=T.ShadowRoot&&(T.ShadyCSS===void 0||T.ShadyCSS.nativeShadow)&&"adoptedStyleSheets"in Document.prototype&&"replace"in CSSStyleSheet.prototype,j=Symbol(),Z=new WeakMap;let nt=class{constructor(t,e,i){if(this._$cssResult$=!0,i!==j)throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");this.cssText=t,this.t=e}get styleSheet(){let t=this.o;const e=this.t;if(D&&t===void 0){const i=e!==void 0&&e.length===1;i&&(t=Z.get(e)),t===void 0&&((this.o=t=new CSSStyleSheet).replaceSync(this.cssText),i&&Z.set(e,t))}return t}toString(){return this.cssText}};const ht=o=>new nt(typeof o=="string"?o:o+"",void 0,j),pt=(o,...t)=>{const e=o.length===1?o[0]:t.reduce((i,r,s)=>i+(n=>{if(n._$cssResult$===!0)return n.cssText;if(typeof n=="number")return n;throw Error("Value passed to 'css' function must be a 'css' function result: "+n+". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.")})(r)+o[s+1],o[0]);return new nt(e,o,j)},ut=(o,t)=>{if(D)o.adoptedStyleSheets=t.map(e=>e instanceof CSSStyleSheet?e:e.styleSheet);else for(const e of t){const i=document.createElement("style"),r=T.litNonce;r!==void 0&&i.setAttribute("nonce",r),i.textContent=e.cssText,o.appendChild(i)}},Q=D?o=>o:o=>o instanceof CSSStyleSheet?(t=>{let e="";for(const i of t.cssRules)e+=i.cssText;return ht(e)})(o):o;/**
+ */const H=globalThis,j=H.ShadowRoot&&(H.ShadyCSS===void 0||H.ShadyCSS.nativeShadow)&&"adoptedStyleSheets"in Document.prototype&&"replace"in CSSStyleSheet.prototype,V=Symbol(),Y=new WeakMap;let lt=class{constructor(t,e,i){if(this._$cssResult$=!0,i!==V)throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");this.cssText=t,this.t=e}get styleSheet(){let t=this.o;const e=this.t;if(j&&t===void 0){const i=e!==void 0&&e.length===1;i&&(t=Y.get(e)),t===void 0&&((this.o=t=new CSSStyleSheet).replaceSync(this.cssText),i&&Y.set(e,t))}return t}toString(){return this.cssText}};const ut=s=>new lt(typeof s=="string"?s:s+"",void 0,V),_t=(s,...t)=>{const e=s.length===1?s[0]:t.reduce((i,r,o)=>i+(n=>{if(n._$cssResult$===!0)return n.cssText;if(typeof n=="number")return n;throw Error("Value passed to 'css' function must be a 'css' function result: "+n+". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.")})(r)+s[o+1],s[0]);return new lt(e,s,V)},ft=(s,t)=>{if(j)s.adoptedStyleSheets=t.map(e=>e instanceof CSSStyleSheet?e:e.styleSheet);else for(const e of t){const i=document.createElement("style"),r=H.litNonce;r!==void 0&&i.setAttribute("nonce",r),i.textContent=e.cssText,s.appendChild(i)}},J=j?s=>s:s=>s instanceof CSSStyleSheet?(t=>{let e="";for(const i of t.cssRules)e+=i.cssText;return ut(e)})(s):s;/**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */const{is:_t,defineProperty:ft,getOwnPropertyDescriptor:mt,getOwnPropertyNames:gt,getOwnPropertySymbols:bt,getPrototypeOf:$t}=Object,q=globalThis,J=q.trustedTypes,yt=J?J.emptyScript:"",vt=q.reactiveElementPolyfillSupport,S=(o,t)=>o,R={toAttribute(o,t){switch(t){case Boolean:o=o?yt:null;break;case Object:case Array:o=o==null?o:JSON.stringify(o)}return o},fromAttribute(o,t){let e=o;switch(t){case Boolean:e=o!==null;break;case Number:e=o===null?null:Number(o);break;case Object:case Array:try{e=JSON.parse(o)}catch{e=null}}return e}},I=(o,t)=>!_t(o,t),G={attribute:!0,type:String,converter:R,reflect:!1,useDefault:!1,hasChanged:I};Symbol.metadata??=Symbol("metadata"),q.litPropertyMetadata??=new WeakMap;let w=class extends HTMLElement{static addInitializer(t){this._$Ei(),(this.l??=[]).push(t)}static get observedAttributes(){return this.finalize(),this._$Eh&&[...this._$Eh.keys()]}static createProperty(t,e=G){if(e.state&&(e.attribute=!1),this._$Ei(),this.prototype.hasOwnProperty(t)&&((e=Object.create(e)).wrapped=!0),this.elementProperties.set(t,e),!e.noAccessor){const i=Symbol(),r=this.getPropertyDescriptor(t,i,e);r!==void 0&&ft(this.prototype,t,r)}}static getPropertyDescriptor(t,e,i){const{get:r,set:s}=mt(this.prototype,t)??{get(){return this[e]},set(n){this[e]=n}};return{get:r,set(n){const l=r?.call(this);s?.call(this,n),this.requestUpdate(t,l,i)},configurable:!0,enumerable:!0}}static getPropertyOptions(t){return this.elementProperties.get(t)??G}static _$Ei(){if(this.hasOwnProperty(S("elementProperties")))return;const t=$t(this);t.finalize(),t.l!==void 0&&(this.l=[...t.l]),this.elementProperties=new Map(t.elementProperties)}static finalize(){if(this.hasOwnProperty(S("finalized")))return;if(this.finalized=!0,this._$Ei(),this.hasOwnProperty(S("properties"))){const e=this.properties,i=[...gt(e),...bt(e)];for(const r of i)this.createProperty(r,e[r])}const t=this[Symbol.metadata];if(t!==null){const e=litPropertyMetadata.get(t);if(e!==void 0)for(const[i,r]of e)this.elementProperties.set(i,r)}this._$Eh=new Map;for(const[e,i]of this.elementProperties){const r=this._$Eu(e,i);r!==void 0&&this._$Eh.set(r,e)}this.elementStyles=this.finalizeStyles(this.styles)}static finalizeStyles(t){const e=[];if(Array.isArray(t)){const i=new Set(t.flat(1/0).reverse());for(const r of i)e.unshift(Q(r))}else t!==void 0&&e.push(Q(t));return e}static _$Eu(t,e){const i=e.attribute;return i===!1?void 0:typeof i=="string"?i:typeof t=="string"?t.toLowerCase():void 0}constructor(){super(),this._$Ep=void 0,this.isUpdatePending=!1,this.hasUpdated=!1,this._$Em=null,this._$Ev()}_$Ev(){this._$ES=new Promise(t=>this.enableUpdating=t),this._$AL=new Map,this._$E_(),this.requestUpdate(),this.constructor.l?.forEach(t=>t(this))}addController(t){(this._$EO??=new Set).add(t),this.renderRoot!==void 0&&this.isConnected&&t.hostConnected?.()}removeController(t){this._$EO?.delete(t)}_$E_(){const t=new Map,e=this.constructor.elementProperties;for(const i of e.keys())this.hasOwnProperty(i)&&(t.set(i,this[i]),delete this[i]);t.size>0&&(this._$Ep=t)}createRenderRoot(){const t=this.shadowRoot??this.attachShadow(this.constructor.shadowRootOptions);return ut(t,this.constructor.elementStyles),t}connectedCallback(){this.renderRoot??=this.createRenderRoot(),this.enableUpdating(!0),this._$EO?.forEach(t=>t.hostConnected?.())}enableUpdating(t){}disconnectedCallback(){this._$EO?.forEach(t=>t.hostDisconnected?.())}attributeChangedCallback(t,e,i){this._$AK(t,i)}_$ET(t,e){const i=this.constructor.elementProperties.get(t),r=this.constructor._$Eu(t,i);if(r!==void 0&&i.reflect===!0){const s=(i.converter?.toAttribute!==void 0?i.converter:R).toAttribute(e,i.type);this._$Em=t,s==null?this.removeAttribute(r):this.setAttribute(r,s),this._$Em=null}}_$AK(t,e){const i=this.constructor,r=i._$Eh.get(t);if(r!==void 0&&this._$Em!==r){const s=i.getPropertyOptions(r),n=typeof s.converter=="function"?{fromAttribute:s.converter}:s.converter?.fromAttribute!==void 0?s.converter:R;this._$Em=r;const l=n.fromAttribute(e,s.type);this[r]=l??this._$Ej?.get(r)??l,this._$Em=null}}requestUpdate(t,e,i,r=!1,s){if(t!==void 0){const n=this.constructor;if(r===!1&&(s=this[t]),i??=n.getPropertyOptions(t),!((i.hasChanged??I)(s,e)||i.useDefault&&i.reflect&&s===this._$Ej?.get(t)&&!this.hasAttribute(n._$Eu(t,i))))return;this.C(t,e,i)}this.isUpdatePending===!1&&(this._$ES=this._$EP())}C(t,e,{useDefault:i,reflect:r,wrapped:s},n){i&&!(this._$Ej??=new Map).has(t)&&(this._$Ej.set(t,n??e??this[t]),s!==!0||n!==void 0)||(this._$AL.has(t)||(this.hasUpdated||i||(e=void 0),this._$AL.set(t,e)),r===!0&&this._$Em!==t&&(this._$Eq??=new Set).add(t))}async _$EP(){this.isUpdatePending=!0;try{await this._$ES}catch(e){Promise.reject(e)}const t=this.scheduleUpdate();return t!=null&&await t,!this.isUpdatePending}scheduleUpdate(){return this.performUpdate()}performUpdate(){if(!this.isUpdatePending)return;if(!this.hasUpdated){if(this.renderRoot??=this.createRenderRoot(),this._$Ep){for(const[r,s]of this._$Ep)this[r]=s;this._$Ep=void 0}const i=this.constructor.elementProperties;if(i.size>0)for(const[r,s]of i){const{wrapped:n}=s,l=this[r];n!==!0||this._$AL.has(r)||l===void 0||this.C(r,void 0,s,l)}}let t=!1;const e=this._$AL;try{t=this.shouldUpdate(e),t?(this.willUpdate(e),this._$EO?.forEach(i=>i.hostUpdate?.()),this.update(e)):this._$EM()}catch(i){throw t=!1,this._$EM(),i}t&&this._$AE(e)}willUpdate(t){}_$AE(t){this._$EO?.forEach(e=>e.hostUpdated?.()),this.hasUpdated||(this.hasUpdated=!0,this.firstUpdated(t)),this.updated(t)}_$EM(){this._$AL=new Map,this.isUpdatePending=!1}get updateComplete(){return this.getUpdateComplete()}getUpdateComplete(){return this._$ES}shouldUpdate(t){return!0}update(t){this._$Eq&&=this._$Eq.forEach(e=>this._$ET(e,this[e])),this._$EM()}updated(t){}firstUpdated(t){}};w.elementStyles=[],w.shadowRootOptions={mode:"open"},w[S("elementProperties")]=new Map,w[S("finalized")]=new Map,vt?.({ReactiveElement:w}),(q.reactiveElementVersions??=[]).push("2.1.2");/**
+ */const{is:mt,defineProperty:gt,getOwnPropertyDescriptor:bt,getOwnPropertyNames:$t,getOwnPropertySymbols:yt,getPrototypeOf:vt}=Object,z=globalThis,G=z.trustedTypes,xt=G?G.emptyScript:"",wt=z.reactiveElementPolyfillSupport,N=(s,t)=>s,q={toAttribute(s,t){switch(t){case Boolean:s=s?xt:null;break;case Object:case Array:s=s==null?s:JSON.stringify(s)}return s},fromAttribute(s,t){let e=s;switch(t){case Boolean:e=s!==null;break;case Number:e=s===null?null:Number(s);break;case Object:case Array:try{e=JSON.parse(s)}catch{e=null}}return e}},W=(s,t)=>!mt(s,t),X={attribute:!0,type:String,converter:q,reflect:!1,useDefault:!1,hasChanged:W};Symbol.metadata??=Symbol("metadata"),z.litPropertyMetadata??=new WeakMap;let C=class extends HTMLElement{static addInitializer(t){this._$Ei(),(this.l??=[]).push(t)}static get observedAttributes(){return this.finalize(),this._$Eh&&[...this._$Eh.keys()]}static createProperty(t,e=X){if(e.state&&(e.attribute=!1),this._$Ei(),this.prototype.hasOwnProperty(t)&&((e=Object.create(e)).wrapped=!0),this.elementProperties.set(t,e),!e.noAccessor){const i=Symbol(),r=this.getPropertyDescriptor(t,i,e);r!==void 0&&gt(this.prototype,t,r)}}static getPropertyDescriptor(t,e,i){const{get:r,set:o}=bt(this.prototype,t)??{get(){return this[e]},set(n){this[e]=n}};return{get:r,set(n){const c=r?.call(this);o?.call(this,n),this.requestUpdate(t,c,i)},configurable:!0,enumerable:!0}}static getPropertyOptions(t){return this.elementProperties.get(t)??X}static _$Ei(){if(this.hasOwnProperty(N("elementProperties")))return;const t=vt(this);t.finalize(),t.l!==void 0&&(this.l=[...t.l]),this.elementProperties=new Map(t.elementProperties)}static finalize(){if(this.hasOwnProperty(N("finalized")))return;if(this.finalized=!0,this._$Ei(),this.hasOwnProperty(N("properties"))){const e=this.properties,i=[...$t(e),...yt(e)];for(const r of i)this.createProperty(r,e[r])}const t=this[Symbol.metadata];if(t!==null){const e=litPropertyMetadata.get(t);if(e!==void 0)for(const[i,r]of e)this.elementProperties.set(i,r)}this._$Eh=new Map;for(const[e,i]of this.elementProperties){const r=this._$Eu(e,i);r!==void 0&&this._$Eh.set(r,e)}this.elementStyles=this.finalizeStyles(this.styles)}static finalizeStyles(t){const e=[];if(Array.isArray(t)){const i=new Set(t.flat(1/0).reverse());for(const r of i)e.unshift(J(r))}else t!==void 0&&e.push(J(t));return e}static _$Eu(t,e){const i=e.attribute;return i===!1?void 0:typeof i=="string"?i:typeof t=="string"?t.toLowerCase():void 0}constructor(){super(),this._$Ep=void 0,this.isUpdatePending=!1,this.hasUpdated=!1,this._$Em=null,this._$Ev()}_$Ev(){this._$ES=new Promise(t=>this.enableUpdating=t),this._$AL=new Map,this._$E_(),this.requestUpdate(),this.constructor.l?.forEach(t=>t(this))}addController(t){(this._$EO??=new Set).add(t),this.renderRoot!==void 0&&this.isConnected&&t.hostConnected?.()}removeController(t){this._$EO?.delete(t)}_$E_(){const t=new Map,e=this.constructor.elementProperties;for(const i of e.keys())this.hasOwnProperty(i)&&(t.set(i,this[i]),delete this[i]);t.size>0&&(this._$Ep=t)}createRenderRoot(){const t=this.shadowRoot??this.attachShadow(this.constructor.shadowRootOptions);return ft(t,this.constructor.elementStyles),t}connectedCallback(){this.renderRoot??=this.createRenderRoot(),this.enableUpdating(!0),this._$EO?.forEach(t=>t.hostConnected?.())}enableUpdating(t){}disconnectedCallback(){this._$EO?.forEach(t=>t.hostDisconnected?.())}attributeChangedCallback(t,e,i){this._$AK(t,i)}_$ET(t,e){const i=this.constructor.elementProperties.get(t),r=this.constructor._$Eu(t,i);if(r!==void 0&&i.reflect===!0){const o=(i.converter?.toAttribute!==void 0?i.converter:q).toAttribute(e,i.type);this._$Em=t,o==null?this.removeAttribute(r):this.setAttribute(r,o),this._$Em=null}}_$AK(t,e){const i=this.constructor,r=i._$Eh.get(t);if(r!==void 0&&this._$Em!==r){const o=i.getPropertyOptions(r),n=typeof o.converter=="function"?{fromAttribute:o.converter}:o.converter?.fromAttribute!==void 0?o.converter:q;this._$Em=r;const c=n.fromAttribute(e,o.type);this[r]=c??this._$Ej?.get(r)??c,this._$Em=null}}requestUpdate(t,e,i,r=!1,o){if(t!==void 0){const n=this.constructor;if(r===!1&&(o=this[t]),i??=n.getPropertyOptions(t),!((i.hasChanged??W)(o,e)||i.useDefault&&i.reflect&&o===this._$Ej?.get(t)&&!this.hasAttribute(n._$Eu(t,i))))return;this.C(t,e,i)}this.isUpdatePending===!1&&(this._$ES=this._$EP())}C(t,e,{useDefault:i,reflect:r,wrapped:o},n){i&&!(this._$Ej??=new Map).has(t)&&(this._$Ej.set(t,n??e??this[t]),o!==!0||n!==void 0)||(this._$AL.has(t)||(this.hasUpdated||i||(e=void 0),this._$AL.set(t,e)),r===!0&&this._$Em!==t&&(this._$Eq??=new Set).add(t))}async _$EP(){this.isUpdatePending=!0;try{await this._$ES}catch(e){Promise.reject(e)}const t=this.scheduleUpdate();return t!=null&&await t,!this.isUpdatePending}scheduleUpdate(){return this.performUpdate()}performUpdate(){if(!this.isUpdatePending)return;if(!this.hasUpdated){if(this.renderRoot??=this.createRenderRoot(),this._$Ep){for(const[r,o]of this._$Ep)this[r]=o;this._$Ep=void 0}const i=this.constructor.elementProperties;if(i.size>0)for(const[r,o]of i){const{wrapped:n}=o,c=this[r];n!==!0||this._$AL.has(r)||c===void 0||this.C(r,void 0,o,c)}}let t=!1;const e=this._$AL;try{t=this.shouldUpdate(e),t?(this.willUpdate(e),this._$EO?.forEach(i=>i.hostUpdate?.()),this.update(e)):this._$EM()}catch(i){throw t=!1,this._$EM(),i}t&&this._$AE(e)}willUpdate(t){}_$AE(t){this._$EO?.forEach(e=>e.hostUpdated?.()),this.hasUpdated||(this.hasUpdated=!0,this.firstUpdated(t)),this.updated(t)}_$EM(){this._$AL=new Map,this.isUpdatePending=!1}get updateComplete(){return this.getUpdateComplete()}getUpdateComplete(){return this._$ES}shouldUpdate(t){return!0}update(t){this._$Eq&&=this._$Eq.forEach(e=>this._$ET(e,this[e])),this._$EM()}updated(t){}firstUpdated(t){}};C.elementStyles=[],C.shadowRootOptions={mode:"open"},C[N("elementProperties")]=new Map,C[N("finalized")]=new Map,wt?.({ReactiveElement:C}),(z.reactiveElementVersions??=[]).push("2.1.2");/**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */const V=globalThis,X=o=>o,U=V.trustedTypes,Y=U?U.createPolicy("lit-html",{createHTML:o=>o}):void 0,at="$lit$",$=`lit$${Math.random().toFixed(9).slice(2)}$`,lt="?"+$,xt=`<${lt}>`,x=document,N=()=>x.createComment(""),L=o=>o===null||typeof o!="object"&&typeof o!="function",W=Array.isArray,wt=o=>W(o)||typeof o?.[Symbol.iterator]=="function",F=`[ 	
-\f\r]`,E=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,tt=/-->/g,et=/>/g,y=RegExp(`>|${F}(?:([^\\s"'>=/]+)(${F}*=${F}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`,"g"),it=/'/g,rt=/"/g,ct=/^(?:script|style|textarea|title)$/i,Ct=o=>(t,...e)=>({_$litType$:o,strings:t,values:e}),h=Ct(1),C=Symbol.for("lit-noChange"),c=Symbol.for("lit-nothing"),st=new WeakMap,v=x.createTreeWalker(x,129);function dt(o,t){if(!W(o)||!o.hasOwnProperty("raw"))throw Error("invalid template strings array");return Y!==void 0?Y.createHTML(t):t}const At=(o,t)=>{const e=o.length-1,i=[];let r,s=t===2?"<svg>":t===3?"<math>":"",n=E;for(let l=0;l<e;l++){const a=o[l];let u,d,p=-1,b=0;for(;b<a.length&&(n.lastIndex=b,d=n.exec(a),d!==null);)b=n.lastIndex,n===E?d[1]==="!--"?n=tt:d[1]!==void 0?n=et:d[2]!==void 0?(ct.test(d[2])&&(r=RegExp("</"+d[2],"g")),n=y):d[3]!==void 0&&(n=y):n===y?d[0]===">"?(n=r??E,p=-1):d[1]===void 0?p=-2:(p=n.lastIndex-d[2].length,u=d[1],n=d[3]===void 0?y:d[3]==='"'?rt:it):n===rt||n===it?n=y:n===tt||n===et?n=E:(n=y,r=void 0);const _=n===y&&o[l+1].startsWith("/>")?" ":"";s+=n===E?a+xt:p>=0?(i.push(u),a.slice(0,p)+at+a.slice(p)+$+_):a+$+(p===-2?l:_)}return[dt(o,s+(o[e]||"<?>")+(t===2?"</svg>":t===3?"</math>":"")),i]};class M{constructor({strings:t,_$litType$:e},i){let r;this.parts=[];let s=0,n=0;const l=t.length-1,a=this.parts,[u,d]=At(t,e);if(this.el=M.createElement(u,i),v.currentNode=this.el.content,e===2||e===3){const p=this.el.content.firstChild;p.replaceWith(...p.childNodes)}for(;(r=v.nextNode())!==null&&a.length<l;){if(r.nodeType===1){if(r.hasAttributes())for(const p of r.getAttributeNames())if(p.endsWith(at)){const b=d[n++],_=r.getAttribute(p).split($),O=/([.?@])?(.*)/.exec(b);a.push({type:1,index:s,name:O[2],strings:_,ctor:O[1]==="."?St:O[1]==="?"?kt:O[1]==="@"?Nt:B}),r.removeAttribute(p)}else p.startsWith($)&&(a.push({type:6,index:s}),r.removeAttribute(p));if(ct.test(r.tagName)){const p=r.textContent.split($),b=p.length-1;if(b>0){r.textContent=U?U.emptyScript:"";for(let _=0;_<b;_++)r.append(p[_],N()),v.nextNode(),a.push({type:2,index:++s});r.append(p[b],N())}}}else if(r.nodeType===8)if(r.data===lt)a.push({type:2,index:s});else{let p=-1;for(;(p=r.data.indexOf($,p+1))!==-1;)a.push({type:7,index:s}),p+=$.length-1}s++}}static createElement(t,e){const i=x.createElement("template");return i.innerHTML=t,i}}function A(o,t,e=o,i){if(t===C)return t;let r=i!==void 0?e._$Co?.[i]:e._$Cl;const s=L(t)?void 0:t._$litDirective$;return r?.constructor!==s&&(r?._$AO?.(!1),s===void 0?r=void 0:(r=new s(o),r._$AT(o,e,i)),i!==void 0?(e._$Co??=[])[i]=r:e._$Cl=r),r!==void 0&&(t=A(o,r._$AS(o,t.values),r,i)),t}class Et{constructor(t,e){this._$AV=[],this._$AN=void 0,this._$AD=t,this._$AM=e}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(t){const{el:{content:e},parts:i}=this._$AD,r=(t?.creationScope??x).importNode(e,!0);v.currentNode=r;let s=v.nextNode(),n=0,l=0,a=i[0];for(;a!==void 0;){if(n===a.index){let u;a.type===2?u=new P(s,s.nextSibling,this,t):a.type===1?u=new a.ctor(s,a.name,a.strings,this,t):a.type===6&&(u=new Lt(s,this,t)),this._$AV.push(u),a=i[++l]}n!==a?.index&&(s=v.nextNode(),n++)}return v.currentNode=x,r}p(t){let e=0;for(const i of this._$AV)i!==void 0&&(i.strings!==void 0?(i._$AI(t,i,e),e+=i.strings.length-2):i._$AI(t[e])),e++}}class P{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(t,e,i,r){this.type=2,this._$AH=c,this._$AN=void 0,this._$AA=t,this._$AB=e,this._$AM=i,this.options=r,this._$Cv=r?.isConnected??!0}get parentNode(){let t=this._$AA.parentNode;const e=this._$AM;return e!==void 0&&t?.nodeType===11&&(t=e.parentNode),t}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(t,e=this){t=A(this,t,e),L(t)?t===c||t==null||t===""?(this._$AH!==c&&this._$AR(),this._$AH=c):t!==this._$AH&&t!==C&&this._(t):t._$litType$!==void 0?this.$(t):t.nodeType!==void 0?this.T(t):wt(t)?this.k(t):this._(t)}O(t){return this._$AA.parentNode.insertBefore(t,this._$AB)}T(t){this._$AH!==t&&(this._$AR(),this._$AH=this.O(t))}_(t){this._$AH!==c&&L(this._$AH)?this._$AA.nextSibling.data=t:this.T(x.createTextNode(t)),this._$AH=t}$(t){const{values:e,_$litType$:i}=t,r=typeof i=="number"?this._$AC(t):(i.el===void 0&&(i.el=M.createElement(dt(i.h,i.h[0]),this.options)),i);if(this._$AH?._$AD===r)this._$AH.p(e);else{const s=new Et(r,this),n=s.u(this.options);s.p(e),this.T(n),this._$AH=s}}_$AC(t){let e=st.get(t.strings);return e===void 0&&st.set(t.strings,e=new M(t)),e}k(t){W(this._$AH)||(this._$AH=[],this._$AR());const e=this._$AH;let i,r=0;for(const s of t)r===e.length?e.push(i=new P(this.O(N()),this.O(N()),this,this.options)):i=e[r],i._$AI(s),r++;r<e.length&&(this._$AR(i&&i._$AB.nextSibling,r),e.length=r)}_$AR(t=this._$AA.nextSibling,e){for(this._$AP?.(!1,!0,e);t!==this._$AB;){const i=X(t).nextSibling;X(t).remove(),t=i}}setConnected(t){this._$AM===void 0&&(this._$Cv=t,this._$AP?.(t))}}class B{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(t,e,i,r,s){this.type=1,this._$AH=c,this._$AN=void 0,this.element=t,this.name=e,this._$AM=r,this.options=s,i.length>2||i[0]!==""||i[1]!==""?(this._$AH=Array(i.length-1).fill(new String),this.strings=i):this._$AH=c}_$AI(t,e=this,i,r){const s=this.strings;let n=!1;if(s===void 0)t=A(this,t,e,0),n=!L(t)||t!==this._$AH&&t!==C,n&&(this._$AH=t);else{const l=t;let a,u;for(t=s[0],a=0;a<s.length-1;a++)u=A(this,l[i+a],e,a),u===C&&(u=this._$AH[a]),n||=!L(u)||u!==this._$AH[a],u===c?t=c:t!==c&&(t+=(u??"")+s[a+1]),this._$AH[a]=u}n&&!r&&this.j(t)}j(t){t===c?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,t??"")}}class St extends B{constructor(){super(...arguments),this.type=3}j(t){this.element[this.name]=t===c?void 0:t}}class kt extends B{constructor(){super(...arguments),this.type=4}j(t){this.element.toggleAttribute(this.name,!!t&&t!==c)}}class Nt extends B{constructor(t,e,i,r,s){super(t,e,i,r,s),this.type=5}_$AI(t,e=this){if((t=A(this,t,e,0)??c)===C)return;const i=this._$AH,r=t===c&&i!==c||t.capture!==i.capture||t.once!==i.once||t.passive!==i.passive,s=t!==c&&(i===c||r);r&&this.element.removeEventListener(this.name,this,i),s&&this.element.addEventListener(this.name,this,t),this._$AH=t}handleEvent(t){typeof this._$AH=="function"?this._$AH.call(this.options?.host??this.element,t):this._$AH.handleEvent(t)}}class Lt{constructor(t,e,i){this.element=t,this.type=6,this._$AN=void 0,this._$AM=e,this.options=i}get _$AU(){return this._$AM._$AU}_$AI(t){A(this,t)}}const Mt=V.litHtmlPolyfillSupport;Mt?.(M,P),(V.litHtmlVersions??=[]).push("3.3.3");const Pt=(o,t,e)=>{const i=e?.renderBefore??t;let r=i._$litPart$;if(r===void 0){const s=e?.renderBefore??null;i._$litPart$=r=new P(t.insertBefore(N(),s),s,void 0,e??{})}return r._$AI(o),r};/**
+ */const K=globalThis,tt=s=>s,B=K.trustedTypes,et=B?B.createPolicy("lit-html",{createHTML:s=>s}):void 0,ct="$lit$",y=`lit$${Math.random().toFixed(9).slice(2)}$`,dt="?"+y,At=`<${dt}>`,w=document,T=()=>w.createComment(""),M=s=>s===null||typeof s!="object"&&typeof s!="function",Z=Array.isArray,Ct=s=>Z(s)||typeof s?.[Symbol.iterator]=="function",I=`[ 	
+\f\r]`,S=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,it=/-->/g,rt=/>/g,v=RegExp(`>|${I}(?:([^\\s"'>=/]+)(${I}*=${I}*(?:[^ 	
+\f\r"'\`<>=]|("|')|))|$)`,"g"),st=/'/g,ot=/"/g,ht=/^(?:script|style|textarea|title)$/i,Et=s=>(t,...e)=>({_$litType$:s,strings:t,values:e}),h=Et(1),$=Symbol.for("lit-noChange"),d=Symbol.for("lit-nothing"),nt=new WeakMap,x=w.createTreeWalker(w,129);function pt(s,t){if(!Z(s)||!s.hasOwnProperty("raw"))throw Error("invalid template strings array");return et!==void 0?et.createHTML(t):t}const St=(s,t)=>{const e=s.length-1,i=[];let r,o=t===2?"<svg>":t===3?"<math>":"",n=S;for(let c=0;c<e;c++){const a=s[c];let u,l,p=-1,b=0;for(;b<a.length&&(n.lastIndex=b,l=n.exec(a),l!==null);)b=n.lastIndex,n===S?l[1]==="!--"?n=it:l[1]!==void 0?n=rt:l[2]!==void 0?(ht.test(l[2])&&(r=RegExp("</"+l[2],"g")),n=v):l[3]!==void 0&&(n=v):n===v?l[0]===">"?(n=r??S,p=-1):l[1]===void 0?p=-2:(p=n.lastIndex-l[2].length,u=l[1],n=l[3]===void 0?v:l[3]==='"'?ot:st):n===ot||n===st?n=v:n===it||n===rt?n=S:(n=v,r=void 0);const _=n===v&&s[c+1].startsWith("/>")?" ":"";o+=n===S?a+At:p>=0?(i.push(u),a.slice(0,p)+ct+a.slice(p)+y+_):a+y+(p===-2?c:_)}return[pt(s,o+(s[e]||"<?>")+(t===2?"</svg>":t===3?"</math>":"")),i]};class O{constructor({strings:t,_$litType$:e},i){let r;this.parts=[];let o=0,n=0;const c=t.length-1,a=this.parts,[u,l]=St(t,e);if(this.el=O.createElement(u,i),x.currentNode=this.el.content,e===2||e===3){const p=this.el.content.firstChild;p.replaceWith(...p.childNodes)}for(;(r=x.nextNode())!==null&&a.length<c;){if(r.nodeType===1){if(r.hasAttributes())for(const p of r.getAttributeNames())if(p.endsWith(ct)){const b=l[n++],_=r.getAttribute(p).split(y),R=/([.?@])?(.*)/.exec(b);a.push({type:1,index:o,name:R[2],strings:_,ctor:R[1]==="."?Nt:R[1]==="?"?Lt:R[1]==="@"?Tt:F}),r.removeAttribute(p)}else p.startsWith(y)&&(a.push({type:6,index:o}),r.removeAttribute(p));if(ht.test(r.tagName)){const p=r.textContent.split(y),b=p.length-1;if(b>0){r.textContent=B?B.emptyScript:"";for(let _=0;_<b;_++)r.append(p[_],T()),x.nextNode(),a.push({type:2,index:++o});r.append(p[b],T())}}}else if(r.nodeType===8)if(r.data===dt)a.push({type:2,index:o});else{let p=-1;for(;(p=r.data.indexOf(y,p+1))!==-1;)a.push({type:7,index:o}),p+=y.length-1}o++}}static createElement(t,e){const i=w.createElement("template");return i.innerHTML=t,i}}function E(s,t,e=s,i){if(t===$)return t;let r=i!==void 0?e._$Co?.[i]:e._$Cl;const o=M(t)?void 0:t._$litDirective$;return r?.constructor!==o&&(r?._$AO?.(!1),o===void 0?r=void 0:(r=new o(s),r._$AT(s,e,i)),i!==void 0?(e._$Co??=[])[i]=r:e._$Cl=r),r!==void 0&&(t=E(s,r._$AS(s,t.values),r,i)),t}class kt{constructor(t,e){this._$AV=[],this._$AN=void 0,this._$AD=t,this._$AM=e}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(t){const{el:{content:e},parts:i}=this._$AD,r=(t?.creationScope??w).importNode(e,!0);x.currentNode=r;let o=x.nextNode(),n=0,c=0,a=i[0];for(;a!==void 0;){if(n===a.index){let u;a.type===2?u=new P(o,o.nextSibling,this,t):a.type===1?u=new a.ctor(o,a.name,a.strings,this,t):a.type===6&&(u=new Mt(o,this,t)),this._$AV.push(u),a=i[++c]}n!==a?.index&&(o=x.nextNode(),n++)}return x.currentNode=w,r}p(t){let e=0;for(const i of this._$AV)i!==void 0&&(i.strings!==void 0?(i._$AI(t,i,e),e+=i.strings.length-2):i._$AI(t[e])),e++}}class P{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(t,e,i,r){this.type=2,this._$AH=d,this._$AN=void 0,this._$AA=t,this._$AB=e,this._$AM=i,this.options=r,this._$Cv=r?.isConnected??!0}get parentNode(){let t=this._$AA.parentNode;const e=this._$AM;return e!==void 0&&t?.nodeType===11&&(t=e.parentNode),t}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(t,e=this){t=E(this,t,e),M(t)?t===d||t==null||t===""?(this._$AH!==d&&this._$AR(),this._$AH=d):t!==this._$AH&&t!==$&&this._(t):t._$litType$!==void 0?this.$(t):t.nodeType!==void 0?this.T(t):Ct(t)?this.k(t):this._(t)}O(t){return this._$AA.parentNode.insertBefore(t,this._$AB)}T(t){this._$AH!==t&&(this._$AR(),this._$AH=this.O(t))}_(t){this._$AH!==d&&M(this._$AH)?this._$AA.nextSibling.data=t:this.T(w.createTextNode(t)),this._$AH=t}$(t){const{values:e,_$litType$:i}=t,r=typeof i=="number"?this._$AC(t):(i.el===void 0&&(i.el=O.createElement(pt(i.h,i.h[0]),this.options)),i);if(this._$AH?._$AD===r)this._$AH.p(e);else{const o=new kt(r,this),n=o.u(this.options);o.p(e),this.T(n),this._$AH=o}}_$AC(t){let e=nt.get(t.strings);return e===void 0&&nt.set(t.strings,e=new O(t)),e}k(t){Z(this._$AH)||(this._$AH=[],this._$AR());const e=this._$AH;let i,r=0;for(const o of t)r===e.length?e.push(i=new P(this.O(T()),this.O(T()),this,this.options)):i=e[r],i._$AI(o),r++;r<e.length&&(this._$AR(i&&i._$AB.nextSibling,r),e.length=r)}_$AR(t=this._$AA.nextSibling,e){for(this._$AP?.(!1,!0,e);t!==this._$AB;){const i=tt(t).nextSibling;tt(t).remove(),t=i}}setConnected(t){this._$AM===void 0&&(this._$Cv=t,this._$AP?.(t))}}class F{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(t,e,i,r,o){this.type=1,this._$AH=d,this._$AN=void 0,this.element=t,this.name=e,this._$AM=r,this.options=o,i.length>2||i[0]!==""||i[1]!==""?(this._$AH=Array(i.length-1).fill(new String),this.strings=i):this._$AH=d}_$AI(t,e=this,i,r){const o=this.strings;let n=!1;if(o===void 0)t=E(this,t,e,0),n=!M(t)||t!==this._$AH&&t!==$,n&&(this._$AH=t);else{const c=t;let a,u;for(t=o[0],a=0;a<o.length-1;a++)u=E(this,c[i+a],e,a),u===$&&(u=this._$AH[a]),n||=!M(u)||u!==this._$AH[a],u===d?t=d:t!==d&&(t+=(u??"")+o[a+1]),this._$AH[a]=u}n&&!r&&this.j(t)}j(t){t===d?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,t??"")}}class Nt extends F{constructor(){super(...arguments),this.type=3}j(t){this.element[this.name]=t===d?void 0:t}}class Lt extends F{constructor(){super(...arguments),this.type=4}j(t){this.element.toggleAttribute(this.name,!!t&&t!==d)}}class Tt extends F{constructor(t,e,i,r,o){super(t,e,i,r,o),this.type=5}_$AI(t,e=this){if((t=E(this,t,e,0)??d)===$)return;const i=this._$AH,r=t===d&&i!==d||t.capture!==i.capture||t.once!==i.once||t.passive!==i.passive,o=t!==d&&(i===d||r);r&&this.element.removeEventListener(this.name,this,i),o&&this.element.addEventListener(this.name,this,t),this._$AH=t}handleEvent(t){typeof this._$AH=="function"?this._$AH.call(this.options?.host??this.element,t):this._$AH.handleEvent(t)}}class Mt{constructor(t,e,i){this.element=t,this.type=6,this._$AN=void 0,this._$AM=e,this.options=i}get _$AU(){return this._$AM._$AU}_$AI(t){E(this,t)}}const Ot=K.litHtmlPolyfillSupport;Ot?.(O,P),(K.litHtmlVersions??=[]).push("3.3.3");const Pt=(s,t,e)=>{const i=e?.renderBefore??t;let r=i._$litPart$;if(r===void 0){const o=e?.renderBefore??null;i._$litPart$=r=new P(t.insertBefore(T(),o),o,void 0,e??{})}return r._$AI(s),r};/**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */const K=globalThis;class k extends w{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const t=super.createRenderRoot();return this.renderOptions.renderBefore??=t.firstChild,t}update(t){const e=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(t),this._$Do=Pt(e,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return C}}k._$litElement$=!0,k.finalized=!0,K.litElementHydrateSupport?.({LitElement:k});const Ot=K.litElementPolyfillSupport;Ot?.({LitElement:k});(K.litElementVersions??=[]).push("4.2.2");/**
+ */const Q=globalThis;let L=class extends C{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const t=super.createRenderRoot();return this.renderOptions.renderBefore??=t.firstChild,t}update(t){const e=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(t),this._$Do=Pt(e,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return $}};L._$litElement$=!0,L.finalized=!0,Q.litElementHydrateSupport?.({LitElement:L});const Rt=Q.litElementPolyfillSupport;Rt?.({LitElement:L});(Q.litElementVersions??=[]).push("4.2.2");/**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */const Ht={attribute:!0,type:String,converter:R,reflect:!1,hasChanged:I},Tt=(o=Ht,t,e)=>{const{kind:i,metadata:r}=e;let s=globalThis.litPropertyMetadata.get(r);if(s===void 0&&globalThis.litPropertyMetadata.set(r,s=new Map),i==="setter"&&((o=Object.create(o)).wrapped=!0),s.set(e.name,o),i==="accessor"){const{name:n}=e;return{set(l){const a=t.get.call(this);t.set.call(this,l),this.requestUpdate(n,a,o,!0,l)},init(l){return l!==void 0&&this.C(n,void 0,o,l),l}}}if(i==="setter"){const{name:n}=e;return function(l){const a=this[n];t.call(this,l),this.requestUpdate(n,a,o,!0,l)}}throw Error("Unsupported decorator location: "+i)};function z(o){return(t,e)=>typeof e=="object"?Tt(o,t,e):((i,r,s)=>{const n=r.hasOwnProperty(s);return r.constructor.createProperty(s,i),n?Object.getOwnPropertyDescriptor(r,s):void 0})(o,t,e)}/**
+ */const A={ATTRIBUTE:1,PROPERTY:3,BOOLEAN_ATTRIBUTE:4},Ut=s=>(...t)=>({_$litDirective$:s,values:t});class Ht{constructor(t){}get _$AU(){return this._$AM._$AU}_$AT(t,e,i){this._$Ct=t,this._$AM=e,this._$Ci=i}_$AS(t,e){return this.update(t,e)}update(t,e){return this.render(...e)}}/**
+ * @license
+ * Copyright 2020 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
+ */const qt=s=>s.strings===void 0,Bt={},zt=(s,t=Bt)=>s._$AH=t;/**
+ * @license
+ * Copyright 2020 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
+ */const k=Ut(class extends Ht{constructor(s){if(super(s),s.type!==A.PROPERTY&&s.type!==A.ATTRIBUTE&&s.type!==A.BOOLEAN_ATTRIBUTE)throw Error("The `live` directive is not allowed on child or event bindings");if(!qt(s))throw Error("`live` bindings can only contain a single expression")}render(s){return s}update(s,[t]){if(t===$||t===d)return t;const e=s.element,i=s.name;if(s.type===A.PROPERTY){if(t===e[i])return $}else if(s.type===A.BOOLEAN_ATTRIBUTE){if(!!t===e.hasAttribute(i))return $}else if(s.type===A.ATTRIBUTE&&e.getAttribute(i)===t+"")return $;return zt(s),t}});/**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */function g(o){return z({...o,state:!0,attribute:!1})}async function Rt(o){return o.connection.sendMessagePromise({type:"ready_home/settings"})}async function Ut(o,t){return o.connection.subscribeMessage(t,{type:"ready_home/subscribe"})}async function qt(o,t){return o.connection.sendMessagePromise({type:"ready_home/barcode/lookup",barcode:t})}var Bt=Object.defineProperty,m=(o,t,e,i)=>{for(var r=void 0,s=o.length-1,n;s>=0;s--)(n=o[s])&&(r=n(t,e,r)||r);return r&&Bt(t,e,r),r};const zt="ready-home-panel",Ft="/api/ready_home/brand/icon.png",Dt="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z",jt="M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1Z",It="M12,20A6,6 0 0,1 6,14C6,10 12,3.25 12,3.25C12,3.25 18,10 18,14A6,6 0 0,1 12,20Z",Vt="M18.06 23H19.72C20.56 23 21.25 22.35 21.35 21.53L23 5.05H18V1H16.03V5.05H11.06L11.36 7.39C13.07 7.86 14.67 8.71 15.63 9.65C17.07 11.07 18.06 12.54 18.06 14.94V23M1 22V21H16.03V22C16.03 22.54 15.58 23 15 23H2C1.45 23 1 22.54 1 22M16.03 15C16.03 7 1 7 1 15H16.03M1 17H16V19H1V17Z",ot=["box","pack","piece"],Wt=["gram","kilogram","liter","milliliter"],Kt=["essential","important","optional"],Zt={expired:"Expired",urgent:"Urgent",expiring:"Expiring",low:"Low stock"};function H(o){return o&&o.charAt(0).toUpperCase()+o.slice(1)}class f extends k{constructor(){super(...arguments),this.narrow=!1,this._snapshot=null,this._settings=null,this._search="",this._filterStatus="all",this._filterLocation="",this._filterCategory="",this._filterReadiness="",this._filtersOpen=!1,this._sort="name",this._dialogOpen=!1,this._editing=null,this._form={},this._error="",this._fieldErrors={},this._busy=!1,this._unsub=null,this._connected=!1,this._resetFilters=()=>{this._filterLocation="",this._filterCategory="",this._filterReadiness=""},this._toggleMenu=t=>{t?.stopPropagation(),this.dispatchEvent(new CustomEvent("hass-toggle-menu",{bubbles:!0,composed:!0}))},this._openAdd=()=>{this._editing=null,this._form=this._blankForm(),this._fieldErrors={},this._error="",this._dialogOpen=!0},this._openEdit=t=>{this._editing=t;const e=ot.includes(t.unit)?t.unit:"piece";let i=t.contents_per_unit,r=t.contents_unit||"",s=t.calories_per_content;i==null&&t.liters_per_unit!=null&&(i=t.liters_per_unit,r="liter"),s==null&&t.calories_per_unit!=null&&i==null&&(i=1,r=r||"gram",s=t.calories_per_unit),this._form={name:t.name,quantity:String(t.quantity),desired_quantity:String(t.desired_quantity),unit:e,location:t.location,category:t.category,priority:t.priority,notes:t.notes||"",barcode:t.barcode||"",expiry_date:t.expiry_date||"",contents_per_unit:i!=null?String(i):"",contents_unit:r,calories_per_content:s!=null?String(s):""},this._fieldErrors={},this._error="",this._dialogOpen=!0},this._closeDialog=()=>{this._dialogOpen=!1,this._fieldErrors={}}}connectedCallback(){super.connectedCallback(),this._connected=!0,this._connect()}disconnectedCallback(){super.disconnectedCallback(),this._connected=!1,this._unsub?.(),this._unsub=null}updated(t){t.has("hass")&&this.hass&&!this._unsub&&this._connected&&this._connect()}async _connect(){if(!(!this.hass||this._unsub))try{this._settings=await Rt(this.hass),this._unsub=await Ut(this.hass,t=>{this._snapshot=t}),this._error=""}catch(t){this._error=String(t)}}get _assessment(){return this._snapshot?.assessment??{}}get _bucketCounts(){const t=this._snapshot?.buckets;return{expired:t?.expired.length??0,expiring:(t?.within_urgent.length??0)+(t?.within_expiring.length??0),low_stock:t?.low_stock.length??0}}get _activeFilterCount(){let t=0;return this._filterLocation&&(t+=1),this._filterCategory&&(t+=1),this._filterReadiness&&(t+=1),t}_readinessKind(t){const e=t.trim().toLowerCase();return!e||!this._settings?"none":(this._settings.water_categories??[]).some(i=>i.trim().toLowerCase()===e)?"water":(this._settings.food_categories??[]).some(i=>i.trim().toLowerCase()===e)?"food":"none"}get _items(){let t=[...this._snapshot?.items??[]];const e=this._search.trim().toLowerCase();if(e&&(t=t.filter(i=>i.name.toLowerCase().includes(e)||i.location.toLowerCase().includes(e)||i.category.toLowerCase().includes(e)||(i.barcode||"").toLowerCase().includes(e)||(i.notes||"").toLowerCase().includes(e))),this._filterLocation&&(t=t.filter(i=>i.location.toLowerCase()===this._filterLocation.toLowerCase())),this._filterCategory&&(t=t.filter(i=>i.category.toLowerCase()===this._filterCategory.toLowerCase())),this._filterReadiness&&(t=t.filter(i=>this._readinessKind(i.category)===this._filterReadiness)),this._filterStatus!=="all"){const i=this._snapshot?.buckets,r=new Set;this._filterStatus==="expired"?i?.expired.forEach(s=>r.add(s.id)):this._filterStatus==="expiring"?(i?.within_urgent.forEach(s=>r.add(s.id)),i?.within_expiring.forEach(s=>r.add(s.id))):this._filterStatus==="low_stock"&&i?.low_stock.forEach(s=>r.add(s.id)),t=t.filter(s=>r.has(s.id))}return t.sort((i,r)=>this._sort==="quantity"?i.quantity-r.quantity:this._sort==="expiry"?(i.expiry_date||"9999").localeCompare(r.expiry_date||"9999"):i.name.localeCompare(r.name)),t}_itemStatus(t){const e=this._snapshot?.buckets;return e?e.expired.some(i=>i.id===t.id)?"expired":e.within_urgent.some(i=>i.id===t.id)?"urgent":e.within_expiring.some(i=>i.id===t.id)?"expiring":e.low_stock.some(i=>i.id===t.id)?"low":"":""}_statusLabel(t){return Zt[t]||t}_setStatusFilter(t){this._filterStatus=this._filterStatus===t?"all":t}_pct(t){return t==null||Number.isNaN(Number(t))?"—":`${Math.round(Number(t))}%`}_formatHours(t){if(t==null||Number.isNaN(Number(t)))return"—";const e=Math.max(0,Math.round(Number(t)));return e<48?`${e}h`:`${Math.round(e/24)}d`}_formatAmount(t,e){if(t==null||Number.isNaN(Number(t)))return"—";const i=Number(t);return`${Math.abs(i-Math.round(i))<.05?Math.round(i):Math.round(i*10)/10} ${e}`}_durationClass(t){const e=this._assessment.duration_hours??this._settings?.duration_hours??72;return t==null||Number.isNaN(Number(t))?"":Number(t)<=0?"duration-bad":Number(t)<Number(e)?"duration-warn":""}_expiryClass(t){return t==="expired"?"expiry-expired":t==="urgent"||t==="expiring"?"expiry-warn":""}_optionList(t,e){const i=new Set,r=[];for(const s of[...t,e]){const n=s?.trim();if(!n)continue;const l=n.toLowerCase();i.has(l)||(i.add(l),r.push(n))}return r}_mdButton(t,e){const i=e.variant??"outlined";return h`
+ */const Ft={attribute:!0,type:String,converter:q,reflect:!1,hasChanged:W},Dt=(s=Ft,t,e)=>{const{kind:i,metadata:r}=e;let o=globalThis.litPropertyMetadata.get(r);if(o===void 0&&globalThis.litPropertyMetadata.set(r,o=new Map),i==="setter"&&((s=Object.create(s)).wrapped=!0),o.set(e.name,s),i==="accessor"){const{name:n}=e;return{set(c){const a=t.get.call(this);t.set.call(this,c),this.requestUpdate(n,a,s,!0,c)},init(c){return c!==void 0&&this.C(n,void 0,s,c),c}}}if(i==="setter"){const{name:n}=e;return function(c){const a=this[n];t.call(this,c),this.requestUpdate(n,a,s,!0,c)}}throw Error("Unsupported decorator location: "+i)};function D(s){return(t,e)=>typeof e=="object"?Dt(s,t,e):((i,r,o)=>{const n=r.hasOwnProperty(o);return r.constructor.createProperty(o,i),n?Object.getOwnPropertyDescriptor(r,o):void 0})(s,t,e)}/**
+ * @license
+ * Copyright 2017 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
+ */function g(s){return D({...s,state:!0,attribute:!1})}async function It(s){return s.connection.sendMessagePromise({type:"ready_home/settings"})}async function jt(s,t){return s.connection.subscribeMessage(t,{type:"ready_home/subscribe"})}async function Vt(s,t){return s.connection.sendMessagePromise({type:"ready_home/barcode/lookup",barcode:t})}var Wt=Object.defineProperty,m=(s,t,e,i)=>{for(var r=void 0,o=s.length-1,n;o>=0;o--)(n=s[o])&&(r=n(t,e,r)||r);return r&&Wt(t,e,r),r};const Kt="ready-home-panel",Zt="/api/ready_home/brand/icon.png",Qt="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z",Yt="M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1Z",Jt="M12,20A6,6 0 0,1 6,14C6,10 12,3.25 12,3.25C12,3.25 18,10 18,14A6,6 0 0,1 12,20Z",Gt="M18.06 23H19.72C20.56 23 21.25 22.35 21.35 21.53L23 5.05H18V1H16.03V5.05H11.06L11.36 7.39C13.07 7.86 14.67 8.71 15.63 9.65C17.07 11.07 18.06 12.54 18.06 14.94V23M1 22V21H16.03V22C16.03 22.54 15.58 23 15 23H2C1.45 23 1 22.54 1 22M16.03 15C16.03 7 1 7 1 15H16.03M1 17H16V19H1V17Z",at=["box","pack","piece"],Xt=["gram","kilogram","liter","milliliter"],te=["essential","important","optional"],ee={expired:"Expired",urgent:"Urgent",expiring:"Expiring",low:"Low stock"};function U(s){return s&&s.charAt(0).toUpperCase()+s.slice(1)}class f extends L{constructor(){super(...arguments),this.narrow=!1,this._snapshot=null,this._settings=null,this._search="",this._filterStatus="all",this._filterLocation="",this._filterCategory="",this._filterReadiness="",this._filtersOpen=!1,this._sort="name",this._dialogOpen=!1,this._editing=null,this._form={},this._error="",this._fieldErrors={},this._busy=!1,this._unsub=null,this._connected=!1,this._resetFilters=()=>{this._filterLocation="",this._filterCategory="",this._filterReadiness=""},this._toggleMenu=t=>{t?.stopPropagation(),this.dispatchEvent(new CustomEvent("hass-toggle-menu",{bubbles:!0,composed:!0}))},this._openAdd=()=>{this._editing=null,this._form=this._blankForm(),this._fieldErrors={},this._error="",this._dialogOpen=!0},this._openEdit=t=>{this._editing=t;const e=at.includes(t.unit)?t.unit:"piece";let i=t.contents_per_unit,r=t.contents_unit||"",o=t.calories_per_content;i==null&&t.liters_per_unit!=null&&(i=t.liters_per_unit,r="liter"),o==null&&t.calories_per_unit!=null&&i==null&&(i=1,r=r||"gram",o=t.calories_per_unit),this._form={name:t.name,quantity:String(t.quantity),desired_quantity:String(t.desired_quantity),unit:e,location:t.location,category:t.category,priority:t.priority,notes:t.notes||"",barcode:t.barcode||"",expiry_date:t.expiry_date||"",contents_per_unit:i!=null?String(i):"",contents_unit:r,calories_per_content:o!=null?String(o):""},this._fieldErrors={},this._error="",this._dialogOpen=!0},this._closeDialog=()=>{this._dialogOpen=!1,this._fieldErrors={}}}connectedCallback(){super.connectedCallback(),this._connected=!0,this._connect()}disconnectedCallback(){super.disconnectedCallback(),this._connected=!1,this._unsub?.(),this._unsub=null}updated(t){t.has("hass")&&this.hass&&!this._unsub&&this._connected&&this._connect()}async _connect(){if(!(!this.hass||this._unsub))try{this._settings=await It(this.hass),this._unsub=await jt(this.hass,t=>{this._snapshot=t}),this._error=""}catch(t){this._error=String(t)}}get _assessment(){return this._snapshot?.assessment??{}}get _bucketCounts(){const t=this._snapshot?.buckets;return{expired:t?.expired.length??0,expiring:(t?.within_urgent.length??0)+(t?.within_expiring.length??0),low_stock:t?.low_stock.length??0}}get _activeFilterCount(){let t=0;return this._filterLocation&&(t+=1),this._filterCategory&&(t+=1),this._filterReadiness&&(t+=1),t}_readinessKind(t){const e=t.trim().toLowerCase();return!e||!this._settings?"none":(this._settings.water_categories??[]).some(i=>i.trim().toLowerCase()===e)?"water":(this._settings.food_categories??[]).some(i=>i.trim().toLowerCase()===e)?"food":"none"}get _items(){let t=[...this._snapshot?.items??[]];const e=this._search.trim().toLowerCase();if(e&&(t=t.filter(i=>i.name.toLowerCase().includes(e)||i.location.toLowerCase().includes(e)||i.category.toLowerCase().includes(e)||(i.barcode||"").toLowerCase().includes(e)||(i.notes||"").toLowerCase().includes(e))),this._filterLocation&&(t=t.filter(i=>i.location.toLowerCase()===this._filterLocation.toLowerCase())),this._filterCategory&&(t=t.filter(i=>i.category.toLowerCase()===this._filterCategory.toLowerCase())),this._filterReadiness&&(t=t.filter(i=>this._readinessKind(i.category)===this._filterReadiness)),this._filterStatus!=="all"){const i=this._snapshot?.buckets,r=new Set;this._filterStatus==="expired"?i?.expired.forEach(o=>r.add(o.id)):this._filterStatus==="expiring"?(i?.within_urgent.forEach(o=>r.add(o.id)),i?.within_expiring.forEach(o=>r.add(o.id))):this._filterStatus==="low_stock"&&i?.low_stock.forEach(o=>r.add(o.id)),t=t.filter(o=>r.has(o.id))}return t.sort((i,r)=>this._sort==="quantity"?i.quantity-r.quantity:this._sort==="expiry"?(i.expiry_date||"9999").localeCompare(r.expiry_date||"9999"):i.name.localeCompare(r.name)),t}_itemStatus(t){const e=this._snapshot?.buckets;return e?e.expired.some(i=>i.id===t.id)?"expired":e.within_urgent.some(i=>i.id===t.id)?"urgent":e.within_expiring.some(i=>i.id===t.id)?"expiring":e.low_stock.some(i=>i.id===t.id)?"low":"":""}_statusLabel(t){return ee[t]||t}_setStatusFilter(t){this._filterStatus=this._filterStatus===t?"all":t}_pct(t){return t==null||Number.isNaN(Number(t))?"—":`${Math.round(Number(t))}%`}_formatHours(t){if(t==null||Number.isNaN(Number(t)))return"—";const e=Math.max(0,Math.round(Number(t)));return e<48?`${e}h`:`${Math.round(e/24)}d`}_formatAmount(t,e){if(t==null||Number.isNaN(Number(t)))return"—";const i=Number(t);return`${Math.abs(i-Math.round(i))<.05?Math.round(i):Math.round(i*10)/10} ${e}`}_durationClass(t){const e=this._assessment.duration_hours??this._settings?.duration_hours??72;return t==null||Number.isNaN(Number(t))?"":Number(t)<=0?"duration-bad":Number(t)<Number(e)?"duration-warn":""}_expiryClass(t){return t==="expired"?"expiry-expired":t==="urgent"||t==="expiring"?"expiry-warn":""}_optionList(t,e){const i=new Set,r=[];for(const o of[...t,e]){const n=o?.trim();if(!n)continue;const c=n.toLowerCase();i.has(c)||(i.add(c),r.push(n))}return r}_mdButton(t,e){const i=e.variant??"outlined";return h`
       <button
         type="button"
         class="md-btn md-btn-${i}"
@@ -33,7 +45,7 @@
       >
         ${t}
       </button>
-    `}render(){const t=this._items,e=this._assessment,i=this._settings?.locations??[],r=this._settings?.categories??[],s=e.overall_percent,n=e.water_percent,l=e.food_percent,a=this._bucketCounts,u=e.duration_hours??this._settings?.duration_hours??72,d=e.supply_hours,p=e.water_supply_hours,b=e.food_supply_hours;return h`
+    `}render(){const t=this._items,e=this._assessment,i=this._settings?.locations??[],r=this._settings?.categories??[],o=e.overall_percent,n=e.water_percent,c=e.food_percent,a=this._bucketCounts,u=e.duration_hours??this._settings?.duration_hours??72,l=e.supply_hours,p=e.water_supply_hours,b=e.food_supply_hours;return h`
       <div class="page">
         <header class="header">
           <div class="header-row">
@@ -46,13 +58,13 @@
                       @click=${this._toggleMenu}
                     >
                       <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path fill="currentColor" d=${Dt} />
+                        <path fill="currentColor" d=${Qt} />
                       </svg>
                     </button>
-                  `:c}
+                  `:d}
               <img
                 class="brand-icon"
-                src=${Ft}
+                src=${Zt}
                 alt=""
                 width="40"
                 height="40"
@@ -71,19 +83,19 @@
             <div class="stat">
               <span class="stat-label">
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="currentColor" d=${jt} />
+                  <path fill="currentColor" d=${Yt} />
                 </svg>
                 Overall
               </span>
-              <span class="stat-value">${this._pct(s)}</span>
-              <span class="stat-duration ${this._durationClass(d)}"
-                >Lasts ${this._formatHours(d)}</span
+              <span class="stat-value">${this._pct(o)}</span>
+              <span class="stat-duration ${this._durationClass(l)}"
+                >Lasts ${this._formatHours(l)}</span
               >
             </div>
             <div class="stat">
               <span class="stat-label">
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="currentColor" d=${It} />
+                  <path fill="currentColor" d=${Jt} />
                 </svg>
                 Water
               </span>
@@ -101,7 +113,7 @@
             <div class="stat">
               <span class="stat-label">
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="currentColor" d=${Vt} />
+                  <path fill="currentColor" d=${Gt} />
                 </svg>
                 Food
               </span>
@@ -109,7 +121,7 @@
                 >${this._formatAmount(e.food_on_hand,"kcal")}</span
               >
               <span class="stat-meta"
-                >${this._pct(l)} · goal
+                >${this._pct(c)} · goal
                 ${this._formatAmount(e.food_target,"kcal")}</span
               >
               <span class="stat-duration ${this._durationClass(b)}"
@@ -169,7 +181,7 @@
                   class="md-btn md-btn-outlined filters-btn ${this._filtersOpen||this._activeFilterCount?"active":""}"
                   @click=${()=>{this._filtersOpen=!this._filtersOpen}}
                 >
-                  Filters${this._activeFilterCount?h` (${this._activeFilterCount})`:c}
+                  Filters${this._activeFilterCount?h` (${this._activeFilterCount})`:d}
                 </button>
               </div>
               ${this._filtersOpen?h`
@@ -197,9 +209,9 @@
                         <option value="food">Food</option>
                         <option value="none">Neither</option>
                       </select>
-                      ${this._activeFilterCount?this._mdButton("Reset",{variant:"text",onClick:this._resetFilters}):c}
+                      ${this._activeFilterCount?this._mdButton("Reset",{variant:"text",onClick:this._resetFilters}):d}
                     </div>
-                  `:c}
+                  `:d}
               <div class="inventory-meta">
                 <span class="item-count"
                   >${t.length}/${this._snapshot?.items.length??0}</span
@@ -207,14 +219,14 @@
               </div>
             </div>
 
-            ${this._error?h`<div class="error" role="alert">${this._error}</div>`:c}
+            ${this._error?h`<div class="error" role="alert">${this._error}</div>`:d}
 
             ${this.narrow?this._renderCardList(t):this._renderTable(t)}
           </section>
         </div>
       </div>
 
-      ${this._dialogOpen?this._renderDialog():c}
+      ${this._dialogOpen?this._renderDialog():d}
     `}_renderEmpty(){return this._snapshot?h`
       <div class="empty">
         No items match.
@@ -222,12 +234,14 @@
       </div>
     `:h`<div class="empty">Loading inventory…</div>`}_renderQtyText(t){return h`
       <span class="qty-text"
-        >${t.quantity}${t.desired_quantity?h` / ${t.desired_quantity}`:c}
+        >${t.quantity}${t.desired_quantity?h` / ${t.desired_quantity}`:d}
         ${t.unit}</span
       >
-    `}_renderMeasure(t){const e=this._readinessKind(t.category);if(e==="food"){const i=this._itemCaloriesOnHand(t);return i==null?"":`${this._formatMeasureNumber(i)} kcal`}if(e==="water"){const i=this._itemLitersOnHand(t);return i==null?"":`${this._formatMeasureNumber(i)} L`}return""}_itemLitersOnHand(t){if(t.contents_per_unit!=null&&t.contents_unit){const e=this._contentsToLiters(t.contents_per_unit,t.contents_unit);if(e!=null)return t.quantity*e}return t.unit==="liter"?t.quantity:t.unit==="milliliter"?t.quantity/1e3:t.liters_per_unit!=null?t.quantity*t.liters_per_unit:null}_itemCaloriesOnHand(t){return t.contents_per_unit!=null&&t.calories_per_content!=null?t.quantity*t.contents_per_unit*t.calories_per_content:t.calories_per_unit!=null?t.quantity*t.calories_per_unit:null}_contentsToLiters(t,e){return e==="liter"?t:e==="milliliter"?t/1e3:null}_formatMeasureNumber(t){const e=Number(t);return Number.isNaN(e)?"—":Math.abs(e-Math.round(e))<.05?String(Math.round(e)):String(Math.round(e*100)/100)}_contentsUnitLabel(t){return H(t||"unit")}_formTotalContents(){const t=Number(this._form.quantity||0),e=Number(this._form.contents_per_unit||"");return!this._form.contents_per_unit||Number.isNaN(e)?null:t*e}_formTotalCalories(){const t=this._formTotalContents(),e=Number(this._form.calories_per_content||"");return t==null||!this._form.calories_per_content||Number.isNaN(e)?null:t*e}_formTotalLiters(){const t=this._formTotalContents();return t==null||!this._form.contents_unit?null:this._contentsToLiters(t,this._form.contents_unit)}_fieldLabel(t,e=!1){return h`${t}${e?h`<span class="req" aria-hidden="true">*</span>`:c}`}_fieldError(t){const e=this._fieldErrors[t];return e?h`<div class="field-error">${e}</div>`:c}_validateForm(){const t=this._form,e={};(t.name||"").trim()||(e.name="Name is required"),(t.location||"").trim()||(e.location="Location is required"),(t.category||"").trim()||(e.category="Category is required");const i=Number(t.quantity);(t.quantity===""||Number.isNaN(i)||i<0)&&(e.quantity="Enter a valid quantity"),(t.unit||"").trim()||(e.unit="Unit is required");const r=this._formReadiness();if(r==="food"||r==="water"){const s=Number(t.contents_per_unit);(t.contents_per_unit===""||Number.isNaN(s)||s<=0)&&(e.contents_per_unit="Contents per unit is required"),(t.contents_unit||"").trim()?r==="water"&&t.contents_unit!=="liter"&&t.contents_unit!=="milliliter"&&(e.contents_unit="Water contents must be liter or milliliter"):e.contents_unit="Contents unit is required"}if(r==="food"){const s=Number(t.calories_per_content);(t.calories_per_content===""||Number.isNaN(s)||s<0)&&(e.calories_per_content="Calories per contents unit is required")}return e}_renderStatusBadge(t){return t?h`<span class="badge badge-${t}"
+    `}_renderMeasure(t){const e=this._readinessKind(t.category);if(e==="food"){const i=this._itemCaloriesOnHand(t);return i==null?"":`${this._formatMeasureNumber(i)} kcal`}if(e==="water"){const i=this._itemLitersOnHand(t);return i==null?"":`${this._formatMeasureNumber(i)} L`}return""}_itemLitersOnHand(t){if(t.contents_per_unit!=null&&t.contents_unit){const e=this._contentsToLiters(t.contents_per_unit,t.contents_unit);if(e!=null)return t.quantity*e}return t.unit==="liter"?t.quantity:t.unit==="milliliter"?t.quantity/1e3:t.liters_per_unit!=null?t.quantity*t.liters_per_unit:null}_itemCaloriesOnHand(t){return t.contents_per_unit!=null&&t.calories_per_content!=null?t.quantity*t.contents_per_unit*t.calories_per_content:t.calories_per_unit!=null?t.quantity*t.calories_per_unit:null}_contentsToLiters(t,e){return e==="liter"?t:e==="milliliter"?t/1e3:null}_formatMeasureNumber(t){const e=Number(t);return Number.isNaN(e)?"—":Math.abs(e-Math.round(e))<.05?String(Math.round(e)):String(Math.round(e*100)/100)}_contentsUnitLabel(t){return U(t||"unit")}_formTotalContents(){const t=Number(this._form.quantity||0),e=Number(this._form.contents_per_unit||"");return!this._form.contents_per_unit||Number.isNaN(e)?null:t*e}_formTotalCalories(){const t=this._formTotalContents(),e=Number(this._form.calories_per_content||"");return t==null||!this._form.calories_per_content||Number.isNaN(e)?null:t*e}_formTotalLiters(){const t=this._formTotalContents();return t==null||!this._form.contents_unit?null:this._contentsToLiters(t,this._form.contents_unit)}_fieldLabel(t,e=!1){return h`<span class="field-label"
+      >${t}${e?h`<span class="req" aria-hidden="true">*</span>`:d}</span
+    >`}_fieldError(t){const e=this._fieldErrors[t];return e?h`<div class="field-error">${e}</div>`:d}_validateForm(){const t=this._form,e={};(t.name||"").trim()||(e.name="Name is required"),(t.location||"").trim()||(e.location="Location is required"),(t.category||"").trim()||(e.category="Category is required");const i=Number(t.quantity);(t.quantity===""||Number.isNaN(i)||i<0)&&(e.quantity="Enter a valid quantity"),(t.unit||"").trim()||(e.unit="Unit is required");const r=this._formReadiness();if(r==="food"||r==="water"){const o=Number(t.contents_per_unit);(t.contents_per_unit===""||Number.isNaN(o)||o<=0)&&(e.contents_per_unit="Contents per unit is required"),(t.contents_unit||"").trim()?r==="water"&&t.contents_unit!=="liter"&&t.contents_unit!=="milliliter"&&(e.contents_unit="Water contents must be liter or milliliter"):e.contents_unit="Contents unit is required"}if(r==="food"){const o=Number(t.calories_per_content);(t.calories_per_content===""||Number.isNaN(o)||o<0)&&(e.calories_per_content="Calories per contents unit is required")}return e}_renderStatusBadge(t){return t?h`<span class="badge badge-${t}"
       >${this._statusLabel(t)}</span
-    >`:c}_renderTable(t){return h`
+    >`:d}_renderTable(t){return h`
       <div class="table-wrap">
         <table>
           <thead>
@@ -246,7 +260,7 @@
             ${t.map(e=>this._renderRow(e))}
             ${t.length===0?h`<tr>
                   <td colspan="8">${this._renderEmpty()}</td>
-                </tr>`:c}
+                </tr>`:d}
           </tbody>
         </table>
       </div>
@@ -288,26 +302,26 @@
             type="button"
             class="md-btn md-btn-danger-text"
             ?disabled=${this._busy}
-            @click=${s=>{s.stopPropagation(),this._remove(t)}}
+            @click=${o=>{o.stopPropagation(),this._remove(t)}}
           >
             Remove
           </button>
         </div>
-        ${r?h`<div class="meta">${r}</div>`:c}
+        ${r?h`<div class="meta">${r}</div>`:d}
         <div class="item-card-bottom">
           ${this._renderQtyText(t)}
           ${t.expiry_date?h`<span class="${this._expiryClass(e)}"
                 >${t.expiry_date}</span
-              >`:c}
+              >`:d}
         </div>
       </article>
-    `}_formReadiness(){return this._readinessKind(this._form.category||"")}_showContentsFields(){const t=this._formReadiness();return t==="food"||t==="water"}_showCaloriesField(){return this._formReadiness()==="food"}_renderDialog(){const t=this._form,e=this._optionList(this._settings?.locations??[],t.location||""),i=this._optionList(this._settings?.categories??[],t.category||""),r=this._formReadiness(),s=this._formTotalContents(),n=this._formTotalLiters(),l=this._formTotalCalories(),a=this._contentsUnitLabel(t.contents_unit||"unit");let u="";return s!=null&&t.contents_unit&&(u=`Total on hand: ${this._formatMeasureNumber(s)} ${a}`,n!=null&&(u+=` · ${this._formatMeasureNumber(n)} L`),l!=null&&(u+=` · ${this._formatMeasureNumber(l)} kcal`)),h`
+    `}_formReadiness(){return this._readinessKind(this._form.category||"")}_showContentsFields(){const t=this._formReadiness();return t==="food"||t==="water"}_showCaloriesField(){return this._formReadiness()==="food"}_renderDialog(){const t=this._form,e=this._optionList(this._settings?.locations??[],t.location||""),i=this._optionList(this._settings?.categories??[],t.category||""),r=this._formReadiness(),o=this._formTotalContents(),n=this._formTotalLiters(),c=this._formTotalCalories(),a=this._contentsUnitLabel(t.contents_unit||"unit");let u="";return o!=null&&t.contents_unit&&(u=`Total on hand: ${this._formatMeasureNumber(o)} ${a}`,n!=null&&(u+=` · ${this._formatMeasureNumber(n)} L`),c!=null&&(u+=` · ${this._formatMeasureNumber(c)} kcal`)),h`
       <div class="dialog-backdrop" @click=${this._closeDialog}>
         <div
           class="dialog ${this.narrow?"dialog-narrow":""}"
           role="dialog"
           aria-modal="true"
-          @click=${d=>d.stopPropagation()}
+          @click=${l=>l.stopPropagation()}
         >
           <h2>${this._editing?"Edit item":"Add item"}</h2>
 
@@ -325,22 +339,36 @@
               <label
                 >${this._fieldLabel("Location",!0)}
                 <select
-                  .value=${t.location||""}
+                  .value=${k(t.location||"")}
                   @change=${this._onField("location")}
                 >
-                  <option value="">Select location</option>
-                  ${e.map(d=>h`<option value=${d}>${d}</option>`)}
+                  <option value="" ?selected=${!t.location}>
+                    Select location
+                  </option>
+                  ${e.map(l=>h`<option
+                        value=${l}
+                        ?selected=${(t.location||"")===l}
+                      >
+                        ${l}
+                      </option>`)}
                 </select>
                 ${this._fieldError("location")}
               </label>
               <label
                 >${this._fieldLabel("Category",!0)}
                 <select
-                  .value=${t.category||""}
+                  .value=${k(t.category||"")}
                   @change=${this._onField("category")}
                 >
-                  <option value="">Select category</option>
-                  ${i.map(d=>h`<option value=${d}>${d}</option>`)}
+                  <option value="" ?selected=${!t.category}>
+                    Select category
+                  </option>
+                  ${i.map(l=>h`<option
+                        value=${l}
+                        ?selected=${(t.category||"")===l}
+                      >
+                        ${l}
+                      </option>`)}
                 </select>
                 ${this._fieldError("category")}
               </label>
@@ -348,10 +376,15 @@
             <label
               >Priority
               <select
-                .value=${t.priority||"important"}
+                .value=${k(t.priority||"important")}
                 @change=${this._onField("priority")}
               >
-                ${Kt.map(d=>h`<option value=${d}>${H(d)}</option>`)}
+                ${te.map(l=>h`<option
+                      value=${l}
+                      ?selected=${(t.priority||"important")===l}
+                    >
+                      ${U(l)}
+                    </option>`)}
               </select>
             </label>
             <label
@@ -384,7 +417,7 @@
                   @input=${this._onField("quantity")}
                 />
                 ${this._fieldError("quantity")}
-                ${u?h`<div class="field-hint">${u}</div>`:c}
+                ${u?h`<div class="field-hint">${u}</div>`:d}
               </label>
               <label
                 >Desired quantity
@@ -399,10 +432,15 @@
               <label
                 >${this._fieldLabel("Unit",!0)}
                 <select
-                  .value=${t.unit||"piece"}
+                  .value=${k(t.unit||"piece")}
                   @change=${this._onField("unit")}
                 >
-                  ${ot.map(d=>h`<option value=${d}>${H(d)}</option>`)}
+                  ${at.map(l=>h`<option
+                        value=${l}
+                        ?selected=${(t.unit||"piece")===l}
+                      >
+                        ${U(l)}
+                      </option>`)}
                 </select>
                 ${this._fieldError("unit")}
               </label>
@@ -426,11 +464,18 @@
                     <label
                       >${this._fieldLabel("Contents unit",!0)}
                       <select
-                        .value=${t.contents_unit||""}
+                        .value=${k(t.contents_unit||"")}
                         @change=${this._onField("contents_unit")}
                       >
-                        <option value="">Select unit</option>
-                        ${Wt.map(d=>h`<option value=${d}>${H(d)}</option>`)}
+                        <option value="" ?selected=${!t.contents_unit}>
+                          Select unit
+                        </option>
+                        ${Xt.map(l=>h`<option
+                              value=${l}
+                              ?selected=${(t.contents_unit||"")===l}
+                            >
+                              ${U(l)}
+                            </option>`)}
                       </select>
                       ${this._fieldError("contents_unit")}
                       <div class="field-hint">
@@ -438,7 +483,7 @@
                       </div>
                     </label>
                   </div>
-                `:c}
+                `:d}
             ${this._showCaloriesField()?h`
                   <label
                     >${this._fieldLabel(`Calories (kcal) per ${a}`,!0)}
@@ -451,15 +496,15 @@
                     />
                     ${this._fieldError("calories_per_content")}
                     <div class="field-hint">
-                      Calories per contents unit${l!=null?h` · Total calories on hand:
-                            ${this._formatMeasureNumber(l)} kcal`:c}
+                      Calories per contents unit${c!=null?h` · Total calories on hand:
+                            ${this._formatMeasureNumber(c)} kcal`:d}
                     </div>
                   </label>
-                `:c}
+                `:d}
             ${r==="none"?h`<div class="field-hint">
                   Category is not mapped to food or water — this item will not
                   count toward readiness.
-                </div>`:c}
+                </div>`:d}
           </div>
 
           <div class="form-section">
@@ -474,7 +519,7 @@
             </label>
           </div>
 
-          ${this._error?h`<div class="error" role="alert">${this._error}</div>`:c}
+          ${this._error?h`<div class="error" role="alert">${this._error}</div>`:d}
 
           <div class="dialog-actions">
             ${this._mdButton("Cancel",{variant:"text",onClick:this._closeDialog})}
@@ -482,7 +527,7 @@
           </div>
         </div>
       </div>
-    `}_onField(t){return e=>{const i=e.target;if(this._form={...this._form,[t]:i.value},this._fieldErrors[t]){const r={...this._fieldErrors};delete r[t],this._fieldErrors=r}}}_blankForm(){return{name:"",quantity:"1",desired_quantity:"0",unit:"piece",location:this._settings?.locations?.[0]??"",category:this._settings?.categories?.[0]??"",priority:"important",notes:"",barcode:"",expiry_date:"",contents_per_unit:"",contents_unit:"",calories_per_content:""}}async _run(t){this._busy=!0,this._error="";try{await t()}catch(e){this._error=String(e)}finally{this._busy=!1}}async _remove(t){confirm(`Remove “${t.name}”?`)&&await this._run(()=>this.hass.callService("ready_home","remove_item",{item_id:t.id}))}async _save(){const t=this._validateForm();if(this._fieldErrors=t,Object.keys(t).length){this._error="Please fix the highlighted fields";return}const e=this._form,i=(e.name||"").trim(),r=this._formReadiness(),s={quantity:Number(e.quantity||0),desired_quantity:Number(e.desired_quantity||0),unit:e.unit||"piece",location:e.location||"",category:e.category||"",priority:e.priority||"important",barcode:e.barcode||"",notes:e.notes||""};e.expiry_date&&(s.expiry_date=e.expiry_date),r==="food"||r==="water"?(s.contents_per_unit=Number(e.contents_per_unit),s.contents_unit=e.contents_unit):(s.contents_per_unit=null,s.contents_unit=null,s.calories_per_content=null,s.liters_per_unit=null,s.calories_per_unit=null),r==="food"?s.calories_per_content=Number(e.calories_per_content):r==="water"&&(s.calories_per_content=null,s.calories_per_unit=null),await this._run(async()=>{this._editing?await this.hass.callService("ready_home","update_item",{item_id:this._editing.id,new_name:i,...s}):await this.hass.callService("ready_home","add_item",{name:i,...s}),this._dialogOpen=!1,this._fieldErrors={}})}async _lookupBarcode(){const t=this._form.barcode?.trim();if(t){this._busy=!0,this._error="";try{const e=await qt(this.hass,t),i=[e.brand,e.name].filter(Boolean).join(" ").trim(),r=this._form.category?.trim()||(this._settings?.food_categories?.[0]??"Food");this._form={...this._form,name:i||this._form.name,category:r,contents_unit:this._form.contents_unit||"gram",calories_per_content:e.calories_per_100g!=null?String(Math.round(e.calories_per_100g/100*1e4)/1e4):this._form.calories_per_content}}catch(e){this._error=`Barcode lookup failed: ${e}`}finally{this._busy=!1}}}async _scanBarcode(){if(typeof BarcodeDetector>"u"){this._error="BarcodeDetector not supported in this browser — enter the code manually.";return}this._busy=!0,this._error="";try{const t=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}),e=document.createElement("video");e.srcObject=t,await e.play();const i=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128"]});await new Promise(s=>setTimeout(s,700));const r=await i.detect(e);t.getTracks().forEach(s=>s.stop()),r[0]?.rawValue?(this._form={...this._form,barcode:r[0].rawValue},this._busy=!1,await this._lookupBarcode()):this._error="No barcode detected — try again or enter manually."}catch(t){this._error=`Camera scan failed: ${t}`}finally{this._busy=!1}}static{this.styles=pt`
+    `}_onField(t){return e=>{const i=e.target;if(this._form={...this._form,[t]:i.value},this._fieldErrors[t]){const r={...this._fieldErrors};delete r[t],this._fieldErrors=r}}}_blankForm(){return{name:"",quantity:"1",desired_quantity:"0",unit:"piece",location:this._settings?.locations?.[0]??"",category:this._settings?.categories?.[0]??"",priority:"important",notes:"",barcode:"",expiry_date:"",contents_per_unit:"",contents_unit:"",calories_per_content:""}}async _run(t){this._busy=!0,this._error="";try{await t()}catch(e){this._error=String(e)}finally{this._busy=!1}}async _remove(t){confirm(`Remove “${t.name}”?`)&&await this._run(()=>this.hass.callService("ready_home","remove_item",{item_id:t.id}))}async _save(){const t=this._validateForm();if(this._fieldErrors=t,Object.keys(t).length){this._error="Please fix the highlighted fields";return}const e=this._form,i=(e.name||"").trim(),r=this._formReadiness(),o={quantity:Number(e.quantity||0),desired_quantity:Number(e.desired_quantity||0),unit:e.unit||"piece",location:e.location||"",category:e.category||"",priority:e.priority||"important",barcode:e.barcode||"",notes:e.notes||""};e.expiry_date&&(o.expiry_date=e.expiry_date),r==="food"||r==="water"?(o.contents_per_unit=Number(e.contents_per_unit),o.contents_unit=e.contents_unit):(o.contents_per_unit=null,o.contents_unit=null,o.calories_per_content=null,o.liters_per_unit=null,o.calories_per_unit=null),r==="food"?o.calories_per_content=Number(e.calories_per_content):r==="water"&&(o.calories_per_content=null,o.calories_per_unit=null),await this._run(async()=>{this._editing?await this.hass.callService("ready_home","update_item",{item_id:this._editing.id,new_name:i,...o}):await this.hass.callService("ready_home","add_item",{name:i,...o}),this._dialogOpen=!1,this._fieldErrors={}})}async _lookupBarcode(){const t=this._form.barcode?.trim();if(t){this._busy=!0,this._error="";try{const e=await Vt(this.hass,t),i=[e.brand,e.name].filter(Boolean).join(" ").trim(),r=this._form.category?.trim()||(this._settings?.food_categories?.[0]??"Food");this._form={...this._form,name:i||this._form.name,category:r,contents_unit:this._form.contents_unit||"gram",calories_per_content:e.calories_per_100g!=null?String(Math.round(e.calories_per_100g/100*1e4)/1e4):this._form.calories_per_content}}catch(e){this._error=`Barcode lookup failed: ${e}`}finally{this._busy=!1}}}async _scanBarcode(){if(typeof BarcodeDetector>"u"){this._error="BarcodeDetector not supported in this browser — enter the code manually.";return}this._busy=!0,this._error="";try{const t=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}),e=document.createElement("video");e.srcObject=t,await e.play();const i=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128"]});await new Promise(o=>setTimeout(o,700));const r=await i.detect(e);t.getTracks().forEach(o=>o.stop()),r[0]?.rawValue?(this._form={...this._form,barcode:r[0].rawValue},this._busy=!1,await this._lookupBarcode()):this._error="No barcode detected — try again or enter manually."}catch(t){this._error=`Camera scan failed: ${t}`}finally{this._busy=!1}}static{this.styles=_t`
     :host {
       display: block;
       height: 100%;
@@ -940,6 +985,10 @@
       gap: 4px;
       font-size: 0.9rem;
     }
+    .field-label {
+      display: block;
+      line-height: 1.3;
+    }
     .row2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -1015,5 +1064,5 @@
         grid-template-columns: 1fr;
       }
     }
-  `}}m([z({attribute:!1})],f.prototype,"hass");m([z({type:Boolean})],f.prototype,"narrow");m([z({attribute:!1})],f.prototype,"panel");m([g()],f.prototype,"_snapshot");m([g()],f.prototype,"_settings");m([g()],f.prototype,"_search");m([g()],f.prototype,"_filterStatus");m([g()],f.prototype,"_filterLocation");m([g()],f.prototype,"_filterCategory");m([g()],f.prototype,"_filterReadiness");m([g()],f.prototype,"_filtersOpen");m([g()],f.prototype,"_sort");m([g()],f.prototype,"_dialogOpen");m([g()],f.prototype,"_editing");m([g()],f.prototype,"_form");m([g()],f.prototype,"_error");m([g()],f.prototype,"_fieldErrors");m([g()],f.prototype,"_busy");try{customElements.define(zt,f)}catch{}
+  `}}m([D({attribute:!1})],f.prototype,"hass");m([D({type:Boolean})],f.prototype,"narrow");m([D({attribute:!1})],f.prototype,"panel");m([g()],f.prototype,"_snapshot");m([g()],f.prototype,"_settings");m([g()],f.prototype,"_search");m([g()],f.prototype,"_filterStatus");m([g()],f.prototype,"_filterLocation");m([g()],f.prototype,"_filterCategory");m([g()],f.prototype,"_filterReadiness");m([g()],f.prototype,"_filtersOpen");m([g()],f.prototype,"_sort");m([g()],f.prototype,"_dialogOpen");m([g()],f.prototype,"_editing");m([g()],f.prototype,"_form");m([g()],f.prototype,"_error");m([g()],f.prototype,"_fieldErrors");m([g()],f.prototype,"_busy");try{customElements.define(Kt,f)}catch{}
 //# sourceMappingURL=ready-home-panel.js.map

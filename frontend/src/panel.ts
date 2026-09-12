@@ -1,6 +1,7 @@
 /** Ready Home sidebar management panel. */
 
 import { LitElement, css, html, nothing } from "lit";
+import { live } from "lit/directives/live.js";
 import { property, state } from "lit/decorators.js";
 import {
   type InventoryItemDto,
@@ -652,9 +653,11 @@ export class ReadyHomePanel extends LitElement {
   }
 
   private _fieldLabel(text: string, required = false) {
-    return html`${text}${required
-      ? html`<span class="req" aria-hidden="true">*</span>`
-      : nothing}`;
+    return html`<span class="field-label"
+      >${text}${required
+        ? html`<span class="req" aria-hidden="true">*</span>`
+        : nothing}</span
+    >`;
   }
 
   private _fieldError(key: string) {
@@ -891,12 +894,20 @@ export class ReadyHomePanel extends LitElement {
               <label
                 >${this._fieldLabel("Location", true)}
                 <select
-                  .value=${f.location || ""}
+                  .value=${live(f.location || "")}
                   @change=${this._onField("location")}
                 >
-                  <option value="">Select location</option>
+                  <option value="" ?selected=${!(f.location || "")}>
+                    Select location
+                  </option>
                   ${locations.map(
-                    (l) => html`<option value=${l}>${l}</option>`,
+                    (l) =>
+                      html`<option
+                        value=${l}
+                        ?selected=${(f.location || "") === l}
+                      >
+                        ${l}
+                      </option>`,
                   )}
                 </select>
                 ${this._fieldError("location")}
@@ -904,12 +915,20 @@ export class ReadyHomePanel extends LitElement {
               <label
                 >${this._fieldLabel("Category", true)}
                 <select
-                  .value=${f.category || ""}
+                  .value=${live(f.category || "")}
                   @change=${this._onField("category")}
                 >
-                  <option value="">Select category</option>
+                  <option value="" ?selected=${!(f.category || "")}>
+                    Select category
+                  </option>
                   ${categories.map(
-                    (c) => html`<option value=${c}>${c}</option>`,
+                    (c) =>
+                      html`<option
+                        value=${c}
+                        ?selected=${(f.category || "") === c}
+                      >
+                        ${c}
+                      </option>`,
                   )}
                 </select>
                 ${this._fieldError("category")}
@@ -918,11 +937,17 @@ export class ReadyHomePanel extends LitElement {
             <label
               >Priority
               <select
-                .value=${f.priority || "important"}
+                .value=${live(f.priority || "important")}
                 @change=${this._onField("priority")}
               >
                 ${PRIORITIES.map(
-                  (p) => html`<option value=${p}>${ucfirst(p)}</option>`,
+                  (p) =>
+                    html`<option
+                      value=${p}
+                      ?selected=${(f.priority || "important") === p}
+                    >
+                      ${ucfirst(p)}
+                    </option>`,
                 )}
               </select>
             </label>
@@ -981,11 +1006,17 @@ export class ReadyHomePanel extends LitElement {
               <label
                 >${this._fieldLabel("Unit", true)}
                 <select
-                  .value=${f.unit || "piece"}
+                  .value=${live(f.unit || "piece")}
                   @change=${this._onField("unit")}
                 >
                   ${STOCK_UNITS.map(
-                    (u) => html`<option value=${u}>${ucfirst(u)}</option>`,
+                    (u) =>
+                      html`<option
+                        value=${u}
+                        ?selected=${(f.unit || "piece") === u}
+                      >
+                        ${ucfirst(u)}
+                      </option>`,
                   )}
                 </select>
                 ${this._fieldError("unit")}
@@ -1011,13 +1042,20 @@ export class ReadyHomePanel extends LitElement {
                     <label
                       >${this._fieldLabel("Contents unit", true)}
                       <select
-                        .value=${f.contents_unit || ""}
+                        .value=${live(f.contents_unit || "")}
                         @change=${this._onField("contents_unit")}
                       >
-                        <option value="">Select unit</option>
+                        <option value="" ?selected=${!(f.contents_unit || "")}>
+                          Select unit
+                        </option>
                         ${CONTENTS_UNITS.map(
                           (u) =>
-                            html`<option value=${u}>${ucfirst(u)}</option>`,
+                            html`<option
+                              value=${u}
+                              ?selected=${(f.contents_unit || "") === u}
+                            >
+                              ${ucfirst(u)}
+                            </option>`,
                         )}
                       </select>
                       ${this._fieldError("contents_unit")}
@@ -1779,6 +1817,10 @@ export class ReadyHomePanel extends LitElement {
       flex-direction: column;
       gap: 4px;
       font-size: 0.9rem;
+    }
+    .field-label {
+      display: block;
+      line-height: 1.3;
     }
     .row2 {
       display: grid;
