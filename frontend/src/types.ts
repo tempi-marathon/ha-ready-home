@@ -6,8 +6,17 @@ export interface HassEntity {
   attributes: Record<string, unknown>;
 }
 
+/** Subset of HA's FrontendLocaleData used for date display. */
+export interface HassLocale {
+  language: string;
+  date_format?: "language" | "system" | "DMY" | "MDY" | "YMD";
+  time_zone?: "local" | "server";
+}
+
 export interface HomeAssistant {
   states: Record<string, HassEntity>;
+  language?: string;
+  locale?: HassLocale;
   callService: (
     domain: string,
     service: string,

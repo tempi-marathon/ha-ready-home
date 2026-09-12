@@ -261,6 +261,51 @@ export class ReadyHomePanel extends LitElement {
     return "";
   }
 
+  /** Format a stored YYYY-MM-DD using the HA user locale / date_format. */
+  private _formatDate(iso: string | null | undefined): string {
+    if (!iso) return "—";
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+    if (!match) return iso;
+    const date = new Date(
+      Number(match[1]),
+      Number(match[2]) - 1,
+      Number(match[3]),
+    );
+    if (Number.isNaN(date.getTime())) return iso;
+
+    const locale = this.hass?.locale;
+    const language =
+      locale?.language || this.hass?.language || navigator.language || "en";
+    const dateFormat = locale?.date_format ?? "language";
+    const localeTag = dateFormat === "system" ? undefined : language;
+
+    const formatter = new Intl.DateTimeFormat(localeTag, {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+    });
+
+    if (dateFormat === "language" || dateFormat === "system") {
+      return formatter.format(date);
+    }
+
+    const parts = formatter.formatToParts(date);
+    const literal = parts.find((p) => p.type === "literal")?.value ?? "/";
+    const day = parts.find((p) => p.type === "day")?.value ?? "";
+    const month = parts.find((p) => p.type === "month")?.value ?? "";
+    const year = parts.find((p) => p.type === "year")?.value ?? "";
+    const last = parts[parts.length - 1];
+    const lastLiteral = last?.type === "literal" ? last.value : "";
+
+    if (dateFormat === "DMY") {
+      return `${day}${literal}${month}${literal}${year}${lastLiteral}`;
+    }
+    if (dateFormat === "MDY") {
+      return `${month}${literal}${day}${literal}${year}${lastLiteral}`;
+    }
+    return `${year}${literal}${month}${literal}${day}${lastLiteral}`;
+  }
+
   private _toggleMenu = (ev?: Event) => {
     ev?.stopPropagation();
     this.dispatchEvent(
@@ -782,7 +827,7 @@ export class ReadyHomePanel extends LitElement {
         <td>${item.location || "—"}</td>
         <td>${item.category || "—"}</td>
         <td class=${this._expiryClass(status)}>
-          ${item.expiry_date || "—"}
+          ${this._formatDate(item.expiry_date)}
         </td>
         <td class="actions">
           ${this._mdButton("Edit", {
@@ -832,7 +877,7 @@ export class ReadyHomePanel extends LitElement {
           ${this._renderQtyText(item)}
           ${item.expiry_date
             ? html`<span class="${this._expiryClass(status)}"
-                >${item.expiry_date}</span
+                >${this._formatDate(item.expiry_date)}</span
               >`
             : nothing}
         </div>
