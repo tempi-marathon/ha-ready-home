@@ -1,4 +1,4 @@
-"""Sidebar panel registration for Ready Home (Alarmo-style)."""
+"""Sidebar panel registration for Ready Home."""
 
 from __future__ import annotations
 
@@ -29,9 +29,9 @@ DIST_DIR = Path(__file__).parent / "dist"
 async def async_setup_panel(hass: HomeAssistant) -> None:
     """Serve the panel JS as a single file and register the sidebar panel.
 
-    Matches Alarmo: the SPA lives at ``/ready_home``, while the module is
-    served from ``/api/panel_custom/ready_home`` so the two URLs never collide
-    (important for Nabu Casa service-worker fetches of the panel route).
+    The SPA route is ``/ready_home``; the module is served from
+    ``/api/panel_custom/ready_home`` so those URLs never collide (important for
+    Nabu Casa service-worker fetches of the panel route).
     """
     if hass.data.get(_PANEL_KEY):
         return
@@ -86,7 +86,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
 
 def async_unregister_panel(hass: HomeAssistant) -> None:
     """Remove the sidebar panel when the last config entry unloads."""
-    if not hass.data.pop(_PANEL_KEY, None):
+    if hass.data.pop(_PANEL_KEY, None):
         return
     frontend.async_remove_panel(hass, PANEL_URL_PATH)
     _LOGGER.debug("Removed Ready Home sidebar panel")

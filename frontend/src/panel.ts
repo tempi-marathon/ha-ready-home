@@ -24,10 +24,6 @@ const UNITS = [
   "milliliter",
 ] as const;
 
-/** mdi:plus path — avoids bundling @mdi/js. */
-const MDI_PLUS =
-  "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z";
-
 const STATUS_LABELS: Record<string, string> = {
   expired: "Expired",
   urgent: "Urgent",
@@ -254,23 +250,23 @@ export class ReadyHomePanel extends LitElement {
     const foodSupply = a.food_supply_hours;
 
     return html`
-      <ha-top-app-bar-fixed>
-        <ha-menu-button
-          slot="navigationIcon"
-          .hass=${this.hass}
-          .narrow=${this.narrow}
-        ></ha-menu-button>
-        <div slot="title">Ready Home</div>
-        <ha-icon-button
-          slot="actionItems"
-          .path=${MDI_PLUS}
-          .label=${"Add item"}
-          ?disabled=${this._busy}
-          @click=${this._openAdd}
-        ></ha-icon-button>
+      <div class="page">
+        <header class="header">
+          <div class="header-row">
+            <h1>Ready Home</h1>
+            <button
+              type="button"
+              class="primary"
+              ?disabled=${this._busy}
+              @click=${this._openAdd}
+            >
+              Add item
+            </button>
+          </div>
+          <p class="subtitle">${duration}-hour readiness</p>
+        </header>
 
         <div class="content">
-          <p class="subtitle">${duration}-hour readiness</p>
           <div class="stats">
             <div class="stat">
               <span class="stat-label">Overall</span>
@@ -428,7 +424,7 @@ export class ReadyHomePanel extends LitElement {
             ? this._renderCardList(items)
             : this._renderTable(items)}
         </div>
-      </ha-top-app-bar-fixed>
+      </div>
 
       ${this._dialogOpen ? this._renderDialog() : nothing}
     `;
@@ -961,8 +957,27 @@ export class ReadyHomePanel extends LitElement {
       color: var(--primary-text-color);
       font-family: var(--paper-font-body1_-_font-family, Roboto, sans-serif);
     }
-    ha-top-app-bar-fixed {
+    .page {
       height: 100%;
+      overflow: auto;
+      box-sizing: border-box;
+    }
+    .header {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px 20px 0;
+      box-sizing: border-box;
+    }
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      font-weight: 500;
     }
     .content {
       max-width: 1100px;
@@ -971,7 +986,7 @@ export class ReadyHomePanel extends LitElement {
       box-sizing: border-box;
     }
     .subtitle {
-      margin: 0 0 10px;
+      margin: 6px 0 0;
       font-size: 0.85rem;
       color: var(--secondary-text-color);
     }
@@ -1338,7 +1353,11 @@ declare global {
   }
 }
 
-// HA can load the panel module more than once after a cache-bust URL change.
-if (!customElements.get(PANEL_TAG)) {
+// Always define on the current registry (HA may use a scoped one).
+// get() can see a global registration and skip define here, leaving the
+// panel host unupgraded and blank. Retrying define is safe via try/catch.
+try {
   customElements.define(PANEL_TAG, ReadyHomePanel);
+} catch {
+  // Already defined in this registry.
 }
