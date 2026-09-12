@@ -19,15 +19,9 @@ const BRAND_ICON_URL = "/api/ready_home/brand/icon.png";
 const MDI_MENU =
   "M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z";
 
-const UNITS = [
-  "piece",
-  "pack",
-  "box",
-  "gram",
-  "kilogram",
-  "liter",
-  "milliliter",
-] as const;
+const STOCK_UNITS = ["box", "pack", "piece"] as const;
+const CONTENTS_UNITS = ["gram", "kilogram", "liter", "milliliter"] as const;
+const PRIORITIES = ["essential", "important", "optional"] as const;
 
 const STATUS_LABELS: Record<string, string> = {
   expired: "Expired",
@@ -35,6 +29,11 @@ const STATUS_LABELS: Record<string, string> = {
   expiring: "Expiring",
   low: "Low stock",
 };
+
+function ucfirst(value: string): string {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
 
 export class ReadyHomePanel extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
@@ -56,6 +55,7 @@ export class ReadyHomePanel extends LitElement {
   @state() private _editing: InventoryItemDto | null = null;
   @state() private _form: Record<string, string> = {};
   @state() private _error = "";
+  @state() private _fieldErrors: Record<string, string> = {};
   @state() private _busy = false;
 
   private _unsub: (() => void) | null = null;
@@ -549,23 +549,48 @@ export class ReadyHomePanel extends LitElement {
   private _renderMeasure(item: InventoryItemDto) {
     const kind = this._readinessKind(item.category);
     if (kind === "food") {
-      if (item.calories_per_unit == null) return "";
-      return `${this._formatMeasureNumber(item.calories_per_unit)} kcal`;
+      const kcal = this._itemCaloriesOnHand(item);
+      return kcal == null ? "" : `${this._formatMeasureNumber(kcal)} kcal`;
     }
     if (kind === "water") {
-      if (item.liters_per_unit != null) {
-        return `${this._formatMeasureNumber(item.liters_per_unit)} L`;
-      }
-      const unit = (item.unit || "").toLowerCase();
-      if (unit === "liter") {
-        return `${this._formatMeasureNumber(item.quantity)} L`;
-      }
-      if (unit === "milliliter") {
-        return `${this._formatMeasureNumber(item.quantity / 1000)} L`;
-      }
-      return "";
+      const liters = this._itemLitersOnHand(item);
+      return liters == null ? "" : `${this._formatMeasureNumber(liters)} L`;
     }
     return "";
+  }
+
+  private _itemLitersOnHand(item: InventoryItemDto): number | null {
+    if (item.contents_per_unit != null && item.contents_unit) {
+      const each = this._contentsToLiters(
+        item.contents_per_unit,
+        item.contents_unit,
+      );
+      if (each != null) return item.quantity * each;
+    }
+    if (item.unit === "liter") return item.quantity;
+    if (item.unit === "milliliter") return item.quantity / 1000;
+    if (item.liters_per_unit != null) {
+      return item.quantity * item.liters_per_unit;
+    }
+    return null;
+  }
+
+  private _itemCaloriesOnHand(item: InventoryItemDto): number | null {
+    if (item.contents_per_unit != null && item.calories_per_content != null) {
+      return (
+        item.quantity * item.contents_per_unit * item.calories_per_content
+      );
+    }
+    if (item.calories_per_unit != null) {
+      return item.quantity * item.calories_per_unit;
+    }
+    return null;
+  }
+
+  private _contentsToLiters(amount: number, unit: string): number | null {
+    if (unit === "liter") return amount;
+    if (unit === "milliliter") return amount / 1000;
+    return null;
   }
 
   private _formatMeasureNumber(value: number): string {
@@ -574,6 +599,88 @@ export class ReadyHomePanel extends LitElement {
     return Math.abs(n - Math.round(n)) < 0.05
       ? String(Math.round(n))
       : String(Math.round(n * 100) / 100);
+  }
+
+  private _contentsUnitLabel(unit: string): string {
+    return ucfirst(unit || "unit");
+  }
+
+  private _formTotalContents(): number | null {
+    const qty = Number(this._form.quantity || 0);
+    const contents = Number(this._form.contents_per_unit || "");
+    if (!this._form.contents_per_unit || Number.isNaN(contents)) return null;
+    return qty * contents;
+  }
+
+  private _formTotalCalories(): number | null {
+    const total = this._formTotalContents();
+    const cal = Number(this._form.calories_per_content || "");
+    if (total == null || !this._form.calories_per_content || Number.isNaN(cal)) {
+      return null;
+    }
+    return total * cal;
+  }
+
+  private _formTotalLiters(): number | null {
+    const total = this._formTotalContents();
+    if (total == null || !this._form.contents_unit) return null;
+    return this._contentsToLiters(total, this._form.contents_unit);
+  }
+
+  private _fieldLabel(text: string, required = false) {
+    return html`${text}${required
+      ? html`<span class="req" aria-hidden="true">*</span>`
+      : nothing}`;
+  }
+
+  private _fieldError(key: string) {
+    const msg = this._fieldErrors[key];
+    return msg ? html`<div class="field-error">${msg}</div>` : nothing;
+  }
+
+  private _validateForm(): Record<string, string> {
+    const f = this._form;
+    const errors: Record<string, string> = {};
+    if (!(f.name || "").trim()) errors.name = "Name is required";
+    if (!(f.location || "").trim()) errors.location = "Location is required";
+    if (!(f.category || "").trim()) errors.category = "Category is required";
+    const qty = Number(f.quantity);
+    if (f.quantity === "" || Number.isNaN(qty) || qty < 0) {
+      errors.quantity = "Enter a valid quantity";
+    }
+    if (!(f.unit || "").trim()) errors.unit = "Unit is required";
+
+    const kind = this._formReadiness();
+    if (kind === "food" || kind === "water") {
+      const contents = Number(f.contents_per_unit);
+      if (
+        f.contents_per_unit === "" ||
+        Number.isNaN(contents) ||
+        contents <= 0
+      ) {
+        errors.contents_per_unit = "Contents per unit is required";
+      }
+      if (!(f.contents_unit || "").trim()) {
+        errors.contents_unit = "Contents unit is required";
+      } else if (
+        kind === "water" &&
+        f.contents_unit !== "liter" &&
+        f.contents_unit !== "milliliter"
+      ) {
+        errors.contents_unit = "Water contents must be liter or milliliter";
+      }
+    }
+    if (kind === "food") {
+      const cal = Number(f.calories_per_content);
+      if (
+        f.calories_per_content === "" ||
+        Number.isNaN(cal) ||
+        cal < 0
+      ) {
+        errors.calories_per_content = "Calories per contents unit is required";
+      }
+    }
+    return errors;
   }
 
   private _renderStatusBadge(status: string) {
@@ -701,10 +808,9 @@ export class ReadyHomePanel extends LitElement {
     return this._readinessKind(this._form.category || "");
   }
 
-  private _showLitersField(): boolean {
-    if (this._formReadiness() !== "water") return false;
-    const unit = this._form.unit || "piece";
-    return unit !== "liter" && unit !== "milliliter";
+  private _showContentsFields(): boolean {
+    const kind = this._formReadiness();
+    return kind === "food" || kind === "water";
   }
 
   private _showCaloriesField(): boolean {
@@ -721,6 +827,22 @@ export class ReadyHomePanel extends LitElement {
       this._settings?.categories ?? [],
       f.category || "",
     );
+    const kind = this._formReadiness();
+    const totalContents = this._formTotalContents();
+    const totalLiters = this._formTotalLiters();
+    const totalCalories = this._formTotalCalories();
+    const contentsLabel = this._contentsUnitLabel(f.contents_unit || "unit");
+    let qtyHint = "";
+    if (totalContents != null && f.contents_unit) {
+      qtyHint = `Total on hand: ${this._formatMeasureNumber(totalContents)} ${contentsLabel}`;
+      if (totalLiters != null) {
+        qtyHint += ` · ${this._formatMeasureNumber(totalLiters)} L`;
+      }
+      if (totalCalories != null) {
+        qtyHint += ` · ${this._formatMeasureNumber(totalCalories)} kcal`;
+      }
+    }
+
     return html`
       <div class="dialog-backdrop" @click=${this._closeDialog}>
         <div
@@ -734,16 +856,16 @@ export class ReadyHomePanel extends LitElement {
           <div class="form-section">
             <div class="form-section-title">Details</div>
             <label
-              >Name
+              >${this._fieldLabel("Name", true)}
               <input
-                required
                 .value=${f.name || ""}
                 @input=${this._onField("name")}
               />
+              ${this._fieldError("name")}
             </label>
             <div class="row2">
               <label
-                >Location
+                >${this._fieldLabel("Location", true)}
                 <select
                   .value=${f.location || ""}
                   @change=${this._onField("location")}
@@ -753,9 +875,10 @@ export class ReadyHomePanel extends LitElement {
                     (l) => html`<option value=${l}>${l}</option>`,
                   )}
                 </select>
+                ${this._fieldError("location")}
               </label>
               <label
-                >Category
+                >${this._fieldLabel("Category", true)}
                 <select
                   .value=${f.category || ""}
                   @change=${this._onField("category")}
@@ -765,6 +888,7 @@ export class ReadyHomePanel extends LitElement {
                     (c) => html`<option value=${c}>${c}</option>`,
                   )}
                 </select>
+                ${this._fieldError("category")}
               </label>
             </div>
             <label
@@ -773,9 +897,9 @@ export class ReadyHomePanel extends LitElement {
                 .value=${f.priority || "important"}
                 @change=${this._onField("priority")}
               >
-                <option value="essential">essential</option>
-                <option value="important">important</option>
-                <option value="optional">optional</option>
+                ${PRIORITIES.map(
+                  (p) => html`<option value=${p}>${ucfirst(p)}</option>`,
+                )}
               </select>
             </label>
             <label
@@ -805,9 +929,9 @@ export class ReadyHomePanel extends LitElement {
 
           <div class="form-section">
             <div class="form-section-title">Stock</div>
-            <div class="row2">
+            <div class="row3">
               <label
-                >Quantity
+                >${this._fieldLabel("Quantity", true)}
                 <input
                   type="number"
                   min="0"
@@ -815,9 +939,13 @@ export class ReadyHomePanel extends LitElement {
                   .value=${f.quantity || "1"}
                   @input=${this._onField("quantity")}
                 />
+                ${this._fieldError("quantity")}
+                ${qtyHint
+                  ? html`<div class="field-hint">${qtyHint}</div>`
+                  : nothing}
               </label>
               <label
-                >Desired
+                >Desired quantity
                 <input
                   type="number"
                   min="0"
@@ -826,43 +954,85 @@ export class ReadyHomePanel extends LitElement {
                   @input=${this._onField("desired_quantity")}
                 />
               </label>
+              <label
+                >${this._fieldLabel("Unit", true)}
+                <select
+                  .value=${f.unit || "piece"}
+                  @change=${this._onField("unit")}
+                >
+                  ${STOCK_UNITS.map(
+                    (u) => html`<option value=${u}>${ucfirst(u)}</option>`,
+                  )}
+                </select>
+                ${this._fieldError("unit")}
+              </label>
             </div>
-            <label
-              >Unit
-              <select
-                .value=${f.unit || "piece"}
-                @change=${this._onField("unit")}
-              >
-                ${UNITS.map((u) => html`<option value=${u}>${u}</option>`)}
-              </select>
-            </label>
-            ${this._showLitersField()
+            ${this._showContentsFields()
               ? html`
-                  <label
-                    >Liters / unit
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      .value=${f.liters_per_unit || ""}
-                      @input=${this._onField("liters_per_unit")}
-                    />
-                  </label>
+                  <div class="row2">
+                    <label
+                      >${this._fieldLabel("Contents per unit", true)}
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        .value=${f.contents_per_unit || ""}
+                        @input=${this._onField("contents_per_unit")}
+                      />
+                      ${this._fieldError("contents_per_unit")}
+                      <div class="field-hint">
+                        How much is in one bottle, can, or pack?
+                      </div>
+                    </label>
+                    <label
+                      >${this._fieldLabel("Contents unit", true)}
+                      <select
+                        .value=${f.contents_unit || ""}
+                        @change=${this._onField("contents_unit")}
+                      >
+                        <option value="">Select unit</option>
+                        ${CONTENTS_UNITS.map(
+                          (u) =>
+                            html`<option value=${u}>${ucfirst(u)}</option>`,
+                        )}
+                      </select>
+                      ${this._fieldError("contents_unit")}
+                      <div class="field-hint">
+                        Liter, milliliter, gram, or kilogram for one stock unit.
+                      </div>
+                    </label>
+                  </div>
                 `
               : nothing}
             ${this._showCaloriesField()
               ? html`
                   <label
-                    >Calories / unit
+                    >${this._fieldLabel(
+                      `Calories (kcal) per ${contentsLabel}`,
+                      true,
+                    )}
                     <input
                       type="number"
                       min="0"
-                      step="1"
-                      .value=${f.calories_per_unit || ""}
-                      @input=${this._onField("calories_per_unit")}
+                      step="0.01"
+                      .value=${f.calories_per_content || ""}
+                      @input=${this._onField("calories_per_content")}
                     />
+                    ${this._fieldError("calories_per_content")}
+                    <div class="field-hint">
+                      Calories per contents unit${totalCalories != null
+                        ? html` · Total calories on hand:
+                            ${this._formatMeasureNumber(totalCalories)} kcal`
+                        : nothing}
+                    </div>
                   </label>
                 `
+              : nothing}
+            ${kind === "none"
+              ? html`<div class="field-hint">
+                  Category is not mapped to food or water — this item will not
+                  count toward readiness.
+                </div>`
               : nothing}
           </div>
 
@@ -878,6 +1048,10 @@ export class ReadyHomePanel extends LitElement {
             </label>
           </div>
 
+          ${this._error
+            ? html`<div class="error" role="alert">${this._error}</div>`
+            : nothing}
+
           <div class="dialog-actions">
             ${this._mdButton("Cancel", {
               variant: "text",
@@ -885,7 +1059,7 @@ export class ReadyHomePanel extends LitElement {
             })}
             ${this._mdButton("Save", {
               variant: "filled",
-              disabled: this._busy || !(f.name || "").trim(),
+              disabled: this._busy,
               onClick: () => void this._save(),
             })}
           </div>
@@ -901,12 +1075,16 @@ export class ReadyHomePanel extends LitElement {
         | HTMLSelectElement
         | HTMLTextAreaElement;
       this._form = { ...this._form, [key]: target.value };
+      if (this._fieldErrors[key]) {
+        const next = { ...this._fieldErrors };
+        delete next[key];
+        this._fieldErrors = next;
+      }
     };
   }
 
-  private _openAdd = () => {
-    this._editing = null;
-    this._form = {
+  private _blankForm(): Record<string, string> {
+    return {
       name: "",
       quantity: "1",
       desired_quantity: "0",
@@ -917,37 +1095,65 @@ export class ReadyHomePanel extends LitElement {
       notes: "",
       barcode: "",
       expiry_date: "",
-      liters_per_unit: "",
-      calories_per_unit: "",
+      contents_per_unit: "",
+      contents_unit: "",
+      calories_per_content: "",
     };
+  }
+
+  private _openAdd = () => {
+    this._editing = null;
+    this._form = this._blankForm();
+    this._fieldErrors = {};
     this._error = "";
     this._dialogOpen = true;
   };
 
   private _openEdit = (item: InventoryItemDto) => {
     this._editing = item;
+    const stockUnit = (STOCK_UNITS as readonly string[]).includes(item.unit)
+      ? item.unit
+      : "piece";
+    let contentsPer = item.contents_per_unit;
+    let contentsUnit = item.contents_unit || "";
+    let caloriesPerContent = item.calories_per_content;
+    if (contentsPer == null && item.liters_per_unit != null) {
+      contentsPer = item.liters_per_unit;
+      contentsUnit = "liter";
+    }
+    if (
+      caloriesPerContent == null &&
+      item.calories_per_unit != null &&
+      contentsPer == null
+    ) {
+      contentsPer = 1;
+      contentsUnit = contentsUnit || "gram";
+      caloriesPerContent = item.calories_per_unit;
+    }
     this._form = {
       name: item.name,
       quantity: String(item.quantity),
       desired_quantity: String(item.desired_quantity),
-      unit: item.unit,
+      unit: stockUnit,
       location: item.location,
       category: item.category,
       priority: item.priority,
       notes: item.notes || "",
       barcode: item.barcode || "",
       expiry_date: item.expiry_date || "",
-      liters_per_unit:
-        item.liters_per_unit != null ? String(item.liters_per_unit) : "",
-      calories_per_unit:
-        item.calories_per_unit != null ? String(item.calories_per_unit) : "",
+      contents_per_unit: contentsPer != null ? String(contentsPer) : "",
+      contents_unit: contentsUnit,
+      calories_per_content:
+        caloriesPerContent != null ? String(caloriesPerContent) : "",
     };
+    this._fieldErrors = {};
     this._error = "";
     this._dialogOpen = true;
   };
 
   private _closeDialog = () => {
     this._dialogOpen = false;
+    this._fieldErrors = {};
   };
 
   private async _run(action: () => Promise<unknown>) {
@@ -970,13 +1176,15 @@ export class ReadyHomePanel extends LitElement {
   }
 
   private async _save() {
-    const f = this._form;
-    const name = (f.name || "").trim();
-    if (!name) {
-      this._error = "Name is required";
+    const errors = this._validateForm();
+    this._fieldErrors = errors;
+    if (Object.keys(errors).length) {
+      this._error = "Please fix the highlighted fields";
       return;
     }
 
+    const f = this._form;
+    const name = (f.name || "").trim();
     const kind = this._formReadiness();
     const payload: Record<string, unknown> = {
       quantity: Number(f.quantity || 0),
@@ -989,14 +1197,21 @@ export class ReadyHomePanel extends LitElement {
       notes: f.notes || "",
     };
     if (f.expiry_date) payload.expiry_date = f.expiry_date;
-    if (kind === "water" && this._showLitersField() && f.liters_per_unit !== "") {
-      payload.liters_per_unit = Number(f.liters_per_unit);
-    } else if (kind !== "water" || !this._showLitersField()) {
+
+    if (kind === "food" || kind === "water") {
+      payload.contents_per_unit = Number(f.contents_per_unit);
+      payload.contents_unit = f.contents_unit;
+    } else {
+      payload.contents_per_unit = null;
+      payload.contents_unit = null;
+      payload.calories_per_content = null;
       payload.liters_per_unit = null;
+      payload.calories_per_unit = null;
     }
-    if (kind === "food" && f.calories_per_unit !== "") {
-      payload.calories_per_unit = Number(f.calories_per_unit);
-    } else if (kind !== "food") {
+    if (kind === "food") {
+      payload.calories_per_content = Number(f.calories_per_content);
+    } else if (kind === "water") {
+      payload.calories_per_content = null;
       payload.calories_per_unit = null;
     }
 
@@ -1014,6 +1229,7 @@ export class ReadyHomePanel extends LitElement {
         });
       }
       this._dialogOpen = false;
+      this._fieldErrors = {};
     });
   }
 
@@ -1032,10 +1248,13 @@ export class ReadyHomePanel extends LitElement {
         ...this._form,
         name: name || this._form.name,
         category,
-        calories_per_unit:
+        contents_unit: this._form.contents_unit || "gram",
+        calories_per_content:
           result.calories_per_100g != null
-            ? String(result.calories_per_100g)
-            : this._form.calories_per_unit,
+            ? String(
+                Math.round((result.calories_per_100g / 100) * 10000) / 10000,
+              )
+            : this._form.calories_per_content,
       };
     } catch (err) {
       this._error = `Barcode lookup failed: ${err}`;
@@ -1535,6 +1754,26 @@ export class ReadyHomePanel extends LitElement {
       grid-template-columns: 1fr 1fr;
       gap: 8px;
     }
+    .row3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .req {
+      color: var(--error-color, #c62828);
+      margin-left: 2px;
+    }
+    .field-error {
+      color: var(--error-color, #c62828);
+      font-size: 0.75rem;
+      margin-top: 2px;
+    }
+    .field-hint {
+      color: var(--secondary-text-color);
+      font-size: 0.75rem;
+      margin-top: 4px;
+      line-height: 1.35;
+    }
     .dialog-actions {
       display: flex;
       justify-content: flex-end;
@@ -1580,7 +1819,8 @@ export class ReadyHomePanel extends LitElement {
         flex-direction: column;
         align-items: stretch;
       }
-      .row2 {
+      .row2,
+      .row3 {
         grid-template-columns: 1fr;
       }
     }

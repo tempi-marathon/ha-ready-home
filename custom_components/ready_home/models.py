@@ -10,15 +10,24 @@ from uuid import uuid4
 
 
 class InventoryUnit(StrEnum):
-    """Measurement units for inventory items."""
+    """Stock count units (how many bottles/packs you have).
+
+    Measurable units (liter/gram/…) remain valid for legacy stored items;
+    new UI only offers piece/pack/box and uses ContentsUnit for package size.
+    """
 
     PIECE = "piece"
+    PACK = "pack"
+    BOX = "box"
     GRAM = "gram"
     KILOGRAM = "kilogram"
     LITER = "liter"
     MILLILITER = "milliliter"
-    PACK = "pack"
-    BOX = "box"
+
+    @classmethod
+    def stock_units(cls) -> tuple[InventoryUnit, ...]:
+        """Units offered for quantity in the panel."""
+        return (cls.BOX, cls.PACK, cls.PIECE)
 
     def is_measurable(self) -> bool:
         """Return True when the unit can convert to liters/grams directly."""
@@ -28,6 +37,25 @@ class InventoryUnit(StrEnum):
             InventoryUnit.LITER,
             InventoryUnit.MILLILITER,
         }
+
+
+class ContentsUnit(StrEnum):
+    """Unit for the contents of one stock unit (bottle, can, bag)."""
+
+    GRAM = "gram"
+    KILOGRAM = "kilogram"
+    LITER = "liter"
+    MILLILITER = "milliliter"
+
+    @classmethod
+    def sorted(cls) -> tuple[ContentsUnit, ...]:
+        return (cls.GRAM, cls.KILOGRAM, cls.LITER, cls.MILLILITER)
+
+    def is_volume(self) -> bool:
+        return self in {ContentsUnit.LITER, ContentsUnit.MILLILITER}
+
+    def is_mass(self) -> bool:
+        return self in {ContentsUnit.GRAM, ContentsUnit.KILOGRAM}
 
 
 class InventoryPriority(StrEnum):
@@ -46,6 +74,35 @@ def _norm_cat(value: str) -> str:
     return value.strip().lower()
 
 
+def contents_to_liters(amount: float, unit: ContentsUnit) -> float | None:
+    """Convert a contents amount to liters, or None if not volume."""
+    if unit == ContentsUnit.LITER:
+        return float(amount)
+    if unit == ContentsUnit.MILLILITER:
+        return float(amount) / 1000.0
+    return None
+
+
+def derive_liters_per_unit(
+    contents_per_unit: float | None,
+    contents_unit: ContentsUnit | None,
+) -> float | None:
+    """Liters contained in one stock unit, when contents are volume."""
+    if contents_per_unit is None or contents_unit is None:
+        return None
+    return contents_to_liters(contents_per_unit, contents_unit)
+
+
+def derive_calories_per_unit(
+    contents_per_unit: float | None,
+    calories_per_content: float | None,
+) -> float | None:
+    """Calories in one stock unit from contents × kcal-per-contents-unit."""
+    if contents_per_unit is None or calories_per_content is None:
+        return None
+    return float(contents_per_unit) * float(calories_per_content)
+
+
 @dataclass(frozen=True, slots=True)
 class InventoryItem:
     """A single inventory stock item."""
@@ -61,6 +118,10 @@ class InventoryItem:
     desired_quantity: float = 0.0
     priority: InventoryPriority = InventoryPriority.IMPORTANT
     expiry_date: str | None = None  # ISO date YYYY-MM-DD
+    contents_per_unit: float | None = None
+    contents_unit: ContentsUnit | None = None
+    calories_per_content: float | None = None  # kcal per 1 contents_unit
+    # Legacy / derived fields kept for readiness fallbacks and older clients
     liters_per_unit: float | None = None
     calories_per_unit: float | None = None
     created_at: str = field(default_factory=_utc_now_iso)
@@ -77,11 +138,25 @@ class InventoryItem:
         today = today or date.today()
         return date.fromisoformat(self.expiry_date) < today
 
+    def total_contents(self) -> float | None:
+        """Quantity × contents_per_unit, when contents are set."""
+        if self.contents_per_unit is None:
+            return None
+        return float(self.quantity) * float(self.contents_per_unit)
+
     def water_liters_on_hand(self) -> float | None:
         """Liters from current stock, or None if unmeasurable.
 
         Callers must decide whether the item counts as water (category mapping).
         """
+        if self.contents_per_unit is not None and self.contents_unit is not None:
+            liters_each = contents_to_liters(
+                float(self.contents_per_unit), self.contents_unit
+            )
+            if liters_each is not None:
+                return float(self.quantity) * liters_each
+
+        # Legacy: quantity stored directly in volume units
         if self.unit == InventoryUnit.LITER:
             return float(self.quantity)
         if self.unit == InventoryUnit.MILLILITER:
@@ -95,15 +170,41 @@ class InventoryItem:
 
         Callers must decide whether the item counts as food (category mapping).
         """
+        if (
+            self.contents_per_unit is not None
+            and self.calories_per_content is not None
+        ):
+            return (
+                float(self.quantity)
+                * float(self.contents_per_unit)
+                * float(self.calories_per_content)
+            )
         if self.calories_per_unit is None:
             return None
         return float(self.quantity) * float(self.calories_per_unit)
+
+    def with_synced_derived(self) -> InventoryItem:
+        """Refresh liters_per_unit / calories_per_unit from contents fields."""
+        if self.contents_per_unit is None or self.contents_unit is None:
+            return self
+        return replace(
+            self,
+            liters_per_unit=derive_liters_per_unit(
+                self.contents_per_unit, self.contents_unit
+            ),
+            calories_per_unit=derive_calories_per_unit(
+                self.contents_per_unit, self.calories_per_content
+            ),
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to a JSON-compatible dict (no legacy resource field)."""
         data = asdict(self)
         data["unit"] = self.unit.value
         data["priority"] = self.priority.value
+        data["contents_unit"] = (
+            self.contents_unit.value if self.contents_unit is not None else None
+        )
         return data
 
     @classmethod
@@ -121,7 +222,12 @@ class InventoryItem:
             elif legacy == "water":
                 category = "Water"
 
-        return cls(
+        raw_contents_unit = data.get("contents_unit")
+        contents_unit: ContentsUnit | None = None
+        if raw_contents_unit:
+            contents_unit = ContentsUnit(str(raw_contents_unit))
+
+        item = cls(
             id=str(data.get("id") or uuid4().hex),
             name=str(data["name"]),
             quantity=float(data.get("quantity", 0)),
@@ -133,11 +239,15 @@ class InventoryItem:
             barcode=str(data.get("barcode") or ""),
             priority=InventoryPriority(data.get("priority", InventoryPriority.IMPORTANT)),
             expiry_date=data.get("expiry_date"),
+            contents_per_unit=_optional_float(data.get("contents_per_unit")),
+            contents_unit=contents_unit,
+            calories_per_content=_optional_float(data.get("calories_per_content")),
             liters_per_unit=_optional_float(data.get("liters_per_unit")),
             calories_per_unit=_optional_float(data.get("calories_per_unit")),
             created_at=str(data.get("created_at") or _utc_now_iso()),
             updated_at=str(data.get("updated_at") or _utc_now_iso()),
         )
+        return item
 
     def with_updates(self, **changes: Any) -> InventoryItem:
         """Return a copy with the given fields updated and updated_at refreshed."""
@@ -147,7 +257,14 @@ class InventoryItem:
             changes["unit"] = InventoryUnit(changes["unit"])
         if "priority" in changes and isinstance(changes["priority"], str):
             changes["priority"] = InventoryPriority(changes["priority"])
-        return replace(self, **changes)
+        if "contents_unit" in changes:
+            raw = changes["contents_unit"]
+            if raw is None or raw == "":
+                changes["contents_unit"] = None
+            elif isinstance(raw, str):
+                changes["contents_unit"] = ContentsUnit(raw)
+        updated = replace(self, **changes)
+        return updated.with_synced_derived()
 
 
 @dataclass(frozen=True, slots=True)

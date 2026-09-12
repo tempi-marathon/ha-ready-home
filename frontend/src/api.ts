@@ -14,6 +14,9 @@ export interface InventoryItemDto {
   barcode?: string;
   priority: string;
   expiry_date: string | null;
+  contents_per_unit?: number | null;
+  contents_unit?: string | null;
+  calories_per_content?: number | null;
   liters_per_unit?: number | null;
   calories_per_unit?: number | null;
 }

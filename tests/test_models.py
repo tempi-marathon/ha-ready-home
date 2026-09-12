@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from custom_components.ready_home.models import (
+    ContentsUnit,
     InventoryItem,
     InventoryPriority,
     InventoryUnit,
@@ -85,6 +86,43 @@ def test_water_liters_helpers() -> None:
         category="Water",
     )
     assert unmeasurable.water_liters_on_hand() is None
+
+
+def test_contents_model_water_and_food() -> None:
+    water = InventoryItem(
+        name="Bottles",
+        quantity=12,
+        unit=InventoryUnit.PIECE,
+        category="Water",
+        contents_per_unit=0.5,
+        contents_unit=ContentsUnit.LITER,
+    ).with_synced_derived()
+    assert water.water_liters_on_hand() == 6.0
+    assert water.liters_per_unit == 0.5
+
+    rice = InventoryItem(
+        name="Rice",
+        quantity=1,
+        unit=InventoryUnit.PIECE,
+        category="Food",
+        contents_per_unit=400,
+        contents_unit=ContentsUnit.GRAM,
+        calories_per_content=3.54,
+    ).with_synced_derived()
+    assert rice.calories_on_hand() == 1416.0
+    assert rice.calories_per_unit == 1416.0
+
+    soup = InventoryItem(
+        name="Soup",
+        quantity=1,
+        unit=InventoryUnit.PIECE,
+        category="Food",
+        contents_per_unit=800,
+        contents_unit=ContentsUnit.MILLILITER,
+        calories_per_content=0.49,
+    )
+    assert soup.calories_on_hand() == 392.0
+    assert soup.water_liters_on_hand() == 0.8
 
 
 def test_category_mapping_helpers() -> None:

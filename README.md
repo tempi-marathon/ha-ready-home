@@ -50,7 +50,8 @@ data:
   unit: piece
   location: Garage
   category: Water
-  liters_per_unit: 1.5
+  contents_per_unit: 1.5
+  contents_unit: liter
   priority: essential
 ```
 
@@ -63,7 +64,9 @@ data:
   quantity: 10
   unit: pack
   category: Food
-  calories_per_unit: 600
+  contents_per_unit: 400
+  contents_unit: gram
+  calories_per_content: 3.54
   expiry_date: "2027-06-01"
 ```
 

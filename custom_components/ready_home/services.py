@@ -14,6 +14,7 @@ from .attention import expiry_severity, item_summary
 from .const import ATTR_CONFIG_ENTRY_ID, DOMAIN
 from .helpers import entry_id_from_call_data, get_coordinator
 from .models import (
+    ContentsUnit,
     InventoryItem,
     InventoryPriority,
     InventoryUnit,
@@ -41,6 +42,9 @@ ATTR_PRIORITY = "priority"
 ATTR_EXPIRY_DATE = "expiry_date"
 ATTR_LITERS_PER_UNIT = "liters_per_unit"
 ATTR_CALORIES_PER_UNIT = "calories_per_unit"
+ATTR_CONTENTS_PER_UNIT = "contents_per_unit"
+ATTR_CONTENTS_UNIT = "contents_unit"
+ATTR_CALORIES_PER_CONTENT = "calories_per_content"
 ATTR_DELTA = "delta"
 ATTR_STATUS = "status"
 ATTR_READINESS = "readiness"
@@ -80,6 +84,11 @@ ADD_SCHEMA = vol.Schema(
             [p.value for p in InventoryPriority]
         ),
         vol.Optional(ATTR_EXPIRY_DATE): vol.Any(None, cv.string),
+        vol.Optional(ATTR_CONTENTS_PER_UNIT): vol.Any(None, vol.Coerce(float)),
+        vol.Optional(ATTR_CONTENTS_UNIT): vol.Any(
+            None, vol.In([u.value for u in ContentsUnit])
+        ),
+        vol.Optional(ATTR_CALORIES_PER_CONTENT): vol.Any(None, vol.Coerce(float)),
         vol.Optional(ATTR_LITERS_PER_UNIT): vol.Any(None, vol.Coerce(float)),
         vol.Optional(ATTR_CALORIES_PER_UNIT): vol.Any(None, vol.Coerce(float)),
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
@@ -100,6 +109,11 @@ UPDATE_SCHEMA = vol.Schema(
         vol.Optional(ATTR_BARCODE): cv.string,
         vol.Optional(ATTR_PRIORITY): vol.In([p.value for p in InventoryPriority]),
         vol.Optional(ATTR_EXPIRY_DATE): vol.Any(None, cv.string),
+        vol.Optional(ATTR_CONTENTS_PER_UNIT): vol.Any(None, vol.Coerce(float)),
+        vol.Optional(ATTR_CONTENTS_UNIT): vol.Any(
+            None, "", vol.In([u.value for u in ContentsUnit])
+        ),
+        vol.Optional(ATTR_CALORIES_PER_CONTENT): vol.Any(None, vol.Coerce(float)),
         vol.Optional(ATTR_LITERS_PER_UNIT): vol.Any(None, vol.Coerce(float)),
         vol.Optional(ATTR_CALORIES_PER_UNIT): vol.Any(None, vol.Coerce(float)),
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
@@ -178,9 +192,16 @@ def async_register_services(hass: HomeAssistant) -> None:
                 data.get(ATTR_PRIORITY, InventoryPriority.IMPORTANT)
             ),
             expiry_date=data.get(ATTR_EXPIRY_DATE),
+            contents_per_unit=data.get(ATTR_CONTENTS_PER_UNIT),
+            contents_unit=(
+                ContentsUnit(data[ATTR_CONTENTS_UNIT])
+                if data.get(ATTR_CONTENTS_UNIT)
+                else None
+            ),
+            calories_per_content=data.get(ATTR_CALORIES_PER_CONTENT),
             liters_per_unit=data.get(ATTR_LITERS_PER_UNIT),
             calories_per_unit=data.get(ATTR_CALORIES_PER_UNIT),
-        )
+        ).with_synced_derived()
         await coordinator.store.async_add(item)
         return {"item_id": item.id, "item": item_summary(item)}
 
@@ -202,6 +223,9 @@ def async_register_services(hass: HomeAssistant) -> None:
             ATTR_BARCODE: "barcode",
             ATTR_PRIORITY: "priority",
             ATTR_EXPIRY_DATE: "expiry_date",
+            ATTR_CONTENTS_PER_UNIT: "contents_per_unit",
+            ATTR_CONTENTS_UNIT: "contents_unit",
+            ATTR_CALORIES_PER_CONTENT: "calories_per_content",
             ATTR_LITERS_PER_UNIT: "liters_per_unit",
             ATTR_CALORIES_PER_UNIT: "calories_per_unit",
         }

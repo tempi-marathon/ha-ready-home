@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+import pytest
+
 from custom_components.ready_home.models import (
+    ContentsUnit,
     InventoryItem,
     InventoryUnit,
     ReadinessSettings,
@@ -73,7 +76,44 @@ def test_milliliters_convert_to_liters() -> None:
     assert result.water_percent == 100.0
 
 
-def test_food_calories() -> None:
+def test_food_from_contents_model() -> None:
+    settings = ReadinessSettings(
+        number_of_people=1,
+        duration_hours=72,
+        calories_per_person_per_day=2000,
+    )
+    # 1 piece × 400 g × 3.54 kcal/g = 1416; need more packs for 6000 target
+    items = [
+        InventoryItem(
+            name="Rice",
+            quantity=5,
+            unit=InventoryUnit.PIECE,
+            category="Food",
+            contents_per_unit=400,
+            contents_unit=ContentsUnit.GRAM,
+            calories_per_content=3.0,
+        )
+    ]
+    result = assess(items, settings)
+    assert result.food_on_hand == 6000.0
+    assert result.food_percent == 100.0
+
+
+def test_water_from_contents_model() -> None:
+    settings = ReadinessSettings(number_of_people=1, duration_hours=72)
+    items = [
+        InventoryItem(
+            name="Bottles",
+            quantity=12,
+            unit=InventoryUnit.PIECE,
+            category="Water",
+            contents_per_unit=0.5,
+            contents_unit=ContentsUnit.LITER,
+        )
+    ]
+    result = assess(items, settings)
+    assert result.water_on_hand == 6.0
+    assert result.water_percent == pytest.approx(6 / 9 * 100)
     settings = ReadinessSettings(
         number_of_people=1,
         duration_hours=72,
