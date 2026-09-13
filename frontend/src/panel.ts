@@ -29,7 +29,11 @@ const COMPANION_SCAN_MESSAGE =
   "Scanning needs the Home Assistant Companion app. Enter the barcode and tap Lookup.";
 
 const PANEL_TAG = "ready-home-panel";
-const BRAND_ICON_URL = "/api/ready_home/brand/icon.png";
+const BRAND_BASE = "/api/ready_home/brand";
+const BRAND_LOGO_URL = `${BRAND_BASE}/logo.png`;
+const BRAND_LOGO_2X_URL = `${BRAND_BASE}/logo@2x.png`;
+const BRAND_DARK_LOGO_URL = `${BRAND_BASE}/dark_logo.png`;
+const BRAND_DARK_LOGO_2X_URL = `${BRAND_BASE}/dark_logo@2x.png`;
 
 /** mdi:menu — open HA sidebar on narrow layouts. */
 const MDI_MENU =
@@ -329,10 +333,14 @@ export class ReadyHomePanel extends LitElement {
     const water = a.water_percent;
     const food = a.food_percent;
     const counts = this._bucketCounts;
-    const duration = a.duration_hours ?? this._settings?.duration_hours ?? 72;
     const supply = a.supply_hours;
     const waterSupply = a.water_supply_hours;
     const foodSupply = a.food_supply_hours;
+    const darkLogo = this.hass?.themes?.darkMode === true;
+    const logoSrc = darkLogo ? BRAND_DARK_LOGO_URL : BRAND_LOGO_URL;
+    const logoSrcset = darkLogo
+      ? `${BRAND_DARK_LOGO_URL} 1x, ${BRAND_DARK_LOGO_2X_URL} 2x`
+      : `${BRAND_LOGO_URL} 1x, ${BRAND_LOGO_2X_URL} 2x`;
 
     return html`
       <div class="page">
@@ -353,17 +361,15 @@ export class ReadyHomePanel extends LitElement {
                     </button>
                   `
                 : nothing}
-              <img
-                class="brand-icon"
-                src=${BRAND_ICON_URL}
-                alt=""
-                width="40"
-                height="40"
-              />
-              <div class="brand-text">
-                <h1>Ready Home</h1>
-                <p class="subtitle">${duration}-hour emergency readiness</p>
-              </div>
+              <h1 class="brand-heading">
+                <img
+                  class="brand-logo"
+                  src=${logoSrc}
+                  srcset=${logoSrcset}
+                  alt="Ready Home"
+                  height="40"
+                />
+              </h1>
             </div>
             <div class="header-actions">
               ${this._mdButton("Scan", {
@@ -1481,29 +1487,20 @@ export class ReadyHomePanel extends LitElement {
     .brand {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 8px;
       min-width: 0;
     }
-    .brand-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 6px;
-      flex-shrink: 0;
-      object-fit: contain;
-    }
-    .brand-text {
-      min-width: 0;
-    }
-    .header h1 {
+    .brand-heading {
       margin: 0;
-      font-size: 1.5rem;
-      font-weight: 500;
-      line-height: 1.2;
+      line-height: 0;
+      min-width: 0;
     }
-    .subtitle {
-      margin: 4px 0 0;
-      font-size: 0.9rem;
-      color: var(--secondary-text-color);
+    .brand-logo {
+      display: block;
+      height: 40px;
+      width: auto;
+      max-width: min(280px, 100%);
+      object-fit: contain;
     }
     .icon-btn {
       display: inline-flex;
@@ -2006,6 +2003,10 @@ export class ReadyHomePanel extends LitElement {
       min-width: 0;
     }
     @media (max-width: 720px) {
+      .brand-logo {
+        height: 36px;
+        max-width: min(200px, 42vw);
+      }
       .stats {
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 6px;

@@ -26,6 +26,9 @@ export interface HomeAssistant {
   states: Record<string, HassEntity>;
   language?: string;
   locale?: HassLocale;
+  themes?: {
+    darkMode?: boolean;
+  };
   auth?: {
     external?: HassExternalBus;
   };
