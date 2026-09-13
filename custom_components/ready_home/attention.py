@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, timedelta
+from typing import Any
 
 from .models import InventoryItem
 
@@ -81,9 +82,13 @@ def build_buckets(
     )
 
 
-def item_summary(item: InventoryItem) -> dict:
-    """Compact dict for sensor attributes and events."""
-    return {
+def item_summary(item: InventoryItem) -> dict[str, Any]:
+    """Compact dict for sensor attributes and events.
+
+    Always includes identity and stock fields. Measurable fields
+    (contents, kcal, liters) are included only when set / computable.
+    """
+    summary: dict[str, Any] = {
         "id": item.id,
         "name": item.name,
         "quantity": item.quantity,
@@ -93,4 +98,53 @@ def item_summary(item: InventoryItem) -> dict:
         "category": item.category,
         "priority": item.priority.value,
         "expiry_date": item.expiry_date,
+    }
+    if item.contents_per_unit is not None:
+        summary["contents_per_unit"] = item.contents_per_unit
+    if item.contents_unit is not None:
+        summary["contents_unit"] = item.contents_unit.value
+    if item.calories_per_content is not None:
+        summary["calories_per_content"] = item.calories_per_content
+    if item.calories_per_unit is not None:
+        summary["calories_per_unit"] = item.calories_per_unit
+    calories = item.calories_on_hand()
+    if calories is not None:
+        summary["calories_on_hand"] = calories
+    if item.liters_per_unit is not None:
+        summary["liters_per_unit"] = item.liters_per_unit
+    liters = item.water_liters_on_hand()
+    if liters is not None:
+        summary["water_liters_on_hand"] = liters
+    return summary
+
+
+def attention_cause_attrs(buckets: AttentionBuckets) -> dict[str, Any]:
+    """Counts, cause keys, and a short cause string for the problem sensor."""
+    expired_count = len(buckets.expired)
+    urgent_count = len(buckets.within_urgent)
+    expiring_count = len(buckets.within_expiring)
+    low_stock_count = len(buckets.low_stock)
+
+    causes: list[str] = []
+    parts: list[str] = []
+    if expired_count:
+        causes.append("expired")
+        parts.append(f"{expired_count} expired")
+    if urgent_count:
+        causes.append("urgent")
+        parts.append(f"{urgent_count} urgent")
+    if expiring_count:
+        causes.append("expiring")
+        parts.append(f"{expiring_count} expiring")
+    if low_stock_count:
+        causes.append("low_stock")
+        parts.append(f"{low_stock_count} low stock")
+
+    return {
+        "expired_count": expired_count,
+        "urgent_count": urgent_count,
+        "expiring_count": expiring_count,
+        "low_stock_count": low_stock_count,
+        "causes": causes,
+        "cause": ", ".join(parts) if parts else None,
     }

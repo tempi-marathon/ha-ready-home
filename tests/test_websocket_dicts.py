@@ -115,7 +115,6 @@ def test_settings_dict() -> None:
         water_categories=("Water",),
         expiring_days=21,
         urgent_days=5,
-        attribute_item_cap=50,
     )
     coordinator = SimpleNamespace(settings=settings)
     result = _settings_dict(coordinator)  # type: ignore[arg-type]
@@ -126,4 +125,4 @@ def test_settings_dict() -> None:
     assert result["water_categories"] == ["Water"]
     assert result["expiring_days"] == 21
     assert result["urgent_days"] == 5
-    assert result["attribute_item_cap"] == 50
+    assert "attribute_item_cap" not in result

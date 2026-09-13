@@ -1953,7 +1953,32 @@ export class ReadyHomePanel extends LitElement {
     }
     @media (max-width: 720px) {
       .stats {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+      .stat {
+        padding: 8px 6px;
+      }
+      .stat-label {
+        font-size: 0.7rem;
+        gap: 4px;
+        margin-bottom: 2px;
+      }
+      .stat-icon {
+        width: 14px;
+        height: 14px;
+      }
+      .stat-value {
+        font-size: 1.15rem;
+      }
+      .stat-meta,
+      .stat-duration {
+        font-size: 0.7rem;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .header,
       .content {

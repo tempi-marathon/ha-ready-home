@@ -281,7 +281,6 @@ class ReadinessSettings:
     water_categories: tuple[str, ...] = ("Water",)
     expiring_days: int = 30
     urgent_days: int = 7
-    attribute_item_cap: int = 100
 
     @classmethod
     def from_options(cls, options: dict[str, Any]) -> ReadinessSettings:
@@ -309,7 +308,6 @@ class ReadinessSettings:
             water_categories=water_categories,
             expiring_days=int(options.get("expiring_days", 30)),
             urgent_days=int(options.get("urgent_days", 7)),
-            attribute_item_cap=int(options.get("attribute_item_cap", 100)),
         )
 
     def is_food_category(self, category: str) -> bool:

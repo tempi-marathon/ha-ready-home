@@ -5,11 +5,14 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from custom_components.ready_home.attention import (
+    AttentionBuckets,
+    attention_cause_attrs,
     build_buckets,
     expiry_severity,
     item_summary,
 )
 from custom_components.ready_home.models import (
+    ContentsUnit,
     InventoryItem,
     InventoryPriority,
     InventoryUnit,
@@ -116,3 +119,60 @@ def test_item_summary() -> None:
         "priority": "essential",
         "expiry_date": "2027-01-15",
     }
+
+
+def test_item_summary_includes_measurable_fields() -> None:
+    item = InventoryItem(
+        name="Beans",
+        quantity=2,
+        unit=InventoryUnit.BOX,
+        contents_per_unit=400.0,
+        contents_unit=ContentsUnit.GRAM,
+        calories_per_content=3.5,
+    ).with_synced_derived()
+    summary = item_summary(item)
+    assert summary["contents_per_unit"] == 400.0
+    assert summary["contents_unit"] == "gram"
+    assert summary["calories_per_content"] == 3.5
+    assert summary["calories_per_unit"] == 1400.0
+    assert summary["calories_on_hand"] == 2800.0
+    assert "water_liters_on_hand" not in summary
+    assert "liters_per_unit" not in summary
+
+
+def test_item_summary_includes_water_fields() -> None:
+    item = InventoryItem(
+        name="Water",
+        quantity=4,
+        unit=InventoryUnit.PACK,
+        contents_per_unit=1.5,
+        contents_unit=ContentsUnit.LITER,
+    ).with_synced_derived()
+    summary = item_summary(item)
+    assert summary["contents_per_unit"] == 1.5
+    assert summary["contents_unit"] == "liter"
+    assert summary["liters_per_unit"] == 1.5
+    assert summary["water_liters_on_hand"] == 6.0
+    assert "calories_on_hand" not in summary
+
+
+def test_attention_cause_attrs() -> None:
+    buckets = AttentionBuckets(
+        expired=[_item("a")],
+        within_urgent=[_item("b"), _item("c")],
+        within_expiring=[],
+        low_stock=[_item("d")],
+    )
+    attrs = attention_cause_attrs(buckets)
+    assert attrs["expired_count"] == 1
+    assert attrs["urgent_count"] == 2
+    assert attrs["expiring_count"] == 0
+    assert attrs["low_stock_count"] == 1
+    assert attrs["causes"] == ["expired", "urgent", "low_stock"]
+    assert attrs["cause"] == "1 expired, 2 urgent, 1 low stock"
+
+
+def test_attention_cause_attrs_empty() -> None:
+    attrs = attention_cause_attrs(AttentionBuckets([], [], [], []))
+    assert attrs["causes"] == []
+    assert attrs["cause"] is None

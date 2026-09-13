@@ -43,7 +43,6 @@ export interface SettingsDto {
   water_categories: string[];
   expiring_days: number;
   urgent_days: number;
-  attribute_item_cap: number;
 }
 
 export async function listItems(hass: HomeAssistant): Promise<Snapshot> {

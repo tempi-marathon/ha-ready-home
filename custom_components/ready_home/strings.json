@@ -64,8 +64,7 @@
         "title": "Thresholds",
         "data": {
           "expiring_days": "Expiring window (days)",
-          "urgent_days": "Urgent window (days)",
-          "attribute_item_cap": "Max items in sensor attributes"
+          "urgent_days": "Urgent window (days)"
         }
       }
     },
@@ -95,7 +94,19 @@
         "name": "Low stock items"
       },
       "items": {
-        "name": "Items"
+        "name": "Total items"
+      },
+      "people": {
+        "name": "People"
+      },
+      "duration": {
+        "name": "Duration"
+      },
+      "food_target": {
+        "name": "Food target"
+      },
+      "water_target": {
+        "name": "Water target"
       }
     },
     "binary_sensor": {
