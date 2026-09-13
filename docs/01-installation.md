@@ -1,4 +1,4 @@
-# Installation
+# 1. Installation
 
 Ready Home installs through [HACS](https://hacs.xyz/) as a **custom repository** (category: **Integration**). A default-store listing (and one-click add button) may follow once approved.
 
@@ -11,7 +11,10 @@ Ready Home installs through [HACS](https://hacs.xyz/) as a **custom repository**
 
 After setup, a **Ready Home** item appears in the sidebar for inventory management (add/edit/remove, filters, barcode).
 
-## Next steps
+## Lovelace resource cleanup
 
-- [Configuration](configuration.md)
-- [Usage](usage.md)
+If you previously added a Lovelace resource for `/ready_home/ready-home.js`, you can remove it (Settings → Dashboards → ⋮ → Resources, or from YAML). Storage-mode installs clean that resource up automatically on the next load.
+
+---
+
+**Next:** [2. Configuration](02-configuration.md)

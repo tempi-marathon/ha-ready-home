@@ -1,4 +1,4 @@
-# Sensors and events
+# 5. Sensors and events
 
 ## Sensors
 
@@ -23,4 +23,8 @@ These fire once on transition:
 - `ready_home_item_expiring`
 - `ready_home_item_low_stock`
 
-See [Automations](automations.md) for examples.
+See [6. Automations](06-automations.md) for examples.
+
+---
+
+**Previous:** [4. Actions](04-actions.md) · **Next:** [6. Automations](06-automations.md)

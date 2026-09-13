@@ -1,6 +1,6 @@
-# Usage
+# 3. Usage
 
-After [installation](installation.md), open **Ready Home** in the Home Assistant sidebar.
+After [installation](01-installation.md), open **Ready Home** in the Home Assistant sidebar.
 
 ## Sidebar panel
 
@@ -26,10 +26,14 @@ Use **Add item** (or **Edit** on a row). You can set quantity, desired quantity,
 - **Desktop:** enter a barcode and tap **Lookup** (Open Food Facts).
 - **Companion app:** use **Scan** with the device camera when available.
 
-Lookup is also available via the `ready_home.lookup_barcode` [action](actions.md).
+Lookup is also available via the `ready_home.lookup_barcode` [action](04-actions.md).
 
 ## Sensors
 
-Readiness and attention counts appear as Home Assistant entities on the Ready Home device. See [Sensors and events](sensors-and-events.md).
+Readiness and attention counts appear as Home Assistant entities on the Ready Home device. See [5. Sensors and events](05-sensors-and-events.md).
 
 ![Sensors](images/ha-sensors.png)
+
+---
+
+**Previous:** [2. Configuration](02-configuration.md) · **Next:** [4. Actions](04-actions.md)

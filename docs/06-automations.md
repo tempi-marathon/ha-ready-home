@@ -1,4 +1,4 @@
-# Example automations
+# 6. Automations
 
 ## Notify when something expires
 
@@ -29,7 +29,6 @@ actions:
       item: "Restock {{ trigger.event.data.item.name }}"
 ```
 
-## Related
+---
 
-- [Sensors and events](sensors-and-events.md)
-- [Actions](actions.md)
+**Previous:** [5. Sensors and events](05-sensors-and-events.md) · **Next:** [7. Readiness math](07-readiness.md)

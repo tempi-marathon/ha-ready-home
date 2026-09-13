@@ -1,4 +1,4 @@
-# Actions
+# 4. Actions
 
 Use **Developer Tools → Actions**. The sidebar panel uses `add_item`, `update_item`, and `remove_item` for writes; `adjust_quantity`, `list_items`, and `lookup_barcode` are mainly for automations and scripts.
 
@@ -77,3 +77,7 @@ action: ready_home.list_items
 data:
   status: low_stock
 ```
+
+---
+
+**Previous:** [3. Usage](03-usage.md) · **Next:** [5. Sensors and events](05-sensors-and-events.md)
