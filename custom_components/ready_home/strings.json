@@ -95,7 +95,19 @@
         "name": "Low stock items"
       },
       "items": {
-        "name": "Items"
+        "name": "Total items"
+      },
+      "people": {
+        "name": "People"
+      },
+      "duration": {
+        "name": "Duration"
+      },
+      "food_target": {
+        "name": "Food target"
+      },
+      "water_target": {
+        "name": "Water target"
       }
     },
     "binary_sensor": {

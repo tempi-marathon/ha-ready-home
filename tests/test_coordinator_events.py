@@ -70,10 +70,14 @@ async def test_events_fire_once_on_transition(
     data1 = await coordinator._async_update_data()
     assert len(data1.buckets.expired) == 1
     assert len(data1.buckets.low_stock) == 1
+    assert coordinator.update_context is not None
 
     fired = [c.args[0] for c in coordinator.hass.bus.async_fire.call_args_list]
     assert EVENT_ITEM_EXPIRED in fired
     assert EVENT_ITEM_LOW_STOCK in fired
+
+    for call in coordinator.hass.bus.async_fire.call_args_list:
+        assert call.kwargs.get("context") is coordinator.update_context
 
     coordinator.hass.bus.async_fire.reset_mock()
 

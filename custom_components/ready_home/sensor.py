@@ -3,32 +3,44 @@
 from __future__ import annotations
 
 from homeassistant.components.sensor import (
+    SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, EntityCategory
-from homeassistant.core import HomeAssistant
+from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfTime, UnitOfVolume
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .attention import item_summary
 from .const import (
     ATTR_DURATION_HOURS,
+    ATTR_DURATION_HOURS_UNIT,
     ATTR_FOOD_ON_HAND,
+    ATTR_FOOD_ON_HAND_UNIT,
     ATTR_FOOD_PERCENT,
     ATTR_FOOD_SUPPLY_HOURS,
+    ATTR_FOOD_SUPPLY_HOURS_UNIT,
     ATTR_FOOD_TARGET,
+    ATTR_FOOD_TARGET_UNIT,
     ATTR_ITEMS,
     ATTR_NEEDS_PEOPLE_COUNT,
     ATTR_SUPPLY_HOURS,
+    ATTR_SUPPLY_HOURS_UNIT,
     ATTR_UNMEASURABLE_FOOD,
     ATTR_UNMEASURABLE_WATER,
     ATTR_WATER_ON_HAND,
+    ATTR_WATER_ON_HAND_UNIT,
     ATTR_WATER_PERCENT,
     ATTR_WATER_SUPPLY_HOURS,
+    ATTR_WATER_SUPPLY_HOURS_UNIT,
     ATTR_WATER_TARGET,
+    ATTR_WATER_TARGET_UNIT,
     DOMAIN,
+    UNIT_HOURS,
+    UNIT_KCAL,
+    UNIT_LITERS,
 )
 from .coordinator import ReadyHomeCoordinator
 from .helpers import device_info_for_entry
@@ -50,6 +62,10 @@ async def async_setup_entry(
             ExpiringItemsSensor(coordinator, entry),
             LowStockItemsSensor(coordinator, entry),
             TotalItemsSensor(coordinator, entry),
+            PeopleSensor(coordinator, entry),
+            DurationSensor(coordinator, entry),
+            FoodTargetSensor(coordinator, entry),
+            WaterTargetSensor(coordinator, entry),
         ]
     )
 
@@ -71,6 +87,14 @@ class ReadyHomeSensorBase(CoordinatorEntity[ReadyHomeCoordinator], SensorEntity)
     def suggested_object_id(self) -> str | None:
         """Stable English object id (not derived from translated name)."""
         return self._object_id
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Apply the shared update context before writing state."""
+        ctx = self.coordinator.update_context
+        if ctx is not None:
+            self.async_set_context(ctx)
+        super()._handle_coordinator_update()
 
 
 class ReadinessSensor(ReadyHomeSensorBase):
@@ -96,15 +120,23 @@ class ReadinessSensor(ReadyHomeSensorBase):
         a = self.coordinator.data.assessment
         return {
             ATTR_WATER_ON_HAND: a.water_on_hand,
+            ATTR_WATER_ON_HAND_UNIT: UNIT_LITERS,
             ATTR_WATER_TARGET: a.water_target,
+            ATTR_WATER_TARGET_UNIT: UNIT_LITERS,
             ATTR_WATER_PERCENT: a.water_percent,
             ATTR_WATER_SUPPLY_HOURS: a.water_supply_hours,
+            ATTR_WATER_SUPPLY_HOURS_UNIT: UNIT_HOURS,
             ATTR_FOOD_ON_HAND: a.food_on_hand,
+            ATTR_FOOD_ON_HAND_UNIT: UNIT_KCAL,
             ATTR_FOOD_TARGET: a.food_target,
+            ATTR_FOOD_TARGET_UNIT: UNIT_KCAL,
             ATTR_FOOD_PERCENT: a.food_percent,
             ATTR_FOOD_SUPPLY_HOURS: a.food_supply_hours,
+            ATTR_FOOD_SUPPLY_HOURS_UNIT: UNIT_HOURS,
             ATTR_SUPPLY_HOURS: a.supply_hours,
+            ATTR_SUPPLY_HOURS_UNIT: UNIT_HOURS,
             ATTR_DURATION_HOURS: a.duration_hours,
+            ATTR_DURATION_HOURS_UNIT: UNIT_HOURS,
             ATTR_UNMEASURABLE_WATER: a.unmeasurable_water_count,
             ATTR_UNMEASURABLE_FOOD: a.unmeasurable_food_count,
             ATTR_NEEDS_PEOPLE_COUNT: a.needs_people_count,
@@ -134,8 +166,11 @@ class WaterReadinessSensor(ReadyHomeSensorBase):
         a = self.coordinator.data.assessment
         return {
             ATTR_WATER_ON_HAND: a.water_on_hand,
+            ATTR_WATER_ON_HAND_UNIT: UNIT_LITERS,
             ATTR_WATER_TARGET: a.water_target,
+            ATTR_WATER_TARGET_UNIT: UNIT_LITERS,
             ATTR_WATER_SUPPLY_HOURS: a.water_supply_hours,
+            ATTR_WATER_SUPPLY_HOURS_UNIT: UNIT_HOURS,
             ATTR_UNMEASURABLE_WATER: a.unmeasurable_water_count,
         }
 
@@ -163,8 +198,11 @@ class FoodReadinessSensor(ReadyHomeSensorBase):
         a = self.coordinator.data.assessment
         return {
             ATTR_FOOD_ON_HAND: a.food_on_hand,
+            ATTR_FOOD_ON_HAND_UNIT: UNIT_KCAL,
             ATTR_FOOD_TARGET: a.food_target,
+            ATTR_FOOD_TARGET_UNIT: UNIT_KCAL,
             ATTR_FOOD_SUPPLY_HOURS: a.food_supply_hours,
+            ATTR_FOOD_SUPPLY_HOURS_UNIT: UNIT_HOURS,
             ATTR_UNMEASURABLE_FOOD: a.unmeasurable_food_count,
         }
 
@@ -208,6 +246,7 @@ class ExpiringItemsSensor(_BucketSensor):
 
     _attr_translation_key = "expiring_items"
     _attr_icon = "mdi:calendar-alert"
+    _unrecorded_attributes = frozenset({ATTR_ITEMS, "urgent_items"})
 
     def __init__(self, coordinator: ReadyHomeCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, entry, "expiring_items")
@@ -254,7 +293,7 @@ class LowStockItemsSensor(_BucketSensor):
 
 
 class TotalItemsSensor(ReadyHomeSensorBase):
-    """Total inventory item count."""
+    """Total inventory item count (diagnostic)."""
 
     _attr_translation_key = "items"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -267,3 +306,77 @@ class TotalItemsSensor(ReadyHomeSensorBase):
     @property
     def native_value(self) -> int:
         return len(self.coordinator.data.items)
+
+
+class PeopleSensor(ReadyHomeSensorBase):
+    """Household size from readiness settings."""
+
+    _attr_translation_key = "people"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:account-group"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator: ReadyHomeCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "people")
+
+    @property
+    def native_value(self) -> int | None:
+        return self.coordinator.settings.number_of_people
+
+
+class DurationSensor(ReadyHomeSensorBase):
+    """Planning horizon duration from readiness settings."""
+
+    _attr_translation_key = "duration"
+    _attr_native_unit_of_measurement = UnitOfTime.HOURS
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:timer-sand"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator: ReadyHomeCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "duration")
+
+    @property
+    def native_value(self) -> int:
+        return self.coordinator.settings.duration_hours
+
+
+class FoodTargetSensor(ReadyHomeSensorBase):
+    """Computed food calorie target for the planning horizon."""
+
+    _attr_translation_key = "food_target"
+    _attr_native_unit_of_measurement = UNIT_KCAL
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:food-apple"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator: ReadyHomeCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "food_target")
+
+    @property
+    def native_value(self) -> float | None:
+        target = self.coordinator.settings.food_target_calories()
+        if target is None:
+            return None
+        return round(target, 1)
+
+
+class WaterTargetSensor(ReadyHomeSensorBase):
+    """Computed water liter target for the planning horizon."""
+
+    _attr_translation_key = "water_target"
+    _attr_native_unit_of_measurement = UnitOfVolume.LITERS
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:water"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator: ReadyHomeCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "water_target")
+
+    @property
+    def native_value(self) -> float | None:
+        target = self.coordinator.settings.water_target_liters()
+        if target is None:
+            return None
+        return round(target, 1)

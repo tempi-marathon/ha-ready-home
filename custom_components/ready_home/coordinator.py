@@ -6,7 +6,7 @@ import logging
 from datetime import date, datetime
 from typing import Any
 
-from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.core import CALLBACK_TYPE, Context, HomeAssistant, callback
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -54,6 +54,7 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
         self.store = store
         self.settings = settings
         self.entry_id: str | None = None
+        self.update_context: Context | None = None
         self._unsub_daily: CALLBACK_TYPE | None = None
         self._unsub_store: CALLBACK_TYPE | None = None
 
@@ -94,6 +95,9 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
         self.hass.async_create_task(self.async_request_refresh())
 
     async def _async_update_data(self) -> ReadyHomeData:
+        # One context per refresh so Activity can chain related state changes
+        # and logbook rows (HA 2026.9 "What happened").
+        self.update_context = Context()
         items = self.store.items
         today = date.today()
         assessment = assess(items, self.settings, today)
@@ -115,6 +119,7 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
         """Fire events only when an item newly enters a bucket."""
         previous = self.store.get_bucket_state()
         current: dict[str, str] = {}
+        context = self.update_context
 
         for item in buckets.expired:
             current[item.id] = "expired"
@@ -139,6 +144,7 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
             self.hass.bus.async_fire(
                 event_type,
                 {"item": item_summary(item), "bucket": bucket},
+                context=context,
             )
 
         for item in buckets.low_stock:
@@ -147,6 +153,7 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
             self.hass.bus.async_fire(
                 EVENT_ITEM_LOW_STOCK,
                 {"item": item_summary(item)},
+                context=context,
             )
 
         # Persist combined map: expiry bucket + low_stock flags

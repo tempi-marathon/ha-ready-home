@@ -77,3 +77,25 @@ ATTR_DURATION_HOURS: Final = "duration_hours"
 ATTR_UNMEASURABLE_WATER: Final = "unmeasurable_water_count"
 ATTR_UNMEASURABLE_FOOD: Final = "unmeasurable_food_count"
 ATTR_NEEDS_PEOPLE_COUNT: Final = "needs_people_count"
+
+# Companion unit attributes (HA cannot attach UoM to attributes)
+ATTR_WATER_ON_HAND_UNIT: Final = "water_on_hand_unit"
+ATTR_WATER_TARGET_UNIT: Final = "water_target_unit"
+ATTR_WATER_SUPPLY_HOURS_UNIT: Final = "water_supply_hours_unit"
+ATTR_FOOD_ON_HAND_UNIT: Final = "food_on_hand_unit"
+ATTR_FOOD_TARGET_UNIT: Final = "food_target_unit"
+ATTR_FOOD_SUPPLY_HOURS_UNIT: Final = "food_supply_hours_unit"
+ATTR_SUPPLY_HOURS_UNIT: Final = "supply_hours_unit"
+ATTR_DURATION_HOURS_UNIT: Final = "duration_hours_unit"
+
+UNIT_KCAL: Final = "kcal"
+UNIT_LITERS: Final = "L"
+UNIT_HOURS: Final = "h"
+
+# Problem-sensor cause attributes
+ATTR_CAUSE: Final = "cause"
+ATTR_CAUSES: Final = "causes"
+ATTR_EXPIRED_COUNT: Final = "expired_count"
+ATTR_URGENT_COUNT: Final = "urgent_count"
+ATTR_EXPIRING_COUNT: Final = "expiring_count"
+ATTR_LOW_STOCK_COUNT: Final = "low_stock_count"

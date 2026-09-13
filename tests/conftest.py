@@ -124,6 +124,19 @@ def _ensure_homeassistant_stubs() -> None:
     modules["homeassistant.core"].ServiceCall = MagicMock
     modules["homeassistant.core"].SupportsResponse = MagicMock
 
+    class Context:  # noqa: D101
+        def __init__(
+            self,
+            id: str | None = None,
+            user_id: str | None = None,
+            parent_id: str | None = None,
+        ) -> None:
+            self.id = id or "stub-context"
+            self.user_id = user_id
+            self.parent_id = parent_id
+
+    modules["homeassistant.core"].Context = Context
+
     # Minimal cv stubs used by service schemas at import time.
     cv = modules["homeassistant.helpers.config_validation"]
     cv.string = str

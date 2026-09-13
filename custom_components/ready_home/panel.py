@@ -79,6 +79,8 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
 
     module_url = f"{PANEL_MODULE_URL}?v={VERSION}&m={cache_bust}"
 
+    # Do not set config_panel_domain — Configure must open the options flow
+    # (profile / targets / lists / thresholds), not navigate to this inventory panel.
     await panel_custom.async_register_panel(
         hass,
         frontend_url_path=PANEL_URL_PATH,
@@ -89,7 +91,6 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         embed_iframe=False,
         require_admin=False,
         config={},
-        config_panel_domain=DOMAIN,
     )
     hass.data[_PANEL_KEY] = True
     _LOGGER.info("Registered Ready Home sidebar panel (%s)", module_url)

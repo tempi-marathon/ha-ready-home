@@ -95,7 +95,19 @@
         "name": "Lage voorraad"
       },
       "items": {
-        "name": "Items"
+        "name": "Totaal items"
+      },
+      "people": {
+        "name": "Personen"
+      },
+      "duration": {
+        "name": "Duur"
+      },
+      "food_target": {
+        "name": "Voedseldoel"
+      },
+      "water_target": {
+        "name": "Waterdoel"
       }
     },
     "binary_sensor": {
