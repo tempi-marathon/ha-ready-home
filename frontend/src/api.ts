@@ -72,7 +72,10 @@ export async function lookupBarcode(
 ): Promise<{
   name: string;
   brand: string;
+  contents_per_unit: number | null;
+  contents_unit: string | null;
   calories_per_100g: number | null;
+  calories_per_100ml: number | null;
   barcode: string;
 }> {
   return hass.connection.sendMessagePromise({

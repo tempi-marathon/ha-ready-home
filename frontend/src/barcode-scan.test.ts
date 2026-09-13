@@ -142,6 +142,7 @@ describe("applyBarcodeLookupToForm", () => {
       {
         name: "",
         category: "",
+        contents_per_unit: "",
         contents_unit: "",
         calories_per_content: "",
         barcode: "3017620422003",
@@ -149,14 +150,66 @@ describe("applyBarcodeLookupToForm", () => {
       {
         brand: "Nutella",
         name: "Hazelnut spread",
+        contents_per_unit: 400,
+        contents_unit: "gram",
         calories_per_100g: 539,
+        calories_per_100ml: null,
       },
       "Food",
     );
     expect(next.name).toBe("Nutella Hazelnut spread");
     expect(next.category).toBe("Food");
+    expect(next.contents_per_unit).toBe("400");
     expect(next.contents_unit).toBe("gram");
     expect(next.calories_per_content).toBe("5.39");
+  });
+
+  it("prefills pasta package size and kcal per gram", () => {
+    const next = applyBarcodeLookupToForm(
+      {
+        name: "",
+        category: "",
+        contents_per_unit: "",
+        contents_unit: "",
+        calories_per_content: "",
+        barcode: "8000050836927",
+      },
+      {
+        brand: "Grand'Italia",
+        name: "Farfalle",
+        contents_per_unit: 500,
+        contents_unit: "gram",
+        calories_per_100g: 357,
+        calories_per_100ml: null,
+      },
+    );
+    expect(next.name).toBe("Grand'Italia Farfalle");
+    expect(next.contents_per_unit).toBe("500");
+    expect(next.contents_unit).toBe("gram");
+    expect(next.calories_per_content).toBe("3.57");
+  });
+
+  it("converts kcal/100g to kcal per kilogram", () => {
+    const next = applyBarcodeLookupToForm(
+      {
+        name: "",
+        category: "",
+        contents_per_unit: "",
+        contents_unit: "",
+        calories_per_content: "",
+        barcode: "1",
+      },
+      {
+        brand: "Bulk",
+        name: "Rice",
+        contents_per_unit: 1,
+        contents_unit: "kilogram",
+        calories_per_100g: 350,
+        calories_per_100ml: null,
+      },
+    );
+    expect(next.contents_unit).toBe("kilogram");
+    expect(next.calories_per_content).toBe("3500");
   });
 
   it("does not overwrite populated fields", () => {
@@ -164,6 +217,7 @@ describe("applyBarcodeLookupToForm", () => {
       {
         name: "My custom name",
         category: "Snacks",
+        contents_per_unit: "250",
         contents_unit: "kilogram",
         calories_per_content: "4",
         barcode: "1",
@@ -171,12 +225,15 @@ describe("applyBarcodeLookupToForm", () => {
       {
         brand: "Nutella",
         name: "Hazelnut spread",
+        contents_per_unit: 400,
+        contents_unit: "gram",
         calories_per_100g: 539,
+        calories_per_100ml: null,
       },
-      "Food",
     );
     expect(next.name).toBe("My custom name");
     expect(next.category).toBe("Snacks");
+    expect(next.contents_per_unit).toBe("250");
     expect(next.contents_unit).toBe("kilogram");
     expect(next.calories_per_content).toBe("4");
   });

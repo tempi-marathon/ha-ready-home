@@ -13,9 +13,32 @@ const PRODUCT_FORMATS = new Set([
 export type BarcodeLookupResult = {
   name: string;
   brand: string;
+  contents_per_unit: number | null;
+  contents_unit: string | null;
   calories_per_100g: number | null;
+  calories_per_100ml: number | null;
   barcode: string;
 };
+
+function caloriesPerContentUnit(
+  contentsUnit: string,
+  result: Pick<BarcodeLookupResult, "calories_per_100g" | "calories_per_100ml">,
+): number | null {
+  const round4 = (n: number) => Math.round(n * 10000) / 10000;
+  if (contentsUnit === "gram" && result.calories_per_100g != null) {
+    return round4(result.calories_per_100g / 100);
+  }
+  if (contentsUnit === "kilogram" && result.calories_per_100g != null) {
+    return round4(result.calories_per_100g * 10);
+  }
+  if (contentsUnit === "milliliter" && result.calories_per_100ml != null) {
+    return round4(result.calories_per_100ml / 100);
+  }
+  if (contentsUnit === "liter" && result.calories_per_100ml != null) {
+    return round4(result.calories_per_100ml * 10);
+  }
+  return null;
+}
 
 export type ScanHandle = {
   done: Promise<string | null>;
@@ -147,7 +170,15 @@ export function scanProductBarcode(
 /** Prefill form fields from Open Food Facts — only empty fields. */
 export function applyBarcodeLookupToForm(
   form: Record<string, string>,
-  result: Pick<BarcodeLookupResult, "name" | "brand" | "calories_per_100g">,
+  result: Pick<
+    BarcodeLookupResult,
+    | "name"
+    | "brand"
+    | "contents_per_unit"
+    | "contents_unit"
+    | "calories_per_100g"
+    | "calories_per_100ml"
+  >,
   foodCategoryFallback = "Food",
 ): Record<string, string> {
   const next = { ...form };
@@ -158,16 +189,20 @@ export function applyBarcodeLookupToForm(
   if (!(next.category || "").trim()) {
     next.category = foodCategoryFallback;
   }
-  if (!(next.contents_unit || "").trim()) {
-    next.contents_unit = "gram";
-  }
   if (
-    !(next.calories_per_content || "").trim() &&
-    result.calories_per_100g != null
+    !(next.contents_per_unit || "").trim() &&
+    result.contents_per_unit != null
   ) {
-    next.calories_per_content = String(
-      Math.round((result.calories_per_100g / 100) * 10000) / 10000,
-    );
+    next.contents_per_unit = String(result.contents_per_unit);
+  }
+  if (!(next.contents_unit || "").trim()) {
+    next.contents_unit = result.contents_unit?.trim() || "gram";
+  }
+  if (!(next.calories_per_content || "").trim()) {
+    const calories = caloriesPerContentUnit(next.contents_unit, result);
+    if (calories != null) {
+      next.calories_per_content = String(calories);
+    }
   }
   return next;
 }

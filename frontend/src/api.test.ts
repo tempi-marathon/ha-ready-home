@@ -62,7 +62,10 @@ describe("api websocket payloads", () => {
     const send = vi.fn().mockResolvedValue({
       name: "Beans",
       brand: "Acme",
+      contents_per_unit: 400,
+      contents_unit: "gram",
       calories_per_100g: 100,
+      calories_per_100ml: null,
       barcode: "123",
     });
     await lookupBarcode(mockHass(send), "123");
