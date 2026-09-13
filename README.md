@@ -27,6 +27,10 @@ After setup, a **Ready Home** item appears in the sidebar for inventory manageme
 
 If you previously added a Lovelace resource for `/ready_home/ready-home.js`, you can remove it (Settings → Dashboards → ⋮ → Resources, or from YAML). Storage-mode installs clean that resource up automatically on the next load.
 
+## Access
+
+Ready Home treats inventory as a **shared household** resource. Any logged-in Home Assistant user who can open the sidebar panel or call `ready_home.*` actions can read and change the full inventory. Profile settings (people, targets, lists, thresholds) stay in the integration options flow, which is admin-only.
+
 ## Configuration
 
 Open the integration → Configure:

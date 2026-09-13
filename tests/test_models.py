@@ -47,6 +47,23 @@ def test_legacy_resource_fills_empty_category() -> None:
     assert water.category == "Water"
 
 
+def test_from_dict_normalizes_invalid_expiry() -> None:
+    item = InventoryItem.from_dict(
+        {"name": "Rice", "quantity": 1, "expiry_date": "boom"}
+    )
+    assert item.expiry_date is None
+    empty = InventoryItem.from_dict(
+        {"name": "Rice", "quantity": 1, "expiry_date": ""}
+    )
+    assert empty.expiry_date is None
+    assert empty.is_expired() is False
+
+
+def test_is_expired_invalid_date_soft_fails() -> None:
+    item = InventoryItem(name="X", quantity=1, expiry_date="not-iso")
+    assert item.is_expired() is False
+
+
 def test_with_updates_refreshes_timestamp() -> None:
     item = InventoryItem(name="Rice", quantity=2)
     updated = item.with_updates(quantity=5, calories_per_unit=400)

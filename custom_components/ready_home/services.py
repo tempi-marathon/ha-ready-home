@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import math
+from datetime import date
 from typing import Any
 
 import voluptuous as vol
@@ -11,6 +13,7 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 
 from .attention import expiry_severity, item_summary
+from .barcode import is_valid_barcode
 from .const import ATTR_CONFIG_ENTRY_ID, DOMAIN
 from .helpers import entry_id_from_call_data, get_coordinator
 from .models import (
@@ -49,6 +52,12 @@ ATTR_DELTA = "delta"
 ATTR_STATUS = "status"
 ATTR_READINESS = "readiness"
 
+_MAX_NUMERIC = 1e9
+_MAX_NAME = 200
+_MAX_LOCATION = 100
+_MAX_CATEGORY = 100
+_MAX_NOTES = 2000
+
 
 def _resolve_item(
     coordinator: Any,
@@ -68,29 +77,98 @@ def _resolve_item(
     raise ServiceValidationError("Provide item_id or name")
 
 
+def _finite_non_negative(value: Any) -> float:
+    """Coerce to a finite float in [0, _MAX_NUMERIC]."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError) as err:
+        raise vol.Invalid("expected a number") from err
+    if not math.isfinite(number):
+        raise vol.Invalid("must be a finite number")
+    if number < 0 or number > _MAX_NUMERIC:
+        raise vol.Invalid(f"must be between 0 and {_MAX_NUMERIC:g}")
+    return number
+
+
+def _finite_delta(value: Any) -> float:
+    """Coerce adjust delta to a finite float within ±_MAX_NUMERIC."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError) as err:
+        raise vol.Invalid("expected a number") from err
+    if not math.isfinite(number):
+        raise vol.Invalid("must be a finite number")
+    if abs(number) > _MAX_NUMERIC:
+        raise vol.Invalid(f"must be between -{_MAX_NUMERIC:g} and {_MAX_NUMERIC:g}")
+    return number
+
+
+def _optional_finite_non_negative(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    return _finite_non_negative(value)
+
+
+def _bounded_string(max_length: int):
+    """Return a voluptuous validator for a bounded string."""
+
+    def validator(value: Any) -> str:
+        text = cv.string(value)
+        if len(text) > max_length:
+            raise vol.Invalid(f"must be at most {max_length} characters")
+        return text
+
+    return validator
+
+
+def _expiry_date(value: Any) -> str | None:
+    """Accept None/empty or a valid YYYY-MM-DD date string."""
+    if value is None or value == "":
+        return None
+    text = cv.string(value).strip()
+    if not text:
+        return None
+    try:
+        return date.fromisoformat(text).isoformat()
+    except ValueError as err:
+        raise vol.Invalid("expiry_date must be YYYY-MM-DD") from err
+
+
+def _item_barcode(value: Any) -> str:
+    """Accept empty or a barcode matching the OFF allowlist."""
+    text = cv.string(value).strip()
+    if not text:
+        return ""
+    if not is_valid_barcode(text):
+        raise vol.Invalid(
+            "barcode must be 4–32 alphanumeric characters"
+        )
+    return text
+
+
 ADD_SCHEMA = vol.Schema(
     {
-        vol.Required(ATTR_NAME): cv.string,
-        vol.Required(ATTR_QUANTITY): vol.Coerce(float),
-        vol.Optional(ATTR_DESIRED_QUANTITY, default=0): vol.Coerce(float),
+        vol.Required(ATTR_NAME): _bounded_string(_MAX_NAME),
+        vol.Required(ATTR_QUANTITY): _finite_non_negative,
+        vol.Optional(ATTR_DESIRED_QUANTITY, default=0): _finite_non_negative,
         vol.Optional(ATTR_UNIT, default=InventoryUnit.PIECE.value): vol.In(
             [u.value for u in InventoryUnit]
         ),
-        vol.Optional(ATTR_LOCATION, default=""): cv.string,
-        vol.Optional(ATTR_CATEGORY, default=""): cv.string,
-        vol.Optional(ATTR_NOTES, default=""): cv.string,
-        vol.Optional(ATTR_BARCODE, default=""): cv.string,
+        vol.Optional(ATTR_LOCATION, default=""): _bounded_string(_MAX_LOCATION),
+        vol.Optional(ATTR_CATEGORY, default=""): _bounded_string(_MAX_CATEGORY),
+        vol.Optional(ATTR_NOTES, default=""): _bounded_string(_MAX_NOTES),
+        vol.Optional(ATTR_BARCODE, default=""): _item_barcode,
         vol.Optional(ATTR_PRIORITY, default=InventoryPriority.IMPORTANT.value): vol.In(
             [p.value for p in InventoryPriority]
         ),
-        vol.Optional(ATTR_EXPIRY_DATE): vol.Any(None, cv.string),
-        vol.Optional(ATTR_CONTENTS_PER_UNIT): vol.Any(None, vol.Coerce(float)),
+        vol.Optional(ATTR_EXPIRY_DATE): _expiry_date,
+        vol.Optional(ATTR_CONTENTS_PER_UNIT): _optional_finite_non_negative,
         vol.Optional(ATTR_CONTENTS_UNIT): vol.Any(
             None, vol.In([u.value for u in ContentsUnit])
         ),
-        vol.Optional(ATTR_CALORIES_PER_CONTENT): vol.Any(None, vol.Coerce(float)),
-        vol.Optional(ATTR_LITERS_PER_UNIT): vol.Any(None, vol.Coerce(float)),
-        vol.Optional(ATTR_CALORIES_PER_UNIT): vol.Any(None, vol.Coerce(float)),
+        vol.Optional(ATTR_CALORIES_PER_CONTENT): _optional_finite_non_negative,
+        vol.Optional(ATTR_LITERS_PER_UNIT): _optional_finite_non_negative,
+        vol.Optional(ATTR_CALORIES_PER_UNIT): _optional_finite_non_negative,
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
     }
 )
@@ -98,24 +176,24 @@ ADD_SCHEMA = vol.Schema(
 UPDATE_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_ITEM_ID): cv.string,
-        vol.Optional(ATTR_NAME): cv.string,
-        vol.Optional("new_name"): cv.string,
-        vol.Optional(ATTR_QUANTITY): vol.Coerce(float),
-        vol.Optional(ATTR_DESIRED_QUANTITY): vol.Coerce(float),
+        vol.Optional(ATTR_NAME): _bounded_string(_MAX_NAME),
+        vol.Optional("new_name"): _bounded_string(_MAX_NAME),
+        vol.Optional(ATTR_QUANTITY): _finite_non_negative,
+        vol.Optional(ATTR_DESIRED_QUANTITY): _finite_non_negative,
         vol.Optional(ATTR_UNIT): vol.In([u.value for u in InventoryUnit]),
-        vol.Optional(ATTR_LOCATION): cv.string,
-        vol.Optional(ATTR_CATEGORY): cv.string,
-        vol.Optional(ATTR_NOTES): cv.string,
-        vol.Optional(ATTR_BARCODE): cv.string,
+        vol.Optional(ATTR_LOCATION): _bounded_string(_MAX_LOCATION),
+        vol.Optional(ATTR_CATEGORY): _bounded_string(_MAX_CATEGORY),
+        vol.Optional(ATTR_NOTES): _bounded_string(_MAX_NOTES),
+        vol.Optional(ATTR_BARCODE): _item_barcode,
         vol.Optional(ATTR_PRIORITY): vol.In([p.value for p in InventoryPriority]),
-        vol.Optional(ATTR_EXPIRY_DATE): vol.Any(None, cv.string),
-        vol.Optional(ATTR_CONTENTS_PER_UNIT): vol.Any(None, vol.Coerce(float)),
+        vol.Optional(ATTR_EXPIRY_DATE): _expiry_date,
+        vol.Optional(ATTR_CONTENTS_PER_UNIT): _optional_finite_non_negative,
         vol.Optional(ATTR_CONTENTS_UNIT): vol.Any(
             None, "", vol.In([u.value for u in ContentsUnit])
         ),
-        vol.Optional(ATTR_CALORIES_PER_CONTENT): vol.Any(None, vol.Coerce(float)),
-        vol.Optional(ATTR_LITERS_PER_UNIT): vol.Any(None, vol.Coerce(float)),
-        vol.Optional(ATTR_CALORIES_PER_UNIT): vol.Any(None, vol.Coerce(float)),
+        vol.Optional(ATTR_CALORIES_PER_CONTENT): _optional_finite_non_negative,
+        vol.Optional(ATTR_LITERS_PER_UNIT): _optional_finite_non_negative,
+        vol.Optional(ATTR_CALORIES_PER_UNIT): _optional_finite_non_negative,
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
     }
 )
@@ -123,8 +201,8 @@ UPDATE_SCHEMA = vol.Schema(
 ADJUST_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_ITEM_ID): cv.string,
-        vol.Optional(ATTR_NAME): cv.string,
-        vol.Required(ATTR_DELTA): vol.Coerce(float),
+        vol.Optional(ATTR_NAME): _bounded_string(_MAX_NAME),
+        vol.Required(ATTR_DELTA): _finite_delta,
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
     }
 )
@@ -132,15 +210,15 @@ ADJUST_SCHEMA = vol.Schema(
 REMOVE_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_ITEM_ID): cv.string,
-        vol.Optional(ATTR_NAME): cv.string,
+        vol.Optional(ATTR_NAME): _bounded_string(_MAX_NAME),
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
     }
 )
 
 LIST_SCHEMA = vol.Schema(
     {
-        vol.Optional(ATTR_LOCATION): cv.string,
-        vol.Optional(ATTR_CATEGORY): cv.string,
+        vol.Optional(ATTR_LOCATION): _bounded_string(_MAX_LOCATION),
+        vol.Optional(ATTR_CATEGORY): _bounded_string(_MAX_CATEGORY),
         vol.Optional(ATTR_READINESS): vol.In(["food", "water", "none"]),
         vol.Optional(ATTR_STATUS): vol.In(
             ["expired", "expiring", "low_stock", "ok"]
@@ -150,7 +228,7 @@ LIST_SCHEMA = vol.Schema(
 )
 
 LOOKUP_SCHEMA = vol.Schema({
-    vol.Required(ATTR_BARCODE): cv.string,
+    vol.Required(ATTR_BARCODE): _item_barcode,
     vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
 })
 

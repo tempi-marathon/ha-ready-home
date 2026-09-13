@@ -76,6 +76,20 @@ def test_expiry_severity_buckets() -> None:
     assert expiry_severity(_item("g"), today=TODAY) is None
 
 
+def test_expiry_severity_invalid_date_soft_fails() -> None:
+    item = InventoryItem(name="bad", quantity=1, expiry_date="boom")
+    assert expiry_severity(item, today=TODAY) is None
+
+
+def test_build_buckets_skips_invalid_expiry() -> None:
+    items = [
+        InventoryItem(name="bad", quantity=1, expiry_date="not-a-date"),
+        _item("ok", expiry=TODAY - timedelta(days=1)),
+    ]
+    buckets = build_buckets(items, today=TODAY)
+    assert [i.name for i in buckets.expired] == ["ok"]
+
+
 def test_build_buckets() -> None:
     items = [
         _item("expired", expiry=TODAY - timedelta(days=2)),

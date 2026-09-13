@@ -35,7 +35,10 @@ def expiry_severity(
         return None
 
     today = today or date.today()
-    expiry = date.fromisoformat(item.expiry_date)
+    try:
+        expiry = date.fromisoformat(item.expiry_date)
+    except (TypeError, ValueError):
+        return None
 
     if expiry < today:
         return "expired"

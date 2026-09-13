@@ -97,7 +97,14 @@ class InventoryStore:
                 item = InventoryItem.from_dict(raw)
                 self._items[item.id] = item
             except (KeyError, TypeError, ValueError) as err:
-                _LOGGER.warning("Skipping corrupt inventory item: %s (%s)", raw, err)
+                item_id = raw.get("id") if isinstance(raw, dict) else None
+                item_name = raw.get("name") if isinstance(raw, dict) else None
+                _LOGGER.warning(
+                    "Skipping corrupt inventory item id=%s name=%s (%s)",
+                    item_id,
+                    item_name,
+                    err,
+                )
 
         self._bucket_state = {
             str(k): str(v) for k, v in (data.get("bucket_state") or {}).items()

@@ -136,7 +136,10 @@ class InventoryItem:
         if self.expiry_date is None:
             return False
         today = today or date.today()
-        return date.fromisoformat(self.expiry_date) < today
+        try:
+            return date.fromisoformat(self.expiry_date) < today
+        except (TypeError, ValueError):
+            return False
 
     def total_contents(self) -> float | None:
         """Quantity × contents_per_unit, when contents are set."""
@@ -238,7 +241,7 @@ class InventoryItem:
             notes=str(data.get("notes") or ""),
             barcode=str(data.get("barcode") or ""),
             priority=InventoryPriority(data.get("priority", InventoryPriority.IMPORTANT)),
-            expiry_date=data.get("expiry_date"),
+            expiry_date=_normalize_expiry_date(data.get("expiry_date")),
             contents_per_unit=_optional_float(data.get("contents_per_unit")),
             contents_unit=contents_unit,
             calories_per_content=_optional_float(data.get("calories_per_content")),
@@ -379,3 +382,16 @@ def _optional_float(value: Any) -> float | None:
     if value is None or value == "":
         return None
     return float(value)
+
+
+def _normalize_expiry_date(value: Any) -> str | None:
+    """Return YYYY-MM-DD or None; invalid / empty values become None."""
+    if value is None or value == "":
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        return date.fromisoformat(text).isoformat()
+    except (TypeError, ValueError):
+        return None

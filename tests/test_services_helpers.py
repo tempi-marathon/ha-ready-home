@@ -5,10 +5,17 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pytest
+import voluptuous as vol
 from homeassistant.exceptions import ServiceValidationError
 
 from custom_components.ready_home.models import InventoryItem
-from custom_components.ready_home.services import _matches_status, _resolve_item
+from custom_components.ready_home.services import (
+    ADD_SCHEMA,
+    ADJUST_SCHEMA,
+    UPDATE_SCHEMA,
+    _matches_status,
+    _resolve_item,
+)
 
 
 def test_resolve_item_by_id() -> None:
@@ -72,3 +79,44 @@ def test_matches_status(
 ) -> None:
     item = InventoryItem(name="x", quantity=quantity, desired_quantity=desired)
     assert _matches_status(status, item, severity) is expected
+
+
+def test_add_schema_rejects_invalid_expiry() -> None:
+    with pytest.raises(vol.Invalid):
+        ADD_SCHEMA({"name": "Rice", "quantity": 1, "expiry_date": "boom"})
+
+
+def test_add_schema_accepts_iso_expiry() -> None:
+    data = ADD_SCHEMA(
+        {"name": "Rice", "quantity": 1, "expiry_date": "2027-06-01"}
+    )
+    assert data["expiry_date"] == "2027-06-01"
+
+
+def test_add_schema_rejects_non_finite_quantity() -> None:
+    with pytest.raises(vol.Invalid):
+        ADD_SCHEMA({"name": "Rice", "quantity": float("inf")})
+    with pytest.raises(vol.Invalid):
+        ADD_SCHEMA({"name": "Rice", "quantity": float("nan")})
+    with pytest.raises(vol.Invalid):
+        ADD_SCHEMA({"name": "Rice", "quantity": -1})
+
+
+def test_update_schema_rejects_invalid_expiry() -> None:
+    with pytest.raises(vol.Invalid):
+        UPDATE_SCHEMA({"item_id": "abc", "expiry_date": "nope"})
+
+
+def test_adjust_schema_rejects_non_finite_delta() -> None:
+    with pytest.raises(vol.Invalid):
+        ADJUST_SCHEMA({"item_id": "abc", "delta": float("nan")})
+
+
+def test_add_schema_rejects_oversized_name() -> None:
+    with pytest.raises(vol.Invalid):
+        ADD_SCHEMA({"name": "x" * 201, "quantity": 1})
+
+
+def test_add_schema_rejects_unsafe_barcode() -> None:
+    with pytest.raises(vol.Invalid):
+        ADD_SCHEMA({"name": "Rice", "quantity": 1, "barcode": "../../evil"})

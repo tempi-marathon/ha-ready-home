@@ -98,7 +98,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
 
 def async_unregister_panel(hass: HomeAssistant) -> None:
     """Remove the sidebar panel when the last config entry unloads."""
-    if hass.data.pop(_PANEL_KEY, None):
+    if not hass.data.pop(_PANEL_KEY, None):
         return
     frontend.async_remove_panel(hass, PANEL_URL_PATH)
     _LOGGER.debug("Removed Ready Home sidebar panel")
