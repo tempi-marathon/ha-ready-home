@@ -12,12 +12,21 @@ import {
   subscribeInventory,
 } from "./api";
 import {
+  applyBarcodeLookupToForm,
+  hasCompanionBarcodeScanner,
+  scanProductBarcode,
+  type ScanHandle,
+} from "./barcode-scan";
+import {
   filterAndSortItems,
   itemStatus,
   readinessKind,
 } from "./inventory_view";
 import { readinessTone } from "./readiness_tone";
 import type { HomeAssistant } from "./types";
+
+const COMPANION_SCAN_MESSAGE =
+  "Scanning needs the Home Assistant Companion app. Enter the barcode and tap Lookup.";
 
 const PANEL_TAG = "ready-home-panel";
 const BRAND_ICON_URL = "/api/ready_home/brand/icon.png";
@@ -79,6 +88,7 @@ export class ReadyHomePanel extends LitElement {
 
   private _unsub: (() => void) | null = null;
   private _connected = false;
+  private _scanHandle: ScanHandle | null = null;
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -91,6 +101,7 @@ export class ReadyHomePanel extends LitElement {
     super.disconnectedCallback();
     this._connected = false;
     window.removeEventListener("keydown", this._onWindowKeyDown);
+    this._abortScan();
     this._unsub?.();
     this._unsub = null;
   }
@@ -354,11 +365,18 @@ export class ReadyHomePanel extends LitElement {
                 <p class="subtitle">${duration}-hour emergency readiness</p>
               </div>
             </div>
-            ${this._mdButton("Add item", {
-              variant: "filled",
-              disabled: this._busy,
-              onClick: this._openAdd,
-            })}
+            <div class="header-actions">
+              ${this._mdButton("Scan", {
+                variant: "outlined",
+                disabled: this._busy,
+                onClick: () => void this._scanFromPanel(),
+              })}
+              ${this._mdButton("Add item", {
+                variant: "filled",
+                disabled: this._busy,
+                onClick: this._openAdd,
+              })}
+            </div>
           </div>
         </header>
 
@@ -560,10 +578,17 @@ export class ReadyHomePanel extends LitElement {
     return html`
       <div class="empty">
         No items match.
-        ${this._mdButton("Add an item", {
-          variant: "text",
-          onClick: this._openAdd,
-        })}
+        <div class="empty-actions">
+          ${this._mdButton("Scan", {
+            variant: "outlined",
+            disabled: this._busy,
+            onClick: () => void this._scanFromPanel(),
+          })}
+          ${this._mdButton("Add an item", {
+            variant: "text",
+            onClick: this._openAdd,
+          })}
+        </div>
       </div>
     `;
   }
@@ -908,6 +933,25 @@ export class ReadyHomePanel extends LitElement {
           <div class="form-section">
             <div class="form-section-title">Details</div>
             <label
+              >Barcode
+              <div class="barcode-row">
+                <input
+                  .value=${f.barcode || ""}
+                  @input=${this._onField("barcode")}
+                />
+                ${this._mdButton("Scan", {
+                  variant: "outlined",
+                  disabled: this._busy,
+                  onClick: () => void this._scanBarcode(),
+                })}
+                ${this._mdButton("Lookup", {
+                  variant: "outlined",
+                  disabled: this._busy || !(f.barcode || "").trim(),
+                  onClick: () => void this._lookupBarcode(),
+                })}
+              </div>
+            </label>
+            <label
               >${this._fieldLabel("Name", true)}
               <input
                 class=${this._fieldInvalid("name") ? "invalid" : ""}
@@ -982,25 +1026,6 @@ export class ReadyHomePanel extends LitElement {
             <label
               >Notes
               <input .value=${f.notes || ""} @input=${this._onField("notes")} />
-            </label>
-            <label
-              >Barcode
-              <div class="barcode-row">
-                <input
-                  .value=${f.barcode || ""}
-                  @input=${this._onField("barcode")}
-                />
-                ${this._mdButton("Scan", {
-                  variant: "outlined",
-                  disabled: this._busy,
-                  onClick: () => void this._scanBarcode(),
-                })}
-                ${this._mdButton("Lookup", {
-                  variant: "outlined",
-                  disabled: this._busy,
-                  onClick: () => void this._lookupBarcode(),
-                })}
-              </div>
             </label>
           </div>
 
@@ -1253,6 +1278,7 @@ export class ReadyHomePanel extends LitElement {
   };
 
   private _closeDialog = () => {
+    this._abortScan();
     this._dialogOpen = false;
     this._fieldErrors = {};
     this._error = "";
@@ -1263,6 +1289,12 @@ export class ReadyHomePanel extends LitElement {
     e.preventDefault();
     this._closeDialog();
   };
+
+  private _abortScan() {
+    const handle = this._scanHandle;
+    this._scanHandle = null;
+    handle?.abort();
+  }
 
   private async _run(action: () => Promise<unknown>) {
     this._busy = true;
@@ -1347,22 +1379,9 @@ export class ReadyHomePanel extends LitElement {
     this._error = "";
     try {
       const result = await lookupBarcode(this.hass, code);
-      const name = [result.brand, result.name].filter(Boolean).join(" ").trim();
-      const category =
-        this._form.category?.trim() ||
-        (this._settings?.food_categories?.[0] ?? "Food");
-      this._form = {
-        ...this._form,
-        name: name || this._form.name,
-        category,
-        contents_unit: this._form.contents_unit || "gram",
-        calories_per_content:
-          result.calories_per_100g != null
-            ? String(
-                Math.round((result.calories_per_100g / 100) * 10000) / 10000,
-              )
-            : this._form.calories_per_content,
-      };
+      const fallback =
+        this._settings?.food_categories?.[0]?.trim() || "Food";
+      this._form = applyBarcodeLookupToForm(this._form, result, fallback);
     } catch (err) {
       this._error = `Barcode lookup failed: ${err}`;
     } finally {
@@ -1370,35 +1389,57 @@ export class ReadyHomePanel extends LitElement {
     }
   }
 
-  private async _scanBarcode() {
-    if (typeof BarcodeDetector === "undefined") {
-      this._error =
-        "BarcodeDetector not supported in this browser — enter the code manually.";
+  /** Header / empty-state Scan: camera first; open add dialog only when needed. */
+  private async _scanFromPanel() {
+    if (!hasCompanionBarcodeScanner(this.hass)) {
+      this._openAdd();
+      this._error = COMPANION_SCAN_MESSAGE;
       return;
     }
+
     this._busy = true;
     this._error = "";
+    this._abortScan();
+    const handle = scanProductBarcode(this.hass);
+    this._scanHandle = handle;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
-      const video = document.createElement("video");
-      video.srcObject = stream;
-      await video.play();
-      const detector = new BarcodeDetector({
-        formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128"],
-      });
-      await new Promise((r) => setTimeout(r, 700));
-      const codes = await detector.detect(video);
-      stream.getTracks().forEach((t) => t.stop());
-      if (codes[0]?.rawValue) {
-        this._form = { ...this._form, barcode: codes[0].rawValue };
-        this._busy = false;
-        await this._lookupBarcode();
-      } else {
-        this._error = "No barcode detected — try again or enter manually.";
-      }
+      const code = await handle.done;
+      if (this._scanHandle === handle) this._scanHandle = null;
+      if (!code) return;
+      this._openAdd();
+      this._form = { ...this._form, barcode: code };
+      this._busy = false;
+      await this._lookupBarcode();
     } catch (err) {
+      if (this._scanHandle === handle) this._scanHandle = null;
+      this._openAdd();
+      this._error = `Camera scan failed: ${err}`;
+    } finally {
+      this._busy = false;
+    }
+  }
+
+  /** Dialog Scan button. */
+  private async _scanBarcode() {
+    if (!hasCompanionBarcodeScanner(this.hass)) {
+      this._error = COMPANION_SCAN_MESSAGE;
+      return;
+    }
+
+    this._busy = true;
+    this._error = "";
+    this._abortScan();
+    const handle = scanProductBarcode(this.hass);
+    this._scanHandle = handle;
+    try {
+      const code = await handle.done;
+      if (this._scanHandle === handle) this._scanHandle = null;
+      if (!code) return;
+      this._form = { ...this._form, barcode: code };
+      this._busy = false;
+      await this._lookupBarcode();
+    } catch (err) {
+      if (this._scanHandle === handle) this._scanHandle = null;
       this._error = `Camera scan failed: ${err}`;
     } finally {
       this._busy = false;
@@ -1430,6 +1471,12 @@ export class ReadyHomePanel extends LitElement {
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
     }
     .brand {
       display: flex;
@@ -1816,6 +1863,13 @@ export class ReadyHomePanel extends LitElement {
       flex-direction: column;
       align-items: center;
       gap: 8px;
+    }
+    .empty-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
     .error {
       color: var(--error-color, #c62828);

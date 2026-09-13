@@ -13,10 +13,22 @@ export interface HassLocale {
   time_zone?: "local" | "server";
 }
 
+/** Companion external bus (subset used for barcode scanning). */
+export interface HassExternalBus {
+  config: {
+    hasBarCodeScanner?: number;
+  };
+  fireMessage: (msg: Record<string, unknown>) => void;
+  receiveMessage: (msg: unknown) => void;
+}
+
 export interface HomeAssistant {
   states: Record<string, HassEntity>;
   language?: string;
   locale?: HassLocale;
+  auth?: {
+    external?: HassExternalBus;
+  };
   callService: (
     domain: string,
     service: string,
@@ -30,18 +42,6 @@ export interface HomeAssistant {
     ) => Promise<() => void>;
   };
   localize: (key: string) => string;
-}
-
-declare global {
-  interface BarcodeDetector {
-    detect(source: ImageBitmapSource): Promise<Array<{ rawValue: string }>>;
-  }
-
-  // eslint-disable-next-line no-var
-  var BarcodeDetector: {
-    new (options?: { formats?: string[] }): BarcodeDetector;
-    getSupportedFormats(): Promise<string[]>;
-  };
 }
 
 export {};

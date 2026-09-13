@@ -14,7 +14,7 @@ Installable through [HACS](https://hacs.xyz/) as a custom repository (category: 
 | **Actions** | `add_item`, `update_item`, `adjust_quantity`, `remove_item`, `list_items`, `lookup_barcode` |
 | **Events** | `ready_home_item_expired`, `ready_home_item_expiring`, `ready_home_item_low_stock` (fire once on transition) |
 | **Sidebar** | Ready Home panel for full inventory management |
-| **Barcode** | Open Food Facts lookup via action, websocket, or sidebar panel scan |
+| **Barcode** | Open Food Facts lookup via action, websocket, or sidebar panel. Camera scan uses the Home Assistant Companion app; on desktop enter the code and tap Lookup |
 
 ## Installation
 
