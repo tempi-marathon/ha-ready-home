@@ -33,7 +33,7 @@ Open the integration → Configure:
 
 - **Readiness targets** — people, duration hours, liters/person/day, kcal/person/day
 - **Locations and categories** — storage locations, category labels, and which categories count as **food** or **water** for readiness
-- **Thresholds** — expiring window (default 30 days), urgent window (7 days), attribute item cap (100)
+- **Thresholds** — expiring window (default 30 days), urgent window (7 days)
 
 ## Actions
 

@@ -42,7 +42,6 @@ describe("api websocket payloads", () => {
       water_categories: ["Water"],
       expiring_days: 30,
       urgent_days: 7,
-      attribute_item_cap: 100,
     });
     await getSettings(mockHass(send));
     expect(send).toHaveBeenCalledWith({ type: "ready_home/settings" });

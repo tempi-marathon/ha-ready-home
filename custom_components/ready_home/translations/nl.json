@@ -64,8 +64,7 @@
         "title": "Drempels",
         "data": {
           "expiring_days": "Houdbaarheidswaarschuwing (dagen)",
-          "urgent_days": "Urgente houdbaarheid (dagen)",
-          "attribute_item_cap": "Max. items in sensorattributen"
+          "urgent_days": "Urgente houdbaarheid (dagen)"
         }
       }
     },

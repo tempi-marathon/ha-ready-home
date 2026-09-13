@@ -64,8 +64,7 @@
         "title": "Thresholds",
         "data": {
           "expiring_days": "Expiring window (days)",
-          "urgent_days": "Urgent window (days)",
-          "attribute_item_cap": "Max items in sensor attributes"
+          "urgent_days": "Urgent window (days)"
         }
       }
     },

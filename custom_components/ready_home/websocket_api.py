@@ -80,7 +80,6 @@ def _settings_dict(coordinator: ReadyHomeCoordinator) -> dict[str, Any]:
         "water_categories": list(s.water_categories),
         "expiring_days": s.expiring_days,
         "urgent_days": s.urgent_days,
-        "attribute_item_cap": s.attribute_item_cap,
     }
 
 

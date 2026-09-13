@@ -23,7 +23,6 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
-    CONF_ATTRIBUTE_ITEM_CAP,
     CONF_CALORIES_PER_PERSON_PER_DAY,
     CONF_CATEGORIES,
     CONF_DURATION_HOURS,
@@ -35,7 +34,6 @@ from .const import (
     CONF_URGENT_DAYS,
     CONF_WATER_CATEGORIES,
     CONF_WATER_LITERS_PER_PERSON_PER_DAY,
-    DEFAULT_ATTRIBUTE_ITEM_CAP,
     DEFAULT_CALORIES_PER_PERSON_PER_DAY,
     DEFAULT_CATEGORIES,
     DEFAULT_DURATION_HOURS,
@@ -119,7 +117,6 @@ class ReadyHomeConfigFlow(ConfigFlow, domain=DOMAIN):
                         CONF_WATER_CATEGORIES: list(DEFAULT_WATER_CATEGORIES),
                         CONF_EXPIRING_DAYS: DEFAULT_EXPIRING_DAYS,
                         CONF_URGENT_DAYS: DEFAULT_URGENT_DAYS,
-                        CONF_ATTRIBUTE_ITEM_CAP: DEFAULT_ATTRIBUTE_ITEM_CAP,
                     },
                 )
 
@@ -348,7 +345,7 @@ class ReadyHomeOptionsFlow(OptionsFlow):
     async def async_step_thresholds(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Edit expiry windows and attribute cap."""
+        """Edit expiry windows."""
         options = dict(self.config_entry.options)
 
         if user_input is not None:
@@ -356,9 +353,9 @@ class ReadyHomeOptionsFlow(OptionsFlow):
                 {
                     CONF_EXPIRING_DAYS: int(user_input[CONF_EXPIRING_DAYS]),
                     CONF_URGENT_DAYS: int(user_input[CONF_URGENT_DAYS]),
-                    CONF_ATTRIBUTE_ITEM_CAP: int(user_input[CONF_ATTRIBUTE_ITEM_CAP]),
                 }
             )
+            options.pop("attribute_item_cap", None)
             return await self._async_save_and_menu(options=options)
 
         schema = vol.Schema(
@@ -377,16 +374,6 @@ class ReadyHomeOptionsFlow(OptionsFlow):
                 ): NumberSelector(
                     NumberSelectorConfig(
                         min=1, max=30, mode=NumberSelectorMode.BOX, step=1
-                    )
-                ),
-                vol.Required(
-                    CONF_ATTRIBUTE_ITEM_CAP,
-                    default=options.get(
-                        CONF_ATTRIBUTE_ITEM_CAP, DEFAULT_ATTRIBUTE_ITEM_CAP
-                    ),
-                ): NumberSelector(
-                    NumberSelectorConfig(
-                        min=10, max=500, mode=NumberSelectorMode.BOX, step=1
                     )
                 ),
             }

@@ -27,7 +27,6 @@ CONF_FOOD_CATEGORIES: Final = "food_categories"
 CONF_WATER_CATEGORIES: Final = "water_categories"
 CONF_EXPIRING_DAYS: Final = "expiring_days"
 CONF_URGENT_DAYS: Final = "urgent_days"
-CONF_ATTRIBUTE_ITEM_CAP: Final = "attribute_item_cap"
 
 ATTR_CONFIG_ENTRY_ID: Final = "config_entry_id"
 
@@ -38,7 +37,8 @@ DEFAULT_WATER_LITERS_PER_PERSON_PER_DAY: Final = 3.0
 DEFAULT_CALORIES_PER_PERSON_PER_DAY: Final = 2000
 DEFAULT_EXPIRING_DAYS: Final = 30
 DEFAULT_URGENT_DAYS: Final = 7
-DEFAULT_ATTRIBUTE_ITEM_CAP: Final = 100
+# Cap item lists on expired/expiring/low-stock sensor attributes (HA state size)
+ATTRIBUTE_ITEM_CAP: Final = 100
 DEFAULT_LOCATIONS: Final = ["Pantry", "Garage", "Basement"]
 DEFAULT_CATEGORIES: Final = ["Food", "Water", "Medical", "Tools", "Other"]
 DEFAULT_FOOD_CATEGORIES: Final = ["Food"]

@@ -32,7 +32,6 @@ const settings: SettingsDto = {
   water_categories: ["Water"],
   expiring_days: 30,
   urgent_days: 7,
-  attribute_item_cap: 100,
 };
 
 const emptyBuckets: Snapshot["buckets"] = {

@@ -37,6 +37,7 @@ from .const import (
     ATTR_WATER_SUPPLY_HOURS_UNIT,
     ATTR_WATER_TARGET,
     ATTR_WATER_TARGET_UNIT,
+    ATTRIBUTE_ITEM_CAP,
     DOMAIN,
     UNIT_HOURS,
     UNIT_KCAL,
@@ -261,7 +262,7 @@ class ExpiringItemsSensor(_BucketSensor):
         b = self.coordinator.data.buckets
         urgent = self.coordinator.capped_item_dicts(b.within_urgent)
         # Fill remaining cap with non-urgent expiring
-        remaining = max(0, self.coordinator.settings.attribute_item_cap - len(urgent))
+        remaining = max(0, ATTRIBUTE_ITEM_CAP - len(urgent))
         expiring = [item_summary(i) for i in b.within_expiring[:remaining]]
         return {
             ATTR_ITEMS: urgent + expiring,

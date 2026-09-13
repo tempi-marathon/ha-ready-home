@@ -12,6 +12,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .attention import AttentionBuckets, build_buckets, item_summary
 from .const import (
+    ATTRIBUTE_ITEM_CAP,
     DOMAIN,
     EVENT_ITEM_EXPIRED,
     EVENT_ITEM_EXPIRING,
@@ -165,5 +166,4 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
 
     def capped_item_dicts(self, items: list[InventoryItem]) -> list[dict[str, Any]]:
         """Return item summaries capped for sensor attributes."""
-        cap = self.settings.attribute_item_cap
-        return [item_summary(i) for i in items[:cap]]
+        return [item_summary(i) for i in items[:ATTRIBUTE_ITEM_CAP]]
