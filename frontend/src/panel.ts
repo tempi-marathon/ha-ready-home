@@ -16,6 +16,7 @@ import {
   itemStatus,
   readinessKind,
 } from "./inventory_view";
+import { readinessTone } from "./readiness_tone";
 import type { HomeAssistant } from "./types";
 
 const PANEL_TAG = "ready-home-panel";
@@ -194,12 +195,21 @@ export class ReadyHomePanel extends LitElement {
     return `${rounded} ${unit}`;
   }
 
+  private _durationHours(): number {
+    return (
+      this._assessment.duration_hours ?? this._settings?.duration_hours ?? 72
+    );
+  }
+
+  private _statToneClass(hours: number | null | undefined): string {
+    const tone = readinessTone(hours, this._durationHours());
+    return tone ? `stat-${tone}` : "";
+  }
+
   private _durationClass(hours: number | null | undefined): string {
-    const duration =
-      this._assessment.duration_hours ?? this._settings?.duration_hours ?? 72;
-    if (hours == null || Number.isNaN(Number(hours))) return "";
-    if (Number(hours) <= 0) return "duration-bad";
-    if (Number(hours) < Number(duration)) return "duration-warn";
+    const tone = readinessTone(hours, this._durationHours());
+    if (tone === "bad") return "duration-bad";
+    if (tone === "warn") return "duration-warn";
     return "";
   }
 
@@ -354,7 +364,7 @@ export class ReadyHomePanel extends LitElement {
 
         <div class="content">
           <div class="stats">
-            <div class="stat">
+            <div class="stat ${this._statToneClass(supply)}">
               <span class="stat-label">
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="currentColor" d=${MDI_SHIELD_CHECK} />
@@ -366,7 +376,7 @@ export class ReadyHomePanel extends LitElement {
                 >Lasts ${this._formatHours(supply)}</span
               >
             </div>
-            <div class="stat">
+            <div class="stat ${this._statToneClass(waterSupply)}">
               <span class="stat-label">
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="currentColor" d=${MDI_WATER} />
@@ -384,7 +394,7 @@ export class ReadyHomePanel extends LitElement {
                 >Lasts ${this._formatHours(waterSupply)}</span
               >
             </div>
-            <div class="stat">
+            <div class="stat ${this._statToneClass(foodSupply)}">
               <span class="stat-label">
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="currentColor" d=${MDI_FOOD} />
@@ -1402,6 +1412,7 @@ export class ReadyHomePanel extends LitElement {
       color: var(--primary-text-color);
       background: var(--primary-background-color, transparent);
       font-family: var(--paper-font-body1_-_font-family, Roboto, sans-serif);
+      --rh-ready-color: #4ca448;
     }
     .page {
       height: 100%;
@@ -1488,9 +1499,18 @@ export class ReadyHomePanel extends LitElement {
     .stat {
       padding: 16px;
       border-radius: 8px;
-      border-left: 3px solid var(--primary-color);
+      border-left: 3px solid var(--divider-color);
       background: var(--card-background-color, #fff);
       box-shadow: var(--ha-card-box-shadow, none);
+    }
+    .stat.stat-ok {
+      border-left-color: var(--rh-ready-color);
+    }
+    .stat.stat-warn {
+      border-left-color: var(--warning-color, #f57c00);
+    }
+    .stat.stat-bad {
+      border-left-color: var(--error-color, #c62828);
     }
     .stat-label {
       display: flex;
@@ -1504,7 +1524,16 @@ export class ReadyHomePanel extends LitElement {
       width: 18px;
       height: 18px;
       flex-shrink: 0;
-      color: var(--primary-color);
+      color: var(--secondary-text-color);
+    }
+    .stat.stat-ok .stat-icon {
+      color: var(--rh-ready-color);
+    }
+    .stat.stat-warn .stat-icon {
+      color: var(--warning-color, #f57c00);
+    }
+    .stat.stat-bad .stat-icon {
+      color: var(--error-color, #c62828);
     }
     .stat-value {
       display: block;
