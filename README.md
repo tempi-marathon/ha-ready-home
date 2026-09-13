@@ -1,8 +1,14 @@
 # Ready Home for Home Assistant
 
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.12%2B-blue.svg)](https://www.home-assistant.io/)
+[![GitHub Release](https://img.shields.io/github/v/release/tempi-marathon/ha-ready-home?include_prereleases)](https://github.com/tempi-marathon/ha-ready-home/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Security Policy](https://img.shields.io/badge/Security-Policy-green.svg)](SECURITY.md)
+
 Track household emergency supplies, measure readiness against water and calorie targets, and surface expired, expiring, and low-stock items as Home Assistant sensors, events, and a sidebar management panel.
 
-Installable through [HACS](https://hacs.xyz/) as a custom repository (category: **Integration**).
+![Ready Home](docs/images/hero.png)
 
 ## Features
 
@@ -12,177 +18,45 @@ Installable through [HACS](https://hacs.xyz/) as a custom repository (category: 
 | **Readiness** | Water (liters) and food (calories) on-hand vs per-person targets over a configurable duration (default 72 hours) |
 | **Sensors** | Overall / water / food readiness %, expired / expiring / low-stock counts, total items, needs-attention binary sensor |
 | **Actions** | `add_item`, `update_item`, `adjust_quantity`, `remove_item`, `list_items`, `lookup_barcode` |
-| **Events** | `ready_home_item_expired`, `ready_home_item_expiring`, `ready_home_item_low_stock` (fire once on transition) |
+| **Events** | `ready_home_item_expired`, `ready_home_item_expiring`, `ready_home_item_low_stock` |
 | **Sidebar** | Ready Home panel for full inventory management |
 | **Barcode** | Open Food Facts lookup via action, websocket, or sidebar panel. Camera scan uses the Home Assistant Companion app; on desktop enter the code and tap Lookup |
 
-## Installation
+## Screenshots
 
-1. In HACS → Integrations → ⋮ → Custom repositories, add this repository URL with category **Integration**.
-2. Install **Ready Home**, then restart Home Assistant.
-3. Settings → Devices & Services → Add Integration → **Ready Home**.
-4. Enter the number of people in the household.
+<p align="center">
+  <img src="docs/images/panel-mobile.png" alt="Ready Home on mobile" width="280" />
+  &nbsp;
+  <img src="docs/images/panel-add-item.png" alt="Add item with barcode lookup" width="360" />
+  &nbsp;
+  <img src="docs/images/ha-sensors.png" alt="Home Assistant readiness sensors" width="280" />
+</p>
 
-After setup, a **Ready Home** item appears in the sidebar for inventory management (add/edit/remove, filters, barcode).
+| Mobile panel | Add / edit item | Home Assistant sensors |
+|--------------|-----------------|------------------------|
+| Narrow layout with readiness cards and inventory list | Barcode scan/lookup, stock, calories, expiry | Readiness %, expired, expiring, low stock |
 
-If you previously added a Lovelace resource for `/ready_home/ready-home.js`, you can remove it (Settings → Dashboards → ⋮ → Resources, or from YAML). Storage-mode installs clean that resource up automatically on the next load.
+## Install
 
-## Access
+Installable through [HACS](https://hacs.xyz/) as a **custom repository** (category: **Integration**). Default-store listing is pending.
 
-Ready Home treats inventory as a **shared household** resource. Any logged-in Home Assistant user who can open the sidebar panel or call `ready_home.*` actions can read and change the full inventory. Profile settings (people, targets, lists, thresholds) stay in the integration options flow, which is admin-only.
+1. HACS → Integrations → ⋮ → **Custom repositories**
+2. Add this repository URL, category **Integration**
+3. Install **Ready Home**, then restart Home Assistant
+4. Settings → Devices & Services → Add Integration → **Ready Home**
+5. Enter the number of people in the household
 
-## Configuration
+Full guide: [Installation](docs/installation.md) · [Configuration](docs/configuration.md) · [Usage](docs/usage.md)
 
-Open the integration → Configure:
+## Documentation
 
-- **Readiness targets** — people, duration hours, liters/person/day, kcal/person/day
-- **Locations and categories** — storage locations, category labels, and which categories count as **food** or **water** for readiness
-- **Thresholds** — expiring window (default 30 days), urgent window (7 days)
-
-## Actions
-
-Use **Developer Tools → Actions**. The sidebar panel uses `add_item`, `update_item`, and `remove_item` for writes; `adjust_quantity`, `list_items`, and `lookup_barcode` are mainly for automations and scripts.
-
-**Stock vs contents:** `unit` is how you count stock (`piece` / `pack` / `box`). Package size goes in `contents_per_unit` + `contents_unit` (e.g. 1.5 liter per bottle). Prefer those over `liters_per_unit` / `calories_per_unit`.
-
-### Add a water six-pack
-
-```yaml
-action: ready_home.add_item
-data:
-  name: Bottled water
-  quantity: 6
-  desired_quantity: 12
-  unit: piece
-  location: Garage
-  category: Water
-  contents_per_unit: 1.5
-  contents_unit: liter
-  priority: essential
-```
-
-### Add food with calories
-
-```yaml
-action: ready_home.add_item
-data:
-  name: Instant rice
-  quantity: 10
-  unit: pack
-  category: Food
-  contents_per_unit: 400
-  contents_unit: gram
-  calories_per_content: 3.54
-  expiry_date: "2027-06-01"
-```
-
-### Update an item
-
-```yaml
-action: ready_home.update_item
-data:
-  name: Bottled water
-  quantity: 4
-  desired_quantity: 12
-```
-
-### Remove an item
-
-```yaml
-action: ready_home.remove_item
-data:
-  name: Instant rice
-```
-
-### Consume one unit
-
-```yaml
-action: ready_home.adjust_quantity
-data:
-  name: Bottled water
-  delta: -1
-```
-
-### Look up a barcode
-
-```yaml
-action: ready_home.lookup_barcode
-data:
-  barcode: "3017620422003"
-```
-
-### List low-stock items
-
-```yaml
-action: ready_home.list_items
-data:
-  status: low_stock
-```
-
-## Example automations
-
-### Notify when something expires
-
-```yaml
-alias: Ready Home item expired
-triggers:
-  - trigger: event
-    event_type: ready_home_item_expired
-actions:
-  - action: notify.persistent_notification
-    data:
-      title: Inventory expired
-      message: "{{ trigger.event.data.item.name }} has expired."
-```
-
-### Add low-stock items to a todo list
-
-```yaml
-alias: Ready Home low stock to shopping list
-triggers:
-  - trigger: event
-    event_type: ready_home_item_low_stock
-actions:
-  - action: todo.add_item
-    target:
-      entity_id: todo.shopping_list
-    data:
-      item: "Restock {{ trigger.event.data.item.name }}"
-```
-
-## Readiness math
-
-```
-water_target   = people × water_liters_per_person_per_day × duration_hours / 24
-calorie_target = people × calories_per_person_per_day × duration_hours / 24
-percent        = min(100, on_hand / target × 100)
-overall        = min(water_percent, food_percent)
-```
-
-Expired stock is excluded. Items whose category is mapped to food or water but lack calories or liters are counted as unmeasurable and left out of totals. Configure food/water category lists under **Locations and categories**.
-
-## Development
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements-dev.txt
-pytest tests/ -v
-ruff check custom_components tests
-
-npm ci
-npm run build   # writes custom_components/ready_home/dist/ready-home-panel.js
-npm test
-```
-
-## Release checklist (HACS default store)
-
-Before submitting to [hacs/default](https://github.com/hacs/default):
-
-1. Push a public GitHub repository under the intended owner
-2. Ensure CI is green (hassfest, HACS action, pytest, Vitest / `npm test`)
-3. Publish a GitHub Release (not only a tag), e.g. `v0.1.0`
-4. Open a PR adding this repo to the `integration` list in hacs/default
+- [Installation](docs/installation.md)
+- [Configuration](docs/configuration.md)
+- [Usage](docs/usage.md)
+- [Actions](docs/actions.md)
+- [Sensors and events](docs/sensors-and-events.md)
+- [Automations](docs/automations.md)
+- [Readiness math](docs/readiness.md)
 
 ## License
 
