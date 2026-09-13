@@ -96,6 +96,8 @@ def item_summary(item: InventoryItem) -> dict[str, Any]:
         "unit": item.unit.value,
         "location": item.location,
         "category": item.category,
+        "notes": item.notes,
+        "barcode": item.barcode,
         "priority": item.priority.value,
         "expiry_date": item.expiry_date,
     }

@@ -34,7 +34,7 @@ add_item:
           mode: box
     unit:
       name: Unit
-      description: How you count stock (bottles, packs, boxes)
+      description: Stock count unit — how many bottles, packs, or boxes you have (not package size)
       default: piece
       selector:
         select:
@@ -48,6 +48,7 @@ add_item:
         text:
     category:
       name: Category
+      description: Category label; food/water mapping is set in integration options
       selector:
         text:
     notes:
@@ -73,7 +74,7 @@ add_item:
         date:
     contents_per_unit:
       name: Contents per unit
-      description: How much is in one bottle, can, or pack
+      description: Package size — how much is in one stock unit (one bottle, can, or pack)
       example: 0.5
       selector:
         number:
@@ -82,7 +83,7 @@ add_item:
           mode: box
     contents_unit:
       name: Contents unit
-      description: Liter, milliliter, gram, or kilogram for the contents of one stock unit
+      description: Unit for package size (liter, milliliter, gram, or kilogram)
       selector:
         select:
           options:
@@ -100,7 +101,7 @@ add_item:
           mode: box
     liters_per_unit:
       name: Liters per unit
-      description: Legacy — prefer contents_per_unit with a volume contents_unit
+      description: Prefer contents_per_unit with a volume contents_unit instead
       selector:
         number:
           min: 0
@@ -108,7 +109,7 @@ add_item:
           mode: box
     calories_per_unit:
       name: Calories per unit
-      description: Legacy — prefer contents fields for food
+      description: Prefer contents_per_unit and calories_per_content instead
       selector:
         number:
           min: 0
@@ -154,6 +155,7 @@ update_item:
           mode: box
     unit:
       name: Unit
+      description: Stock count unit — how many bottles, packs, or boxes you have (not package size)
       selector:
         select:
           options:
@@ -166,6 +168,7 @@ update_item:
         text:
     category:
       name: Category
+      description: Category label; food/water mapping is set in integration options
       selector:
         text:
     notes:
@@ -190,6 +193,7 @@ update_item:
         date:
     contents_per_unit:
       name: Contents per unit
+      description: Package size — how much is in one stock unit (one bottle, can, or pack)
       selector:
         number:
           min: 0
@@ -197,6 +201,7 @@ update_item:
           mode: box
     contents_unit:
       name: Contents unit
+      description: Unit for package size (liter, milliliter, gram, or kilogram)
       selector:
         select:
           options:
@@ -206,6 +211,7 @@ update_item:
             - milliliter
     calories_per_content:
       name: Calories per contents unit
+      description: kcal per 1 contents unit (e.g. per gram or per milliliter)
       selector:
         number:
           min: 0
@@ -213,6 +219,7 @@ update_item:
           mode: box
     liters_per_unit:
       name: Liters per unit
+      description: Prefer contents_per_unit with a volume contents_unit instead
       selector:
         number:
           min: 0
@@ -220,6 +227,7 @@ update_item:
           mode: box
     calories_per_unit:
       name: Calories per unit
+      description: Prefer contents_per_unit and calories_per_content instead
       selector:
         number:
           min: 0

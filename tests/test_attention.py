@@ -105,6 +105,8 @@ def test_item_summary() -> None:
         unit=InventoryUnit.BOX,
         location="Pantry",
         category="Food",
+        notes="organic",
+        barcode="123456",
         priority=InventoryPriority.ESSENTIAL,
         expiry_date="2027-01-15",
     )
@@ -116,6 +118,8 @@ def test_item_summary() -> None:
         "unit": "box",
         "location": "Pantry",
         "category": "Food",
+        "notes": "organic",
+        "barcode": "123456",
         "priority": "essential",
         "expiry_date": "2027-01-15",
     }

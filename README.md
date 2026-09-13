@@ -37,7 +37,9 @@ Open the integration → Configure:
 
 ## Actions
 
-Use **Developer Tools → Actions**.
+Use **Developer Tools → Actions**. The sidebar panel uses `add_item`, `update_item`, and `remove_item` for writes; `adjust_quantity`, `list_items`, and `lookup_barcode` are mainly for automations and scripts.
+
+**Stock vs contents:** `unit` is how you count stock (`piece` / `pack` / `box`). Package size goes in `contents_per_unit` + `contents_unit` (e.g. 1.5 liter per bottle). Prefer those over `liters_per_unit` / `calories_per_unit`.
 
 ### Add a water six-pack
 
@@ -68,6 +70,24 @@ data:
   contents_unit: gram
   calories_per_content: 3.54
   expiry_date: "2027-06-01"
+```
+
+### Update an item
+
+```yaml
+action: ready_home.update_item
+data:
+  name: Bottled water
+  quantity: 4
+  desired_quantity: 12
+```
+
+### Remove an item
+
+```yaml
+action: ready_home.remove_item
+data:
+  name: Instant rice
 ```
 
 ### Consume one unit
