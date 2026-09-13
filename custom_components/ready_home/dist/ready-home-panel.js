@@ -1,56 +1,19 @@
-/**
- * @license
- * Copyright 2019 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */const q=globalThis,W=q.ShadowRoot&&(q.ShadyCSS===void 0||q.ShadyCSS.nativeShadow)&&"adoptedStyleSheets"in Document.prototype&&"replace"in CSSStyleSheet.prototype,K=Symbol(),G=new WeakMap;let ht=class{constructor(t,e,r){if(this._$cssResult$=!0,r!==K)throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");this.cssText=t,this.t=e}get styleSheet(){let t=this.o;const e=this.t;if(W&&t===void 0){const r=e!==void 0&&e.length===1;r&&(t=G.get(e)),t===void 0&&((this.o=t=new CSSStyleSheet).replaceSync(this.cssText),r&&G.set(e,t))}return t}toString(){return this.cssText}};const gt=s=>new ht(typeof s=="string"?s:s+"",void 0,K),$t=(s,...t)=>{const e=s.length===1?s[0]:t.reduce((r,i,o)=>r+(n=>{if(n._$cssResult$===!0)return n.cssText;if(typeof n=="number")return n;throw Error("Value passed to 'css' function must be a 'css' function result: "+n+". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.")})(i)+s[o+1],s[0]);return new ht(e,s,K)},bt=(s,t)=>{if(W)s.adoptedStyleSheets=t.map(e=>e instanceof CSSStyleSheet?e:e.styleSheet);else for(const e of t){const r=document.createElement("style"),i=q.litNonce;i!==void 0&&r.setAttribute("nonce",i),r.textContent=e.cssText,s.appendChild(r)}},X=W?s=>s:s=>s instanceof CSSStyleSheet?(t=>{let e="";for(const r of t.cssRules)e+=r.cssText;return gt(e)})(s):s;/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */const{is:yt,defineProperty:vt,getOwnPropertyDescriptor:xt,getOwnPropertyNames:wt,getOwnPropertySymbols:At,getPrototypeOf:Ct}=Object,I=globalThis,tt=I.trustedTypes,Et=tt?tt.emptyScript:"",St=I.reactiveElementPolyfillSupport,T=(s,t)=>s,B={toAttribute(s,t){switch(t){case Boolean:s=s?Et:null;break;case Object:case Array:s=s==null?s:JSON.stringify(s)}return s},fromAttribute(s,t){let e=s;switch(t){case Boolean:e=s!==null;break;case Number:e=s===null?null:Number(s);break;case Object:case Array:try{e=JSON.parse(s)}catch{e=null}}return e}},Z=(s,t)=>!yt(s,t),et={attribute:!0,type:String,converter:B,reflect:!1,useDefault:!1,hasChanged:Z};Symbol.metadata??=Symbol("metadata"),I.litPropertyMetadata??=new WeakMap;let S=class extends HTMLElement{static addInitializer(t){this._$Ei(),(this.l??=[]).push(t)}static get observedAttributes(){return this.finalize(),this._$Eh&&[...this._$Eh.keys()]}static createProperty(t,e=et){if(e.state&&(e.attribute=!1),this._$Ei(),this.prototype.hasOwnProperty(t)&&((e=Object.create(e)).wrapped=!0),this.elementProperties.set(t,e),!e.noAccessor){const r=Symbol(),i=this.getPropertyDescriptor(t,r,e);i!==void 0&&vt(this.prototype,t,i)}}static getPropertyDescriptor(t,e,r){const{get:i,set:o}=xt(this.prototype,t)??{get(){return this[e]},set(n){this[e]=n}};return{get:i,set(n){const a=i?.call(this);o?.call(this,n),this.requestUpdate(t,a,r)},configurable:!0,enumerable:!0}}static getPropertyOptions(t){return this.elementProperties.get(t)??et}static _$Ei(){if(this.hasOwnProperty(T("elementProperties")))return;const t=Ct(this);t.finalize(),t.l!==void 0&&(this.l=[...t.l]),this.elementProperties=new Map(t.elementProperties)}static finalize(){if(this.hasOwnProperty(T("finalized")))return;if(this.finalized=!0,this._$Ei(),this.hasOwnProperty(T("properties"))){const e=this.properties,r=[...wt(e),...At(e)];for(const i of r)this.createProperty(i,e[i])}const t=this[Symbol.metadata];if(t!==null){const e=litPropertyMetadata.get(t);if(e!==void 0)for(const[r,i]of e)this.elementProperties.set(r,i)}this._$Eh=new Map;for(const[e,r]of this.elementProperties){const i=this._$Eu(e,r);i!==void 0&&this._$Eh.set(i,e)}this.elementStyles=this.finalizeStyles(this.styles)}static finalizeStyles(t){const e=[];if(Array.isArray(t)){const r=new Set(t.flat(1/0).reverse());for(const i of r)e.unshift(X(i))}else t!==void 0&&e.push(X(t));return e}static _$Eu(t,e){const r=e.attribute;return r===!1?void 0:typeof r=="string"?r:typeof t=="string"?t.toLowerCase():void 0}constructor(){super(),this._$Ep=void 0,this.isUpdatePending=!1,this.hasUpdated=!1,this._$Em=null,this._$Ev()}_$Ev(){this._$ES=new Promise(t=>this.enableUpdating=t),this._$AL=new Map,this._$E_(),this.requestUpdate(),this.constructor.l?.forEach(t=>t(this))}addController(t){(this._$EO??=new Set).add(t),this.renderRoot!==void 0&&this.isConnected&&t.hostConnected?.()}removeController(t){this._$EO?.delete(t)}_$E_(){const t=new Map,e=this.constructor.elementProperties;for(const r of e.keys())this.hasOwnProperty(r)&&(t.set(r,this[r]),delete this[r]);t.size>0&&(this._$Ep=t)}createRenderRoot(){const t=this.shadowRoot??this.attachShadow(this.constructor.shadowRootOptions);return bt(t,this.constructor.elementStyles),t}connectedCallback(){this.renderRoot??=this.createRenderRoot(),this.enableUpdating(!0),this._$EO?.forEach(t=>t.hostConnected?.())}enableUpdating(t){}disconnectedCallback(){this._$EO?.forEach(t=>t.hostDisconnected?.())}attributeChangedCallback(t,e,r){this._$AK(t,r)}_$ET(t,e){const r=this.constructor.elementProperties.get(t),i=this.constructor._$Eu(t,r);if(i!==void 0&&r.reflect===!0){const o=(r.converter?.toAttribute!==void 0?r.converter:B).toAttribute(e,r.type);this._$Em=t,o==null?this.removeAttribute(i):this.setAttribute(i,o),this._$Em=null}}_$AK(t,e){const r=this.constructor,i=r._$Eh.get(t);if(i!==void 0&&this._$Em!==i){const o=r.getPropertyOptions(i),n=typeof o.converter=="function"?{fromAttribute:o.converter}:o.converter?.fromAttribute!==void 0?o.converter:B;this._$Em=i;const a=n.fromAttribute(e,o.type);this[i]=a??this._$Ej?.get(i)??a,this._$Em=null}}requestUpdate(t,e,r,i=!1,o){if(t!==void 0){const n=this.constructor;if(i===!1&&(o=this[t]),r??=n.getPropertyOptions(t),!((r.hasChanged??Z)(o,e)||r.useDefault&&r.reflect&&o===this._$Ej?.get(t)&&!this.hasAttribute(n._$Eu(t,r))))return;this.C(t,e,r)}this.isUpdatePending===!1&&(this._$ES=this._$EP())}C(t,e,{useDefault:r,reflect:i,wrapped:o},n){r&&!(this._$Ej??=new Map).has(t)&&(this._$Ej.set(t,n??e??this[t]),o!==!0||n!==void 0)||(this._$AL.has(t)||(this.hasUpdated||r||(e=void 0),this._$AL.set(t,e)),i===!0&&this._$Em!==t&&(this._$Eq??=new Set).add(t))}async _$EP(){this.isUpdatePending=!0;try{await this._$ES}catch(e){Promise.reject(e)}const t=this.scheduleUpdate();return t!=null&&await t,!this.isUpdatePending}scheduleUpdate(){return this.performUpdate()}performUpdate(){if(!this.isUpdatePending)return;if(!this.hasUpdated){if(this.renderRoot??=this.createRenderRoot(),this._$Ep){for(const[i,o]of this._$Ep)this[i]=o;this._$Ep=void 0}const r=this.constructor.elementProperties;if(r.size>0)for(const[i,o]of r){const{wrapped:n}=o,a=this[i];n!==!0||this._$AL.has(i)||a===void 0||this.C(i,void 0,o,a)}}let t=!1;const e=this._$AL;try{t=this.shouldUpdate(e),t?(this.willUpdate(e),this._$EO?.forEach(r=>r.hostUpdate?.()),this.update(e)):this._$EM()}catch(r){throw t=!1,this._$EM(),r}t&&this._$AE(e)}willUpdate(t){}_$AE(t){this._$EO?.forEach(e=>e.hostUpdated?.()),this.hasUpdated||(this.hasUpdated=!0,this.firstUpdated(t)),this.updated(t)}_$EM(){this._$AL=new Map,this.isUpdatePending=!1}get updateComplete(){return this.getUpdateComplete()}getUpdateComplete(){return this._$ES}shouldUpdate(t){return!0}update(t){this._$Eq&&=this._$Eq.forEach(e=>this._$ET(e,this[e])),this._$EM()}updated(t){}firstUpdated(t){}};S.elementStyles=[],S.shadowRootOptions={mode:"open"},S[T("elementProperties")]=new Map,S[T("finalized")]=new Map,St?.({ReactiveElement:S}),(I.reactiveElementVersions??=[]).push("2.1.2");/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */const Q=globalThis,rt=s=>s,D=Q.trustedTypes,it=D?D.createPolicy("lit-html",{createHTML:s=>s}):void 0,ut="$lit$",y=`lit$${Math.random().toFixed(9).slice(2)}$`,pt="?"+y,kt=`<${pt}>`,C=document,O=()=>C.createComment(""),P=s=>s===null||typeof s!="object"&&typeof s!="function",Y=Array.isArray,Lt=s=>Y(s)||typeof s?.[Symbol.iterator]=="function",V=`[ 	
-\f\r]`,L=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,st=/-->/g,ot=/>/g,w=RegExp(`>|${V}(?:([^\\s"'>=/]+)(${V}*=${V}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`,"g"),nt=/'/g,at=/"/g,_t=/^(?:script|style|textarea|title)$/i,Nt=s=>(t,...e)=>({_$litType$:s,strings:t,values:e}),h=Nt(1),b=Symbol.for("lit-noChange"),d=Symbol.for("lit-nothing"),lt=new WeakMap,A=C.createTreeWalker(C,129);function ft(s,t){if(!Y(s)||!s.hasOwnProperty("raw"))throw Error("invalid template strings array");return it!==void 0?it.createHTML(t):t}const Tt=(s,t)=>{const e=s.length-1,r=[];let i,o=t===2?"<svg>":t===3?"<math>":"",n=L;for(let a=0;a<e;a++){const c=s[a];let u,l,p=-1,g=0;for(;g<c.length&&(n.lastIndex=g,l=n.exec(c),l!==null);)g=n.lastIndex,n===L?l[1]==="!--"?n=st:l[1]!==void 0?n=ot:l[2]!==void 0?(_t.test(l[2])&&(i=RegExp("</"+l[2],"g")),n=w):l[3]!==void 0&&(n=w):n===w?l[0]===">"?(n=i??L,p=-1):l[1]===void 0?p=-2:(p=n.lastIndex-l[2].length,u=l[1],n=l[3]===void 0?w:l[3]==='"'?at:nt):n===at||n===nt?n=w:n===st||n===ot?n=L:(n=w,i=void 0);const _=n===w&&s[a+1].startsWith("/>")?" ":"";o+=n===L?c+kt:p>=0?(r.push(u),c.slice(0,p)+ut+c.slice(p)+y+_):c+y+(p===-2?a:_)}return[ft(s,o+(s[e]||"<?>")+(t===2?"</svg>":t===3?"</math>":"")),r]};class R{constructor({strings:t,_$litType$:e},r){let i;this.parts=[];let o=0,n=0;const a=t.length-1,c=this.parts,[u,l]=Tt(t,e);if(this.el=R.createElement(u,r),A.currentNode=this.el.content,e===2||e===3){const p=this.el.content.firstChild;p.replaceWith(...p.childNodes)}for(;(i=A.nextNode())!==null&&c.length<a;){if(i.nodeType===1){if(i.hasAttributes())for(const p of i.getAttributeNames())if(p.endsWith(ut)){const g=l[n++],_=i.getAttribute(p).split(y),v=/([.?@])?(.*)/.exec(g);c.push({type:1,index:o,name:v[2],strings:_,ctor:v[1]==="."?Ot:v[1]==="?"?Pt:v[1]==="@"?Rt:z}),i.removeAttribute(p)}else p.startsWith(y)&&(c.push({type:6,index:o}),i.removeAttribute(p));if(_t.test(i.tagName)){const p=i.textContent.split(y),g=p.length-1;if(g>0){i.textContent=D?D.emptyScript:"";for(let _=0;_<g;_++)i.append(p[_],O()),A.nextNode(),c.push({type:2,index:++o});i.append(p[g],O())}}}else if(i.nodeType===8)if(i.data===pt)c.push({type:2,index:o});else{let p=-1;for(;(p=i.data.indexOf(y,p+1))!==-1;)c.push({type:7,index:o}),p+=y.length-1}o++}}static createElement(t,e){const r=C.createElement("template");return r.innerHTML=t,r}}function k(s,t,e=s,r){if(t===b)return t;let i=r!==void 0?e._$Co?.[r]:e._$Cl;const o=P(t)?void 0:t._$litDirective$;return i?.constructor!==o&&(i?._$AO?.(!1),o===void 0?i=void 0:(i=new o(s),i._$AT(s,e,r)),r!==void 0?(e._$Co??=[])[r]=i:e._$Cl=i),i!==void 0&&(t=k(s,i._$AS(s,t.values),i,r)),t}class Mt{constructor(t,e){this._$AV=[],this._$AN=void 0,this._$AD=t,this._$AM=e}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(t){const{el:{content:e},parts:r}=this._$AD,i=(t?.creationScope??C).importNode(e,!0);A.currentNode=i;let o=A.nextNode(),n=0,a=0,c=r[0];for(;c!==void 0;){if(n===c.index){let u;c.type===2?u=new H(o,o.nextSibling,this,t):c.type===1?u=new c.ctor(o,c.name,c.strings,this,t):c.type===6&&(u=new Ht(o,this,t)),this._$AV.push(u),c=r[++a]}n!==c?.index&&(o=A.nextNode(),n++)}return A.currentNode=C,i}p(t){let e=0;for(const r of this._$AV)r!==void 0&&(r.strings!==void 0?(r._$AI(t,r,e),e+=r.strings.length-2):r._$AI(t[e])),e++}}class H{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(t,e,r,i){this.type=2,this._$AH=d,this._$AN=void 0,this._$AA=t,this._$AB=e,this._$AM=r,this.options=i,this._$Cv=i?.isConnected??!0}get parentNode(){let t=this._$AA.parentNode;const e=this._$AM;return e!==void 0&&t?.nodeType===11&&(t=e.parentNode),t}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(t,e=this){t=k(this,t,e),P(t)?t===d||t==null||t===""?(this._$AH!==d&&this._$AR(),this._$AH=d):t!==this._$AH&&t!==b&&this._(t):t._$litType$!==void 0?this.$(t):t.nodeType!==void 0?this.T(t):Lt(t)?this.k(t):this._(t)}O(t){return this._$AA.parentNode.insertBefore(t,this._$AB)}T(t){this._$AH!==t&&(this._$AR(),this._$AH=this.O(t))}_(t){this._$AH!==d&&P(this._$AH)?this._$AA.nextSibling.data=t:this.T(C.createTextNode(t)),this._$AH=t}$(t){const{values:e,_$litType$:r}=t,i=typeof r=="number"?this._$AC(t):(r.el===void 0&&(r.el=R.createElement(ft(r.h,r.h[0]),this.options)),r);if(this._$AH?._$AD===i)this._$AH.p(e);else{const o=new Mt(i,this),n=o.u(this.options);o.p(e),this.T(n),this._$AH=o}}_$AC(t){let e=lt.get(t.strings);return e===void 0&&lt.set(t.strings,e=new R(t)),e}k(t){Y(this._$AH)||(this._$AH=[],this._$AR());const e=this._$AH;let r,i=0;for(const o of t)i===e.length?e.push(r=new H(this.O(O()),this.O(O()),this,this.options)):r=e[i],r._$AI(o),i++;i<e.length&&(this._$AR(r&&r._$AB.nextSibling,i),e.length=i)}_$AR(t=this._$AA.nextSibling,e){for(this._$AP?.(!1,!0,e);t!==this._$AB;){const r=rt(t).nextSibling;rt(t).remove(),t=r}}setConnected(t){this._$AM===void 0&&(this._$Cv=t,this._$AP?.(t))}}class z{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(t,e,r,i,o){this.type=1,this._$AH=d,this._$AN=void 0,this.element=t,this.name=e,this._$AM=i,this.options=o,r.length>2||r[0]!==""||r[1]!==""?(this._$AH=Array(r.length-1).fill(new String),this.strings=r):this._$AH=d}_$AI(t,e=this,r,i){const o=this.strings;let n=!1;if(o===void 0)t=k(this,t,e,0),n=!P(t)||t!==this._$AH&&t!==b,n&&(this._$AH=t);else{const a=t;let c,u;for(t=o[0],c=0;c<o.length-1;c++)u=k(this,a[r+c],e,c),u===b&&(u=this._$AH[c]),n||=!P(u)||u!==this._$AH[c],u===d?t=d:t!==d&&(t+=(u??"")+o[c+1]),this._$AH[c]=u}n&&!i&&this.j(t)}j(t){t===d?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,t??"")}}class Ot extends z{constructor(){super(...arguments),this.type=3}j(t){this.element[this.name]=t===d?void 0:t}}class Pt extends z{constructor(){super(...arguments),this.type=4}j(t){this.element.toggleAttribute(this.name,!!t&&t!==d)}}class Rt extends z{constructor(t,e,r,i,o){super(t,e,r,i,o),this.type=5}_$AI(t,e=this){if((t=k(this,t,e,0)??d)===b)return;const r=this._$AH,i=t===d&&r!==d||t.capture!==r.capture||t.once!==r.once||t.passive!==r.passive,o=t!==d&&(r===d||i);i&&this.element.removeEventListener(this.name,this,r),o&&this.element.addEventListener(this.name,this,t),this._$AH=t}handleEvent(t){typeof this._$AH=="function"?this._$AH.call(this.options?.host??this.element,t):this._$AH.handleEvent(t)}}class Ht{constructor(t,e,r){this.element=t,this.type=6,this._$AN=void 0,this._$AM=e,this.options=r}get _$AU(){return this._$AM._$AU}_$AI(t){k(this,t)}}const Ut=Q.litHtmlPolyfillSupport;Ut?.(R,H),(Q.litHtmlVersions??=[]).push("3.3.3");const qt=(s,t,e)=>{const r=e?.renderBefore??t;let i=r._$litPart$;if(i===void 0){const o=e?.renderBefore??null;r._$litPart$=i=new H(t.insertBefore(O(),o),o,void 0,e??{})}return i._$AI(s),i};/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */const J=globalThis;let M=class extends S{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const t=super.createRenderRoot();return this.renderOptions.renderBefore??=t.firstChild,t}update(t){const e=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(t),this._$Do=qt(e,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return b}};M._$litElement$=!0,M.finalized=!0,J.litElementHydrateSupport?.({LitElement:M});const Bt=J.litElementPolyfillSupport;Bt?.({LitElement:M});(J.litElementVersions??=[]).push("4.2.2");/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */const E={ATTRIBUTE:1,PROPERTY:3,BOOLEAN_ATTRIBUTE:4},Dt=s=>(...t)=>({_$litDirective$:s,values:t});class It{constructor(t){}get _$AU(){return this._$AM._$AU}_$AT(t,e,r){this._$Ct=t,this._$AM=e,this._$Ci=r}_$AS(t,e){return this.update(t,e)}update(t,e){return this.render(...e)}}/**
- * @license
- * Copyright 2020 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */const zt=s=>s.strings===void 0,Ft={},jt=(s,t=Ft)=>s._$AH=t;/**
- * @license
- * Copyright 2020 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */const N=Dt(class extends It{constructor(s){if(super(s),s.type!==E.PROPERTY&&s.type!==E.ATTRIBUTE&&s.type!==E.BOOLEAN_ATTRIBUTE)throw Error("The `live` directive is not allowed on child or event bindings");if(!zt(s))throw Error("`live` bindings can only contain a single expression")}render(s){return s}update(s,[t]){if(t===b||t===d)return t;const e=s.element,r=s.name;if(s.type===E.PROPERTY){if(t===e[r])return b}else if(s.type===E.BOOLEAN_ATTRIBUTE){if(!!t===e.hasAttribute(r))return b}else if(s.type===E.ATTRIBUTE&&e.getAttribute(r)===t+"")return b;return jt(s),t}});/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */const Vt={attribute:!0,type:String,converter:B,reflect:!1,hasChanged:Z},Wt=(s=Vt,t,e)=>{const{kind:r,metadata:i}=e;let o=globalThis.litPropertyMetadata.get(i);if(o===void 0&&globalThis.litPropertyMetadata.set(i,o=new Map),r==="setter"&&((s=Object.create(s)).wrapped=!0),o.set(e.name,s),r==="accessor"){const{name:n}=e;return{set(a){const c=t.get.call(this);t.set.call(this,a),this.requestUpdate(n,c,s,!0,a)},init(a){return a!==void 0&&this.C(n,void 0,s,a),a}}}if(r==="setter"){const{name:n}=e;return function(a){const c=this[n];t.call(this,a),this.requestUpdate(n,c,s,!0,a)}}throw Error("Unsupported decorator location: "+r)};function F(s){return(t,e)=>typeof e=="object"?Wt(s,t,e):((r,i,o)=>{const n=i.hasOwnProperty(o);return i.constructor.createProperty(o,r),n?Object.getOwnPropertyDescriptor(i,o):void 0})(s,t,e)}/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */function $(s){return F({...s,state:!0,attribute:!1})}async function Kt(s){return s.connection.sendMessagePromise({type:"ready_home/settings"})}async function Zt(s,t){return s.connection.subscribeMessage(t,{type:"ready_home/subscribe"})}async function Qt(s,t){return s.connection.sendMessagePromise({type:"ready_home/barcode/lookup",barcode:t})}function mt(s,t){const e=s.trim().toLowerCase();return!e||!t?"none":(t.water_categories??[]).some(r=>r.trim().toLowerCase()===e)?"water":(t.food_categories??[]).some(r=>r.trim().toLowerCase()===e)?"food":"none"}function Yt(s,t){return t?t.expired.some(e=>e.id===s.id)?"expired":t.within_urgent.some(e=>e.id===s.id)?"urgent":t.within_expiring.some(e=>e.id===s.id)?"expiring":t.low_stock.some(e=>e.id===s.id)?"low":"":""}function Jt(s,t,e,r){let i=[...s];const o=r.search.trim().toLowerCase();if(o&&(i=i.filter(n=>n.name.toLowerCase().includes(o)||n.location.toLowerCase().includes(o)||n.category.toLowerCase().includes(o)||(n.barcode||"").toLowerCase().includes(o)||(n.notes||"").toLowerCase().includes(o))),r.filterLocation&&(i=i.filter(n=>n.location.toLowerCase()===r.filterLocation.toLowerCase())),r.filterCategory&&(i=i.filter(n=>n.category.toLowerCase()===r.filterCategory.toLowerCase())),r.filterReadiness&&(i=i.filter(n=>mt(n.category,e)===r.filterReadiness)),r.filterStatus!=="all"){const n=new Set;r.filterStatus==="expired"?t?.expired.forEach(a=>n.add(a.id)):r.filterStatus==="expiring"?(t?.within_urgent.forEach(a=>n.add(a.id)),t?.within_expiring.forEach(a=>n.add(a.id))):r.filterStatus==="low_stock"&&t?.low_stock.forEach(a=>n.add(a.id)),i=i.filter(a=>n.has(a.id))}return i.sort((n,a)=>r.sort==="quantity"?n.quantity-a.quantity:r.sort==="expiry"?(n.expiry_date||"9999").localeCompare(a.expiry_date||"9999"):n.name.localeCompare(a.name)),i}function ct(s,t){return s==null||Number.isNaN(Number(s))?"":Number(s)<=0?"bad":Number(s)<Number(t)?"warn":"ok"}var Gt=Object.defineProperty,m=(s,t,e,r)=>{for(var i=void 0,o=s.length-1,n;o>=0;o--)(n=s[o])&&(i=n(t,e,i)||i);return i&&Gt(t,e,i),i};const Xt="ready-home-panel",te="/api/ready_home/brand/icon.png",ee="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z",re="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z",ie="M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1Z",se="M12,20A6,6 0 0,1 6,14C6,10 12,3.25 12,3.25C12,3.25 18,10 18,14A6,6 0 0,1 12,20Z",oe="M18.06 23H19.72C20.56 23 21.25 22.35 21.35 21.53L23 5.05H18V1H16.03V5.05H11.06L11.36 7.39C13.07 7.86 14.67 8.71 15.63 9.65C17.07 11.07 18.06 12.54 18.06 14.94V23M1 22V21H16.03V22C16.03 22.54 15.58 23 15 23H2C1.45 23 1 22.54 1 22M16.03 15C16.03 7 1 7 1 15H16.03M1 17H16V19H1V17Z",dt=["box","pack","piece"],ne=["gram","kilogram","liter","milliliter"],ae=["essential","important","optional"],le={expired:"Expired",urgent:"Urgent",expiring:"Expiring",low:"Low stock"};function U(s){return s&&s.charAt(0).toUpperCase()+s.slice(1)}class f extends M{constructor(){super(...arguments),this.narrow=!1,this._snapshot=null,this._settings=null,this._search="",this._filterStatus="all",this._filterLocation="",this._filterCategory="",this._filterReadiness="",this._filtersOpen=!1,this._sort="name",this._dialogOpen=!1,this._editing=null,this._form={},this._error="",this._fieldErrors={},this._busy=!1,this._unsub=null,this._connected=!1,this._resetFilters=()=>{this._filterLocation="",this._filterCategory="",this._filterReadiness=""},this._toggleMenu=t=>{t?.stopPropagation(),this.dispatchEvent(new CustomEvent("hass-toggle-menu",{bubbles:!0,composed:!0}))},this._openAdd=()=>{this._editing=null,this._form=this._blankForm(),this._fieldErrors={},this._error="",this._dialogOpen=!0},this._openEdit=t=>{this._editing=t;const e=dt.includes(t.unit)?t.unit:"piece";let r=t.contents_per_unit,i=t.contents_unit||"",o=t.calories_per_content;r==null&&t.liters_per_unit!=null&&(r=t.liters_per_unit,i="liter"),o==null&&t.calories_per_unit!=null&&r==null&&(r=1,i=i||"gram",o=t.calories_per_unit),this._form={name:t.name,quantity:String(t.quantity),desired_quantity:String(t.desired_quantity),unit:e,location:t.location,category:t.category,priority:t.priority,notes:t.notes||"",barcode:t.barcode||"",expiry_date:t.expiry_date||"",contents_per_unit:r!=null?String(r):"",contents_unit:i,calories_per_content:o!=null?String(o):""},this._fieldErrors={},this._error="",this._dialogOpen=!0},this._closeDialog=()=>{this._dialogOpen=!1,this._fieldErrors={},this._error=""},this._onWindowKeyDown=t=>{t.key!=="Escape"||!this._dialogOpen||(t.preventDefault(),this._closeDialog())}}connectedCallback(){super.connectedCallback(),this._connected=!0,window.addEventListener("keydown",this._onWindowKeyDown),this._connect()}disconnectedCallback(){super.disconnectedCallback(),this._connected=!1,window.removeEventListener("keydown",this._onWindowKeyDown),this._unsub?.(),this._unsub=null}updated(t){t.has("hass")&&this.hass&&!this._unsub&&this._connected&&this._connect()}async _connect(){if(!(!this.hass||this._unsub))try{this._settings=await Kt(this.hass),this._unsub=await Zt(this.hass,t=>{this._snapshot=t}),this._error=""}catch(t){this._error=String(t)}}get _assessment(){return this._snapshot?.assessment??{}}get _bucketCounts(){const t=this._snapshot?.buckets;return{expired:t?.expired.length??0,expiring:(t?.within_urgent.length??0)+(t?.within_expiring.length??0),low_stock:t?.low_stock.length??0}}get _activeFilterCount(){let t=0;return this._filterLocation&&(t+=1),this._filterCategory&&(t+=1),this._filterReadiness&&(t+=1),t}_readinessKind(t){return mt(t,this._settings)}get _items(){return Jt(this._snapshot?.items??[],this._snapshot?.buckets,this._settings,{search:this._search,filterStatus:this._filterStatus,filterLocation:this._filterLocation,filterCategory:this._filterCategory,filterReadiness:this._filterReadiness,sort:this._sort})}_itemStatus(t){return Yt(t,this._snapshot?.buckets)}_statusLabel(t){return le[t]||t}_setStatusFilter(t){this._filterStatus=this._filterStatus===t?"all":t}_pct(t){return t==null||Number.isNaN(Number(t))?"—":`${Math.round(Number(t))}%`}_formatHours(t){if(t==null||Number.isNaN(Number(t)))return"—";const e=Math.max(0,Math.round(Number(t)));return e<48?`${e}h`:`${Math.round(e/24)}d`}_formatAmount(t,e){if(t==null||Number.isNaN(Number(t)))return"—";const r=Number(t);return`${Math.abs(r-Math.round(r))<.05?Math.round(r):Math.round(r*10)/10} ${e}`}_durationHours(){return this._assessment.duration_hours??this._settings?.duration_hours??72}_statToneClass(t){const e=ct(t,this._durationHours());return e?`stat-${e}`:""}_durationClass(t){const e=ct(t,this._durationHours());return e==="bad"?"duration-bad":e==="warn"?"duration-warn":""}_expiryClass(t){return t==="expired"?"expiry-expired":t==="urgent"||t==="expiring"?"expiry-warn":""}_formatDate(t){if(!t)return"—";const e=/^(\d{4})-(\d{2})-(\d{2})$/.exec(t.trim());if(!e)return t;const r=new Date(Number(e[1]),Number(e[2])-1,Number(e[3]));if(Number.isNaN(r.getTime()))return t;const i=this.hass?.locale,o=i?.language||this.hass?.language||navigator.language||"en",n=i?.date_format??"language",a=n==="system"?void 0:o,c=new Intl.DateTimeFormat(a,{year:"numeric",month:"numeric",day:"numeric"});if(n==="language"||n==="system")return c.format(r);const u=c.formatToParts(r),l=u.find(x=>x.type==="literal")?.value??"/",p=u.find(x=>x.type==="day")?.value??"",g=u.find(x=>x.type==="month")?.value??"",_=u.find(x=>x.type==="year")?.value??"",v=u[u.length-1],j=v?.type==="literal"?v.value:"";return n==="DMY"?`${p}${l}${g}${l}${_}${j}`:n==="MDY"?`${g}${l}${p}${l}${_}${j}`:`${_}${l}${g}${l}${p}${j}`}_optionList(t,e){const r=new Set,i=[];for(const o of[...t,e]){const n=o?.trim();if(!n)continue;const a=n.toLowerCase();r.has(a)||(r.add(a),i.push(n))}return i}_mdButton(t,e){const r=e.variant??"outlined";return h`
+var e=globalThis,t=e.ShadowRoot&&(e.ShadyCSS===void 0||e.ShadyCSS.nativeShadow)&&`adoptedStyleSheets`in Document.prototype&&`replace`in CSSStyleSheet.prototype,n=Symbol(),r=new WeakMap,i=class{constructor(e,t,r){if(this._$cssResult$=!0,r!==n)throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");this.cssText=e,this.t=t}get styleSheet(){let e=this.o,n=this.t;if(t&&e===void 0){let t=n!==void 0&&n.length===1;t&&(e=r.get(n)),e===void 0&&((this.o=e=new CSSStyleSheet).replaceSync(this.cssText),t&&r.set(n,e))}return e}toString(){return this.cssText}},a=e=>new i(typeof e==`string`?e:e+``,void 0,n),o=(e,...t)=>new i(e.length===1?e[0]:t.reduce((t,n,r)=>t+(e=>{if(!0===e._$cssResult$)return e.cssText;if(typeof e==`number`)return e;throw Error(`Value passed to 'css' function must be a 'css' function result: `+e+`. Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.`)})(n)+e[r+1],e[0]),e,n),s=(n,r)=>{if(t)n.adoptedStyleSheets=r.map(e=>e instanceof CSSStyleSheet?e:e.styleSheet);else for(let t of r){let r=document.createElement(`style`),i=e.litNonce;i!==void 0&&r.setAttribute(`nonce`,i),r.textContent=t.cssText,n.appendChild(r)}},c=t?e=>e:e=>e instanceof CSSStyleSheet?(e=>{let t=``;for(let n of e.cssRules)t+=n.cssText;return a(t)})(e):e,{is:l,defineProperty:u,getOwnPropertyDescriptor:d,getOwnPropertyNames:f,getOwnPropertySymbols:p,getPrototypeOf:m}=Object,h=globalThis,ee=h.trustedTypes,te=ee?ee.emptyScript:``,ne=h.reactiveElementPolyfillSupport,g=(e,t)=>e,_={toAttribute(e,t){switch(t){case Boolean:e=e?te:null;break;case Object:case Array:e=e==null?e:JSON.stringify(e)}return e},fromAttribute(e,t){let n=e;switch(t){case Boolean:n=e!==null;break;case Number:n=e===null?null:Number(e);break;case Object:case Array:try{n=JSON.parse(e)}catch{n=null}}return n}},v=(e,t)=>!l(e,t),re={attribute:!0,type:String,converter:_,reflect:!1,useDefault:!1,hasChanged:v};Symbol.metadata??=Symbol(`metadata`),h.litPropertyMetadata??=new WeakMap;var y=class extends HTMLElement{static addInitializer(e){this._$Ei(),(this.l??=[]).push(e)}static get observedAttributes(){return this.finalize(),this._$Eh&&[...this._$Eh.keys()]}static createProperty(e,t=re){if(t.state&&(t.attribute=!1),this._$Ei(),this.prototype.hasOwnProperty(e)&&((t=Object.create(t)).wrapped=!0),this.elementProperties.set(e,t),!t.noAccessor){let n=Symbol(),r=this.getPropertyDescriptor(e,n,t);r!==void 0&&u(this.prototype,e,r)}}static getPropertyDescriptor(e,t,n){let{get:r,set:i}=d(this.prototype,e)??{get(){return this[t]},set(e){this[t]=e}};return{get:r,set(t){let a=r?.call(this);i?.call(this,t),this.requestUpdate(e,a,n)},configurable:!0,enumerable:!0}}static getPropertyOptions(e){return this.elementProperties.get(e)??re}static _$Ei(){if(this.hasOwnProperty(g(`elementProperties`)))return;let e=m(this);e.finalize(),e.l!==void 0&&(this.l=[...e.l]),this.elementProperties=new Map(e.elementProperties)}static finalize(){if(this.hasOwnProperty(g(`finalized`)))return;if(this.finalized=!0,this._$Ei(),this.hasOwnProperty(g(`properties`))){let e=this.properties,t=[...f(e),...p(e)];for(let n of t)this.createProperty(n,e[n])}let e=this[Symbol.metadata];if(e!==null){let t=litPropertyMetadata.get(e);if(t!==void 0)for(let[e,n]of t)this.elementProperties.set(e,n)}this._$Eh=new Map;for(let[e,t]of this.elementProperties){let n=this._$Eu(e,t);n!==void 0&&this._$Eh.set(n,e)}this.elementStyles=this.finalizeStyles(this.styles)}static finalizeStyles(e){let t=[];if(Array.isArray(e)){let n=new Set(e.flat(1/0).reverse());for(let e of n)t.unshift(c(e))}else e!==void 0&&t.push(c(e));return t}static _$Eu(e,t){let n=t.attribute;return!1===n?void 0:typeof n==`string`?n:typeof e==`string`?e.toLowerCase():void 0}constructor(){super(),this._$Ep=void 0,this.isUpdatePending=!1,this.hasUpdated=!1,this._$Em=null,this._$Ev()}_$Ev(){this._$ES=new Promise(e=>this.enableUpdating=e),this._$AL=new Map,this._$E_(),this.requestUpdate(),this.constructor.l?.forEach(e=>e(this))}addController(e){(this._$EO??=new Set).add(e),this.renderRoot!==void 0&&this.isConnected&&e.hostConnected?.()}removeController(e){this._$EO?.delete(e)}_$E_(){let e=new Map,t=this.constructor.elementProperties;for(let n of t.keys())this.hasOwnProperty(n)&&(e.set(n,this[n]),delete this[n]);e.size>0&&(this._$Ep=e)}createRenderRoot(){let e=this.shadowRoot??this.attachShadow(this.constructor.shadowRootOptions);return s(e,this.constructor.elementStyles),e}connectedCallback(){this.renderRoot??=this.createRenderRoot(),this.enableUpdating(!0),this._$EO?.forEach(e=>e.hostConnected?.())}enableUpdating(e){}disconnectedCallback(){this._$EO?.forEach(e=>e.hostDisconnected?.())}attributeChangedCallback(e,t,n){this._$AK(e,n)}_$ET(e,t){let n=this.constructor.elementProperties.get(e),r=this.constructor._$Eu(e,n);if(r!==void 0&&!0===n.reflect){let i=(n.converter?.toAttribute===void 0?_:n.converter).toAttribute(t,n.type);this._$Em=e,i==null?this.removeAttribute(r):this.setAttribute(r,i),this._$Em=null}}_$AK(e,t){let n=this.constructor,r=n._$Eh.get(e);if(r!==void 0&&this._$Em!==r){let e=n.getPropertyOptions(r),i=typeof e.converter==`function`?{fromAttribute:e.converter}:e.converter?.fromAttribute===void 0?_:e.converter;this._$Em=r;let a=i.fromAttribute(t,e.type);this[r]=a??this._$Ej?.get(r)??a,this._$Em=null}}requestUpdate(e,t,n,r=!1,i){if(e!==void 0){let a=this.constructor;if(!1===r&&(i=this[e]),n??=a.getPropertyOptions(e),!((n.hasChanged??v)(i,t)||n.useDefault&&n.reflect&&i===this._$Ej?.get(e)&&!this.hasAttribute(a._$Eu(e,n))))return;this.C(e,t,n)}!1===this.isUpdatePending&&(this._$ES=this._$EP())}C(e,t,{useDefault:n,reflect:r,wrapped:i},a){n&&!(this._$Ej??=new Map).has(e)&&(this._$Ej.set(e,a??t??this[e]),!0!==i||a!==void 0)||(this._$AL.has(e)||(this.hasUpdated||n||(t=void 0),this._$AL.set(e,t)),!0===r&&this._$Em!==e&&(this._$Eq??=new Set).add(e))}async _$EP(){this.isUpdatePending=!0;try{await this._$ES}catch(e){Promise.reject(e)}let e=this.scheduleUpdate();return e!=null&&await e,!this.isUpdatePending}scheduleUpdate(){return this.performUpdate()}performUpdate(){if(!this.isUpdatePending)return;if(!this.hasUpdated){if(this.renderRoot??=this.createRenderRoot(),this._$Ep){for(let[e,t]of this._$Ep)this[e]=t;this._$Ep=void 0}let e=this.constructor.elementProperties;if(e.size>0)for(let[t,n]of e){let{wrapped:e}=n,r=this[t];!0!==e||this._$AL.has(t)||r===void 0||this.C(t,void 0,n,r)}}let e=!1,t=this._$AL;try{e=this.shouldUpdate(t),e?(this.willUpdate(t),this._$EO?.forEach(e=>e.hostUpdate?.()),this.update(t)):this._$EM()}catch(t){throw e=!1,this._$EM(),t}e&&this._$AE(t)}willUpdate(e){}_$AE(e){this._$EO?.forEach(e=>e.hostUpdated?.()),this.hasUpdated||(this.hasUpdated=!0,this.firstUpdated(e)),this.updated(e)}_$EM(){this._$AL=new Map,this.isUpdatePending=!1}get updateComplete(){return this.getUpdateComplete()}getUpdateComplete(){return this._$ES}shouldUpdate(e){return!0}update(e){this._$Eq&&=this._$Eq.forEach(e=>this._$ET(e,this[e])),this._$EM()}updated(e){}firstUpdated(e){}};y.elementStyles=[],y.shadowRootOptions={mode:`open`},y[g(`elementProperties`)]=new Map,y[g(`finalized`)]=new Map,ne?.({ReactiveElement:y}),(h.reactiveElementVersions??=[]).push(`2.1.2`);var b=globalThis,x=e=>e,S=b.trustedTypes,C=S?S.createPolicy(`lit-html`,{createHTML:e=>e}):void 0,w=`$lit$`,T=`lit$${Math.random().toFixed(9).slice(2)}$`,E=`?`+T,ie=`<${E}>`,D=document,O=()=>D.createComment(``),k=e=>e===null||typeof e!=`object`&&typeof e!=`function`,A=Array.isArray,ae=e=>A(e)||typeof e?.[Symbol.iterator]==`function`,j=`[ 	
+\f\r]`,M=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,oe=/-->/g,se=/>/g,N=RegExp(`>|${j}(?:([^\\s"'>=/]+)(${j}*=${j}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,`g`),P=/'/g,F=/"/g,I=/^(?:script|style|textarea|title)$/i,L=(e=>(t,...n)=>({_$litType$:e,strings:t,values:n}))(1),R=Symbol.for(`lit-noChange`),z=Symbol.for(`lit-nothing`),ce=new WeakMap,B=D.createTreeWalker(D,129);function le(e,t){if(!A(e)||!e.hasOwnProperty(`raw`))throw Error(`invalid template strings array`);return C===void 0?t:C.createHTML(t)}var ue=(e,t)=>{let n=e.length-1,r=[],i,a=t===2?`<svg>`:t===3?`<math>`:``,o=M;for(let t=0;t<n;t++){let n=e[t],s,c,l=-1,u=0;for(;u<n.length&&(o.lastIndex=u,c=o.exec(n),c!==null);)u=o.lastIndex,o===M?c[1]===`!--`?o=oe:c[1]===void 0?c[2]===void 0?c[3]!==void 0&&(o=N):(I.test(c[2])&&(i=RegExp(`</`+c[2],`g`)),o=N):o=se:o===N?c[0]===`>`?(o=i??M,l=-1):c[1]===void 0?l=-2:(l=o.lastIndex-c[2].length,s=c[1],o=c[3]===void 0?N:c[3]===`"`?F:P):o===F||o===P?o=N:o===oe||o===se?o=M:(o=N,i=void 0);let d=o===N&&e[t+1].startsWith(`/>`)?` `:``;a+=o===M?n+ie:l>=0?(r.push(s),n.slice(0,l)+w+n.slice(l)+T+d):n+T+(l===-2?t:d)}return[le(e,a+(e[n]||`<?>`)+(t===2?`</svg>`:t===3?`</math>`:``)),r]},V=class e{constructor({strings:t,_$litType$:n},r){let i;this.parts=[];let a=0,o=0,s=t.length-1,c=this.parts,[l,u]=ue(t,n);if(this.el=e.createElement(l,r),B.currentNode=this.el.content,n===2||n===3){let e=this.el.content.firstChild;e.replaceWith(...e.childNodes)}for(;(i=B.nextNode())!==null&&c.length<s;){if(i.nodeType===1){if(i.hasAttributes())for(let e of i.getAttributeNames())if(e.endsWith(w)){let t=u[o++],n=i.getAttribute(e).split(T),r=/([.?@])?(.*)/.exec(t);c.push({type:1,index:a,name:r[2],strings:n,ctor:r[1]===`.`?fe:r[1]===`?`?pe:r[1]===`@`?me:W}),i.removeAttribute(e)}else e.startsWith(T)&&(c.push({type:6,index:a}),i.removeAttribute(e));if(I.test(i.tagName)){let e=i.textContent.split(T),t=e.length-1;if(t>0){i.textContent=S?S.emptyScript:``;for(let n=0;n<t;n++)i.append(e[n],O()),B.nextNode(),c.push({type:2,index:++a});i.append(e[t],O())}}}else if(i.nodeType===8){if(i.data===E)c.push({type:2,index:a});else{let e=-1;for(;(e=i.data.indexOf(T,e+1))!==-1;)c.push({type:7,index:a}),e+=T.length-1}}a++}}static createElement(e,t){let n=D.createElement(`template`);return n.innerHTML=e,n}};function H(e,t,n=e,r){if(t===R)return t;let i=r===void 0?n._$Cl:n._$Co?.[r],a=k(t)?void 0:t._$litDirective$;return i?.constructor!==a&&(i?._$AO?.(!1),a===void 0?i=void 0:(i=new a(e),i._$AT(e,n,r)),r===void 0?n._$Cl=i:(n._$Co??=[])[r]=i),i!==void 0&&(t=H(e,i._$AS(e,t.values),i,r)),t}var de=class{constructor(e,t){this._$AV=[],this._$AN=void 0,this._$AD=e,this._$AM=t}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(e){let{el:{content:t},parts:n}=this._$AD,r=(e?.creationScope??D).importNode(t,!0);B.currentNode=r;let i=B.nextNode(),a=0,o=0,s=n[0];for(;s!==void 0;){if(a===s.index){let t;s.type===2?t=new U(i,i.nextSibling,this,e):s.type===1?t=new s.ctor(i,s.name,s.strings,this,e):s.type===6&&(t=new he(i,this,e)),this._$AV.push(t),s=n[++o]}a!==s?.index&&(i=B.nextNode(),a++)}return B.currentNode=D,r}p(e){let t=0;for(let n of this._$AV)n!==void 0&&(n.strings===void 0?n._$AI(e[t]):(n._$AI(e,n,t),t+=n.strings.length-2)),t++}},U=class e{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(e,t,n,r){this.type=2,this._$AH=z,this._$AN=void 0,this._$AA=e,this._$AB=t,this._$AM=n,this.options=r,this._$Cv=r?.isConnected??!0}get parentNode(){let e=this._$AA.parentNode,t=this._$AM;return t!==void 0&&e?.nodeType===11&&(e=t.parentNode),e}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(e,t=this){e=H(this,e,t),k(e)?e===z||e==null||e===``?(this._$AH!==z&&this._$AR(),this._$AH=z):e!==this._$AH&&e!==R&&this._(e):e._$litType$===void 0?e.nodeType===void 0?ae(e)?this.k(e):this._(e):this.T(e):this.$(e)}O(e){return this._$AA.parentNode.insertBefore(e,this._$AB)}T(e){this._$AH!==e&&(this._$AR(),this._$AH=this.O(e))}_(e){this._$AH!==z&&k(this._$AH)?this._$AA.nextSibling.data=e:this.T(D.createTextNode(e)),this._$AH=e}$(e){let{values:t,_$litType$:n}=e,r=typeof n==`number`?this._$AC(e):(n.el===void 0&&(n.el=V.createElement(le(n.h,n.h[0]),this.options)),n);if(this._$AH?._$AD===r)this._$AH.p(t);else{let e=new de(r,this),n=e.u(this.options);e.p(t),this.T(n),this._$AH=e}}_$AC(e){let t=ce.get(e.strings);return t===void 0&&ce.set(e.strings,t=new V(e)),t}k(t){A(this._$AH)||(this._$AH=[],this._$AR());let n=this._$AH,r,i=0;for(let a of t)i===n.length?n.push(r=new e(this.O(O()),this.O(O()),this,this.options)):r=n[i],r._$AI(a),i++;i<n.length&&(this._$AR(r&&r._$AB.nextSibling,i),n.length=i)}_$AR(e=this._$AA.nextSibling,t){for(this._$AP?.(!1,!0,t);e!==this._$AB;){let t=x(e).nextSibling;x(e).remove(),e=t}}setConnected(e){this._$AM===void 0&&(this._$Cv=e,this._$AP?.(e))}},W=class{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(e,t,n,r,i){this.type=1,this._$AH=z,this._$AN=void 0,this.element=e,this.name=t,this._$AM=r,this.options=i,n.length>2||n[0]!==``||n[1]!==``?(this._$AH=Array(n.length-1).fill(new String),this.strings=n):this._$AH=z}_$AI(e,t=this,n,r){let i=this.strings,a=!1;if(i===void 0)e=H(this,e,t,0),a=!k(e)||e!==this._$AH&&e!==R,a&&(this._$AH=e);else{let r=e,o,s;for(e=i[0],o=0;o<i.length-1;o++)s=H(this,r[n+o],t,o),s===R&&(s=this._$AH[o]),a||=!k(s)||s!==this._$AH[o],s===z?e=z:e!==z&&(e+=(s??``)+i[o+1]),this._$AH[o]=s}a&&!r&&this.j(e)}j(e){e===z?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,e??``)}},fe=class extends W{constructor(){super(...arguments),this.type=3}j(e){this.element[this.name]=e===z?void 0:e}},pe=class extends W{constructor(){super(...arguments),this.type=4}j(e){this.element.toggleAttribute(this.name,!!e&&e!==z)}},me=class extends W{constructor(e,t,n,r,i){super(e,t,n,r,i),this.type=5}_$AI(e,t=this){if((e=H(this,e,t,0)??z)===R)return;let n=this._$AH,r=e===z&&n!==z||e.capture!==n.capture||e.once!==n.once||e.passive!==n.passive,i=e!==z&&(n===z||r);r&&this.element.removeEventListener(this.name,this,n),i&&this.element.addEventListener(this.name,this,e),this._$AH=e}handleEvent(e){typeof this._$AH==`function`?this._$AH.call(this.options?.host??this.element,e):this._$AH.handleEvent(e)}},he=class{constructor(e,t,n){this.element=e,this.type=6,this._$AN=void 0,this._$AM=t,this.options=n}get _$AU(){return this._$AM._$AU}_$AI(e){H(this,e)}},ge={M:w,P:T,A:E,C:1,L:ue,R:de,D:ae,V:H,I:U,H:W,N:pe,U:me,B:fe,F:he},_e=b.litHtmlPolyfillSupport;_e?.(V,U),(b.litHtmlVersions??=[]).push(`3.3.3`);var ve=(e,t,n)=>{let r=n?.renderBefore??t,i=r._$litPart$;if(i===void 0){let e=n?.renderBefore??null;r._$litPart$=i=new U(t.insertBefore(O(),e),e,void 0,n??{})}return i._$AI(e),i},G=globalThis,K=class extends y{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){let e=super.createRenderRoot();return this.renderOptions.renderBefore??=e.firstChild,e}update(e){let t=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(e),this._$Do=ve(t,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return R}};K._$litElement$=!0,K.finalized=!0,G.litElementHydrateSupport?.({LitElement:K});var ye=G.litElementPolyfillSupport;ye?.({LitElement:K}),(G.litElementVersions??=[]).push(`4.2.2`);var q={ATTRIBUTE:1,CHILD:2,PROPERTY:3,BOOLEAN_ATTRIBUTE:4,EVENT:5,ELEMENT:6},be=e=>(...t)=>({_$litDirective$:e,values:t}),xe=class{constructor(e){}get _$AU(){return this._$AM._$AU}_$AT(e,t,n){this._$Ct=e,this._$AM=t,this._$Ci=n}_$AS(e,t){return this.update(e,t)}update(e,t){return this.render(...t)}},{I:Se}=ge,Ce=e=>e.strings===void 0,we={},Te=(e,t=we)=>e._$AH=t,J=be(class extends xe{constructor(e){if(super(e),e.type!==q.PROPERTY&&e.type!==q.ATTRIBUTE&&e.type!==q.BOOLEAN_ATTRIBUTE)throw Error("The `live` directive is not allowed on child or event bindings");if(!Ce(e))throw Error("`live` bindings can only contain a single expression")}render(e){return e}update(e,[t]){if(t===R||t===z)return t;let n=e.element,r=e.name;if(e.type===q.PROPERTY){if(t===n[r])return R}else if(e.type===q.BOOLEAN_ATTRIBUTE){if(!!t===n.hasAttribute(r))return R}else if(e.type===q.ATTRIBUTE&&n.getAttribute(r)===t+``)return R;return Te(e),t}}),Ee={attribute:!0,type:String,converter:_,reflect:!1,hasChanged:v},De=(e=Ee,t,n)=>{let{kind:r,metadata:i}=n,a=globalThis.litPropertyMetadata.get(i);if(a===void 0&&globalThis.litPropertyMetadata.set(i,a=new Map),r===`setter`&&((e=Object.create(e)).wrapped=!0),a.set(n.name,e),r===`accessor`){let{name:r}=n;return{set(n){let i=t.get.call(this);t.set.call(this,n),this.requestUpdate(r,i,e,!0,n)},init(t){return t!==void 0&&this.C(r,void 0,e,t),t}}}if(r===`setter`){let{name:r}=n;return function(n){let i=this[r];t.call(this,n),this.requestUpdate(r,i,e,!0,n)}}throw Error(`Unsupported decorator location: `+r)};function Y(e){return(t,n)=>typeof n==`object`?De(e,t,n):((e,t,n)=>{let r=t.hasOwnProperty(n);return t.constructor.createProperty(n,e),r?Object.getOwnPropertyDescriptor(t,n):void 0})(e,t,n)}function X(e){return Y({...e,state:!0,attribute:!1})}async function Oe(e){return e.connection.sendMessagePromise({type:`ready_home/settings`})}async function ke(e,t){return e.connection.subscribeMessage(t,{type:`ready_home/subscribe`})}async function Ae(e,t){return e.connection.sendMessagePromise({type:`ready_home/barcode/lookup`,barcode:t})}function je(e,t){let n=e.trim().toLowerCase();return!n||!t?`none`:(t.water_categories??[]).some(e=>e.trim().toLowerCase()===n)?`water`:(t.food_categories??[]).some(e=>e.trim().toLowerCase()===n)?`food`:`none`}function Me(e,t){return t?t.expired.some(t=>t.id===e.id)?`expired`:t.within_urgent.some(t=>t.id===e.id)?`urgent`:t.within_expiring.some(t=>t.id===e.id)?`expiring`:t.low_stock.some(t=>t.id===e.id)?`low`:``:``}function Ne(e,t,n,r){let i=[...e],a=r.search.trim().toLowerCase();if(a&&(i=i.filter(e=>e.name.toLowerCase().includes(a)||e.location.toLowerCase().includes(a)||e.category.toLowerCase().includes(a)||(e.barcode||``).toLowerCase().includes(a)||(e.notes||``).toLowerCase().includes(a))),r.filterLocation&&(i=i.filter(e=>e.location.toLowerCase()===r.filterLocation.toLowerCase())),r.filterCategory&&(i=i.filter(e=>e.category.toLowerCase()===r.filterCategory.toLowerCase())),r.filterReadiness&&(i=i.filter(e=>je(e.category,n)===r.filterReadiness)),r.filterStatus!==`all`){let e=new Set;r.filterStatus===`expired`?t?.expired.forEach(t=>e.add(t.id)):r.filterStatus===`expiring`?(t?.within_urgent.forEach(t=>e.add(t.id)),t?.within_expiring.forEach(t=>e.add(t.id))):r.filterStatus===`low_stock`&&t?.low_stock.forEach(t=>e.add(t.id)),i=i.filter(t=>e.has(t.id))}return i.sort((e,t)=>r.sort===`quantity`?e.quantity-t.quantity:r.sort===`expiry`?(e.expiry_date||`9999`).localeCompare(t.expiry_date||`9999`):e.name.localeCompare(t.name)),i}function Pe(e,t){return e==null||Number.isNaN(Number(e))?``:Number(e)<=0?`bad`:Number(e)<Number(t)?`warn`:`ok`}function Z(e,t,n,r){var i=arguments.length,a=i<3?t:r===null?r=Object.getOwnPropertyDescriptor(t,n):r,o;if(typeof Reflect==`object`&&typeof Reflect.decorate==`function`)a=Reflect.decorate(e,t,n,r);else for(var s=e.length-1;s>=0;s--)(o=e[s])&&(a=(i<3?o(a):i>3?o(t,n,a):o(t,n))||a);return i>3&&a&&Object.defineProperty(t,n,a),a}var Fe=`ready-home-panel`,Ie=`/api/ready_home/brand/icon.png`,Le=`M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z`,Re=`M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z`,ze=`M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1Z`,Be=`M12,20A6,6 0 0,1 6,14C6,10 12,3.25 12,3.25C12,3.25 18,10 18,14A6,6 0 0,1 12,20Z`,Ve=`M18.06 23H19.72C20.56 23 21.25 22.35 21.35 21.53L23 5.05H18V1H16.03V5.05H11.06L11.36 7.39C13.07 7.86 14.67 8.71 15.63 9.65C17.07 11.07 18.06 12.54 18.06 14.94V23M1 22V21H16.03V22C16.03 22.54 15.58 23 15 23H2C1.45 23 1 22.54 1 22M16.03 15C16.03 7 1 7 1 15H16.03M1 17H16V19H1V17Z`,He=[`box`,`pack`,`piece`],Ue=[`gram`,`kilogram`,`liter`,`milliliter`],We=[`essential`,`important`,`optional`],Ge={expired:`Expired`,urgent:`Urgent`,expiring:`Expiring`,low:`Low stock`};function Q(e){return e&&e.charAt(0).toUpperCase()+e.slice(1)}var $=class extends K{constructor(...e){super(...e),this.narrow=!1,this._snapshot=null,this._settings=null,this._search=``,this._filterStatus=`all`,this._filterLocation=``,this._filterCategory=``,this._filterReadiness=``,this._filtersOpen=!1,this._sort=`name`,this._dialogOpen=!1,this._editing=null,this._form={},this._error=``,this._fieldErrors={},this._busy=!1,this._unsub=null,this._connected=!1,this._resetFilters=()=>{this._filterLocation=``,this._filterCategory=``,this._filterReadiness=``},this._toggleMenu=e=>{e?.stopPropagation(),this.dispatchEvent(new CustomEvent(`hass-toggle-menu`,{bubbles:!0,composed:!0}))},this._openAdd=()=>{this._editing=null,this._form=this._blankForm(),this._fieldErrors={},this._error=``,this._dialogOpen=!0},this._openEdit=e=>{this._editing=e;let t=He.includes(e.unit)?e.unit:`piece`,n=e.contents_per_unit,r=e.contents_unit||``,i=e.calories_per_content;n==null&&e.liters_per_unit!=null&&(n=e.liters_per_unit,r=`liter`),i==null&&e.calories_per_unit!=null&&n==null&&(n=1,r||=`gram`,i=e.calories_per_unit),this._form={name:e.name,quantity:String(e.quantity),desired_quantity:String(e.desired_quantity),unit:t,location:e.location,category:e.category,priority:e.priority,notes:e.notes||``,barcode:e.barcode||``,expiry_date:e.expiry_date||``,contents_per_unit:n==null?``:String(n),contents_unit:r,calories_per_content:i==null?``:String(i)},this._fieldErrors={},this._error=``,this._dialogOpen=!0},this._closeDialog=()=>{this._dialogOpen=!1,this._fieldErrors={},this._error=``},this._onWindowKeyDown=e=>{e.key===`Escape`&&this._dialogOpen&&(e.preventDefault(),this._closeDialog())}}connectedCallback(){super.connectedCallback(),this._connected=!0,window.addEventListener(`keydown`,this._onWindowKeyDown),this._connect()}disconnectedCallback(){super.disconnectedCallback(),this._connected=!1,window.removeEventListener(`keydown`,this._onWindowKeyDown),this._unsub?.(),this._unsub=null}updated(e){e.has(`hass`)&&this.hass&&!this._unsub&&this._connected&&this._connect()}async _connect(){if(this.hass&&!this._unsub)try{this._settings=await Oe(this.hass),this._unsub=await ke(this.hass,e=>{this._snapshot=e}),this._error=``}catch(e){this._error=String(e)}}get _assessment(){return this._snapshot?.assessment??{}}get _bucketCounts(){let e=this._snapshot?.buckets;return{expired:e?.expired.length??0,expiring:(e?.within_urgent.length??0)+(e?.within_expiring.length??0),low_stock:e?.low_stock.length??0}}get _activeFilterCount(){let e=0;return this._filterLocation&&(e+=1),this._filterCategory&&(e+=1),this._filterReadiness&&(e+=1),e}_readinessKind(e){return je(e,this._settings)}get _items(){return Ne(this._snapshot?.items??[],this._snapshot?.buckets,this._settings,{search:this._search,filterStatus:this._filterStatus,filterLocation:this._filterLocation,filterCategory:this._filterCategory,filterReadiness:this._filterReadiness,sort:this._sort})}_itemStatus(e){return Me(e,this._snapshot?.buckets)}_statusLabel(e){return Ge[e]||e}_setStatusFilter(e){this._filterStatus=this._filterStatus===e?`all`:e}_pct(e){return e==null||Number.isNaN(Number(e))?`—`:`${Math.round(Number(e))}%`}_formatHours(e){if(e==null||Number.isNaN(Number(e)))return`—`;let t=Math.max(0,Math.round(Number(e)));return t<48?`${t}h`:`${Math.round(t/24)}d`}_formatAmount(e,t){if(e==null||Number.isNaN(Number(e)))return`—`;let n=Number(e);return`${Math.abs(n-Math.round(n))<.05?Math.round(n):Math.round(n*10)/10} ${t}`}_durationHours(){return this._assessment.duration_hours??this._settings?.duration_hours??72}_statToneClass(e){let t=Pe(e,this._durationHours());return t?`stat-${t}`:``}_durationClass(e){let t=Pe(e,this._durationHours());return t===`bad`?`duration-bad`:t===`warn`?`duration-warn`:``}_expiryClass(e){return e===`expired`?`expiry-expired`:e===`urgent`||e===`expiring`?`expiry-warn`:``}_formatDate(e){if(!e)return`—`;let t=/^(\d{4})-(\d{2})-(\d{2})$/.exec(e.trim());if(!t)return e;let n=new Date(Number(t[1]),Number(t[2])-1,Number(t[3]));if(Number.isNaN(n.getTime()))return e;let r=this.hass?.locale,i=r?.language||this.hass?.language||navigator.language||`en`,a=r?.date_format??`language`,o=a===`system`?void 0:i,s=new Intl.DateTimeFormat(o,{year:`numeric`,month:`numeric`,day:`numeric`});if(a===`language`||a===`system`)return s.format(n);let c=s.formatToParts(n),l=c.find(e=>e.type===`literal`)?.value??`/`,u=c.find(e=>e.type===`day`)?.value??``,d=c.find(e=>e.type===`month`)?.value??``,f=c.find(e=>e.type===`year`)?.value??``,p=c[c.length-1],m=p?.type===`literal`?p.value:``;return a===`DMY`?`${u}${l}${d}${l}${f}${m}`:a===`MDY`?`${d}${l}${u}${l}${f}${m}`:`${f}${l}${d}${l}${u}${m}`}_optionList(e,t){let n=new Set,r=[];for(let i of[...e,t]){let e=i?.trim();if(!e)continue;let t=e.toLowerCase();n.has(t)||(n.add(t),r.push(e))}return r}_mdButton(e,t){return L`
       <button
         type="button"
-        class="md-btn md-btn-${r}"
-        ?disabled=${e.disabled??!1}
-        @click=${e.onClick}
+        class="md-btn md-btn-${t.variant??`outlined`}"
+        ?disabled=${t.disabled??!1}
+        @click=${t.onClick}
       >
-        ${t}
+        ${e}
       </button>
-    `}render(){const t=this._items,e=this._assessment,r=this._settings?.locations??[],i=this._settings?.categories??[],o=e.overall_percent,n=e.water_percent,a=e.food_percent,c=this._bucketCounts,u=e.duration_hours??this._settings?.duration_hours??72,l=e.supply_hours,p=e.water_supply_hours,g=e.food_supply_hours;return h`
+    `}render(){let e=this._items,t=this._assessment,n=this._settings?.locations??[],r=this._settings?.categories??[],i=t.overall_percent,a=t.water_percent,o=t.food_percent,s=this._bucketCounts,c=t.duration_hours??this._settings?.duration_hours??72,l=t.supply_hours,u=t.water_supply_hours,d=t.food_supply_hours;return L`
       <div class="page">
         <header class="header">
           <div class="header-row">
             <div class="brand">
-              ${this.narrow?h`
+              ${this.narrow?L`
                     <button
                       type="button"
                       class="icon-btn"
@@ -58,23 +21,23 @@
                       @click=${this._toggleMenu}
                     >
                       <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path fill="currentColor" d=${ee} />
+                        <path fill="currentColor" d=${Le} />
                       </svg>
                     </button>
-                  `:d}
+                  `:z}
               <img
                 class="brand-icon"
-                src=${te}
+                src=${Ie}
                 alt=""
                 width="40"
                 height="40"
               />
               <div class="brand-text">
                 <h1>Ready Home</h1>
-                <p class="subtitle">${u}-hour emergency readiness</p>
+                <p class="subtitle">${c}-hour emergency readiness</p>
               </div>
             </div>
-            ${this._mdButton("Add item",{variant:"filled",disabled:this._busy,onClick:this._openAdd})}
+            ${this._mdButton(`Add item`,{variant:`filled`,disabled:this._busy,onClick:this._openAdd})}
           </div>
         </header>
 
@@ -83,49 +46,49 @@
             <div class="stat ${this._statToneClass(l)}">
               <span class="stat-label">
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="currentColor" d=${ie} />
+                  <path fill="currentColor" d=${ze} />
                 </svg>
                 Overall
               </span>
-              <span class="stat-value">${this._pct(o)}</span>
+              <span class="stat-value">${this._pct(i)}</span>
               <span class="stat-duration ${this._durationClass(l)}"
                 >Lasts ${this._formatHours(l)}</span
               >
             </div>
-            <div class="stat ${this._statToneClass(p)}">
+            <div class="stat ${this._statToneClass(u)}">
               <span class="stat-label">
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="currentColor" d=${se} />
+                  <path fill="currentColor" d=${Be} />
                 </svg>
                 Water
               </span>
               <span class="stat-value"
-                >${this._formatAmount(e.water_on_hand,"L")}</span
+                >${this._formatAmount(t.water_on_hand,`L`)}</span
               >
               <span class="stat-meta"
-                >${this._pct(n)} · goal
-                ${this._formatAmount(e.water_target,"L")}</span
+                >${this._pct(a)} · goal
+                ${this._formatAmount(t.water_target,`L`)}</span
               >
-              <span class="stat-duration ${this._durationClass(p)}"
-                >Lasts ${this._formatHours(p)}</span
+              <span class="stat-duration ${this._durationClass(u)}"
+                >Lasts ${this._formatHours(u)}</span
               >
             </div>
-            <div class="stat ${this._statToneClass(g)}">
+            <div class="stat ${this._statToneClass(d)}">
               <span class="stat-label">
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="currentColor" d=${oe} />
+                  <path fill="currentColor" d=${Ve} />
                 </svg>
                 Food
               </span>
               <span class="stat-value"
-                >${this._formatAmount(e.food_on_hand,"kcal")}</span
+                >${this._formatAmount(t.food_on_hand,`kcal`)}</span
               >
               <span class="stat-meta"
-                >${this._pct(a)} · goal
-                ${this._formatAmount(e.food_target,"kcal")}</span
+                >${this._pct(o)} · goal
+                ${this._formatAmount(t.food_target,`kcal`)}</span
               >
-              <span class="stat-duration ${this._durationClass(g)}"
-                >Lasts ${this._formatHours(g)}</span
+              <span class="stat-duration ${this._durationClass(d)}"
+                >Lasts ${this._formatHours(d)}</span
               >
             </div>
           </div>
@@ -133,27 +96,27 @@
           <div class="attention" role="group" aria-label="Attention filters">
             <button
               type="button"
-              class="chip ${this._filterStatus==="expired"?"active":""}"
-              @click=${()=>this._setStatusFilter("expired")}
+              class="chip ${this._filterStatus===`expired`?`active`:``}"
+              @click=${()=>this._setStatusFilter(`expired`)}
             >
               Expired
-              <span class="chip-count">${c.expired}</span>
+              <span class="chip-count">${s.expired}</span>
             </button>
             <button
               type="button"
-              class="chip ${this._filterStatus==="expiring"?"active":""}"
-              @click=${()=>this._setStatusFilter("expiring")}
+              class="chip ${this._filterStatus===`expiring`?`active`:``}"
+              @click=${()=>this._setStatusFilter(`expiring`)}
             >
               Expiring
-              <span class="chip-count">${c.expiring}</span>
+              <span class="chip-count">${s.expiring}</span>
             </button>
             <button
               type="button"
-              class="chip ${this._filterStatus==="low_stock"?"active":""}"
-              @click=${()=>this._setStatusFilter("low_stock")}
+              class="chip ${this._filterStatus===`low_stock`?`active`:``}"
+              @click=${()=>this._setStatusFilter(`low_stock`)}
             >
               Low stock
-              <span class="chip-count">${c.low_stock}</span>
+              <span class="chip-count">${s.low_stock}</span>
             </button>
           </div>
 
@@ -165,12 +128,12 @@
                   type="search"
                   placeholder="Search name, location, barcode…"
                   .value=${this._search}
-                  @input=${_=>{this._search=_.target.value}}
+                  @input=${e=>{this._search=e.target.value}}
                 />
                 <select
                   class="sort"
                   .value=${this._sort}
-                  @change=${_=>{this._sort=_.target.value}}
+                  @change=${e=>{this._sort=e.target.value}}
                 >
                   <option value="name">Sort: name</option>
                   <option value="expiry">Sort: expiry</option>
@@ -178,70 +141,70 @@
                 </select>
                 <button
                   type="button"
-                  class="md-btn md-btn-outlined filters-btn ${this._filtersOpen||this._activeFilterCount?"active":""}"
+                  class="md-btn md-btn-outlined filters-btn ${this._filtersOpen||this._activeFilterCount?`active`:``}"
                   @click=${()=>{this._filtersOpen=!this._filtersOpen}}
                 >
-                  Filters${this._activeFilterCount?h` (${this._activeFilterCount})`:d}
+                  Filters${this._activeFilterCount?L` (${this._activeFilterCount})`:z}
                 </button>
               </div>
-              ${this._filtersOpen?h`
+              ${this._filtersOpen?L`
                     <div class="filters">
                       <select
                         .value=${this._filterLocation}
-                        @change=${_=>{this._filterLocation=_.target.value}}
+                        @change=${e=>{this._filterLocation=e.target.value}}
                       >
                         <option value="">All locations</option>
-                        ${r.map(_=>h`<option value=${_}>${_}</option>`)}
+                        ${n.map(e=>L`<option value=${e}>${e}</option>`)}
                       </select>
                       <select
                         .value=${this._filterCategory}
-                        @change=${_=>{this._filterCategory=_.target.value}}
+                        @change=${e=>{this._filterCategory=e.target.value}}
                       >
                         <option value="">All categories</option>
-                        ${i.map(_=>h`<option value=${_}>${_}</option>`)}
+                        ${r.map(e=>L`<option value=${e}>${e}</option>`)}
                       </select>
                       <select
                         .value=${this._filterReadiness}
-                        @change=${_=>{this._filterReadiness=_.target.value}}
+                        @change=${e=>{this._filterReadiness=e.target.value}}
                       >
                         <option value="">All readiness</option>
                         <option value="water">Water</option>
                         <option value="food">Food</option>
                         <option value="none">Neither</option>
                       </select>
-                      ${this._activeFilterCount?this._mdButton("Reset",{variant:"text",onClick:this._resetFilters}):d}
+                      ${this._activeFilterCount?this._mdButton(`Reset`,{variant:`text`,onClick:this._resetFilters}):z}
                     </div>
-                  `:d}
+                  `:z}
               <div class="inventory-meta">
                 <span class="item-count"
-                  >${t.length}/${this._snapshot?.items.length??0}</span
+                  >${e.length}/${this._snapshot?.items.length??0}</span
                 >
               </div>
             </div>
 
-            ${this._error?h`<div class="error" role="alert">${this._error}</div>`:d}
+            ${this._error?L`<div class="error" role="alert">${this._error}</div>`:z}
 
-            ${this.narrow?this._renderCardList(t):this._renderTable(t)}
+            ${this.narrow?this._renderCardList(e):this._renderTable(e)}
           </section>
         </div>
       </div>
 
-      ${this._dialogOpen?this._renderDialog():d}
-    `}_renderEmpty(){return this._snapshot?h`
+      ${this._dialogOpen?this._renderDialog():z}
+    `}_renderEmpty(){return this._snapshot?L`
       <div class="empty">
         No items match.
-        ${this._mdButton("Add an item",{variant:"text",onClick:this._openAdd})}
+        ${this._mdButton(`Add an item`,{variant:`text`,onClick:this._openAdd})}
       </div>
-    `:h`<div class="empty">Loading inventory…</div>`}_renderQtyText(t){return h`
+    `:L`<div class="empty">Loading inventory…</div>`}_renderQtyText(e){return L`
       <span class="qty-text"
-        >${t.quantity}${t.desired_quantity?h` / ${t.desired_quantity}`:d}
-        ${t.unit}</span
+        >${e.quantity}${e.desired_quantity?L` / ${e.desired_quantity}`:z}
+        ${e.unit}</span
       >
-    `}_renderMeasure(t){const e=this._readinessKind(t.category);if(e==="food"){const r=this._itemCaloriesOnHand(t);return r==null?"":`${this._formatMeasureNumber(r)} kcal`}if(e==="water"){const r=this._itemLitersOnHand(t);return r==null?"":`${this._formatMeasureNumber(r)} L`}return""}_itemLitersOnHand(t){if(t.contents_per_unit!=null&&t.contents_unit){const e=this._contentsToLiters(t.contents_per_unit,t.contents_unit);if(e!=null)return t.quantity*e}return t.unit==="liter"?t.quantity:t.unit==="milliliter"?t.quantity/1e3:t.liters_per_unit!=null?t.quantity*t.liters_per_unit:null}_itemCaloriesOnHand(t){return t.contents_per_unit!=null&&t.calories_per_content!=null?t.quantity*t.contents_per_unit*t.calories_per_content:t.calories_per_unit!=null?t.quantity*t.calories_per_unit:null}_contentsToLiters(t,e){return e==="liter"?t:e==="milliliter"?t/1e3:null}_formatMeasureNumber(t){const e=Number(t);return Number.isNaN(e)?"—":Math.abs(e-Math.round(e))<.05?String(Math.round(e)):String(Math.round(e*100)/100)}_contentsUnitLabel(t){return U(t||"unit")}_formTotalContents(){const t=Number(this._form.quantity||0),e=Number(this._form.contents_per_unit||"");return!this._form.contents_per_unit||Number.isNaN(e)?null:t*e}_formTotalCalories(){const t=this._formTotalContents(),e=Number(this._form.calories_per_content||"");return t==null||!this._form.calories_per_content||Number.isNaN(e)?null:t*e}_formTotalLiters(){const t=this._formTotalContents();return t==null||!this._form.contents_unit?null:this._contentsToLiters(t,this._form.contents_unit)}_fieldLabel(t,e=!1){return h`<span class="field-label"
-      >${t}${e?h`<span class="req" aria-hidden="true">*</span>`:d}</span
-    >`}_fieldError(t){const e=this._fieldErrors[t];return e?h`<div class="field-error">${e}</div>`:d}_fieldInvalid(t){return!!this._fieldErrors[t]}_validateForm(){const t=this._form,e={};(t.name||"").trim()||(e.name="Name is required"),(t.location||"").trim()||(e.location="Location is required"),(t.category||"").trim()||(e.category="Category is required");const r=Number(t.quantity);(t.quantity===""||Number.isNaN(r)||r<0)&&(e.quantity="Enter a valid quantity"),(t.unit||"").trim()||(e.unit="Unit is required");const i=this._formReadiness();if(i==="food"||i==="water"){const o=Number(t.contents_per_unit);(t.contents_per_unit===""||Number.isNaN(o)||o<=0)&&(e.contents_per_unit="Contents per unit is required"),(t.contents_unit||"").trim()?i==="water"&&t.contents_unit!=="liter"&&t.contents_unit!=="milliliter"&&(e.contents_unit="Water contents must be liter or milliliter"):e.contents_unit="Contents unit is required"}if(i==="food"){const o=Number(t.calories_per_content);(t.calories_per_content===""||Number.isNaN(o)||o<0)&&(e.calories_per_content="Calories per contents unit is required")}return e}_renderStatusBadge(t){return t?h`<span class="badge badge-${t}"
-      >${this._statusLabel(t)}</span
-    >`:d}_renderTable(t){return h`
+    `}_renderMeasure(e){let t=this._readinessKind(e.category);if(t===`food`){let t=this._itemCaloriesOnHand(e);return t==null?``:`${this._formatMeasureNumber(t)} kcal`}if(t===`water`){let t=this._itemLitersOnHand(e);return t==null?``:`${this._formatMeasureNumber(t)} L`}return``}_itemLitersOnHand(e){if(e.contents_per_unit!=null&&e.contents_unit){let t=this._contentsToLiters(e.contents_per_unit,e.contents_unit);if(t!=null)return e.quantity*t}return e.unit===`liter`?e.quantity:e.unit===`milliliter`?e.quantity/1e3:e.liters_per_unit==null?null:e.quantity*e.liters_per_unit}_itemCaloriesOnHand(e){return e.contents_per_unit!=null&&e.calories_per_content!=null?e.quantity*e.contents_per_unit*e.calories_per_content:e.calories_per_unit==null?null:e.quantity*e.calories_per_unit}_contentsToLiters(e,t){return t===`liter`?e:t===`milliliter`?e/1e3:null}_formatMeasureNumber(e){let t=Number(e);return Number.isNaN(t)?`—`:Math.abs(t-Math.round(t))<.05?String(Math.round(t)):String(Math.round(t*100)/100)}_contentsUnitLabel(e){return Q(e||`unit`)}_formTotalContents(){let e=Number(this._form.quantity||0),t=Number(this._form.contents_per_unit||``);return!this._form.contents_per_unit||Number.isNaN(t)?null:e*t}_formTotalCalories(){let e=this._formTotalContents(),t=Number(this._form.calories_per_content||``);return e==null||!this._form.calories_per_content||Number.isNaN(t)?null:e*t}_formTotalLiters(){let e=this._formTotalContents();return e==null||!this._form.contents_unit?null:this._contentsToLiters(e,this._form.contents_unit)}_fieldLabel(e,t=!1){return L`<span class="field-label"
+      >${e}${t?L`<span class="req" aria-hidden="true">*</span>`:z}</span
+    >`}_fieldError(e){let t=this._fieldErrors[e];return t?L`<div class="field-error">${t}</div>`:z}_fieldInvalid(e){return!!this._fieldErrors[e]}_validateForm(){let e=this._form,t={};(e.name||``).trim()||(t.name=`Name is required`),(e.location||``).trim()||(t.location=`Location is required`),(e.category||``).trim()||(t.category=`Category is required`);let n=Number(e.quantity);(e.quantity===``||Number.isNaN(n)||n<0)&&(t.quantity=`Enter a valid quantity`),(e.unit||``).trim()||(t.unit=`Unit is required`);let r=this._formReadiness();if(r===`food`||r===`water`){let n=Number(e.contents_per_unit);(e.contents_per_unit===``||Number.isNaN(n)||n<=0)&&(t.contents_per_unit=`Contents per unit is required`),(e.contents_unit||``).trim()?r===`water`&&e.contents_unit!==`liter`&&e.contents_unit!==`milliliter`&&(t.contents_unit=`Water contents must be liter or milliliter`):t.contents_unit=`Contents unit is required`}if(r===`food`){let n=Number(e.calories_per_content);(e.calories_per_content===``||Number.isNaN(n)||n<0)&&(t.calories_per_content=`Calories per contents unit is required`)}return t}_renderStatusBadge(e){return e?L`<span class="badge badge-${e}"
+      >${this._statusLabel(e)}</span
+    >`:z}_renderTable(e){return L`
       <div class="table-wrap">
         <table>
           <thead>
@@ -257,75 +220,75 @@
             </tr>
           </thead>
           <tbody>
-            ${t.map(e=>this._renderRow(e))}
-            ${t.length===0?h`<tr>
+            ${e.map(e=>this._renderRow(e))}
+            ${e.length===0?L`<tr>
                   <td colspan="8">${this._renderEmpty()}</td>
-                </tr>`:d}
+                </tr>`:z}
           </tbody>
         </table>
       </div>
-    `}_renderCardList(t){return t.length===0?this._renderEmpty():h`
+    `}_renderCardList(e){return e.length===0?this._renderEmpty():L`
       <div class="card-list">
-        ${t.map(e=>this._renderItemCard(e))}
+        ${e.map(e=>this._renderItemCard(e))}
       </div>
-    `}_renderRow(t){const e=this._itemStatus(t),r=this._renderMeasure(t);return h`
-      <tr class=${e?`row-${e}`:""}>
+    `}_renderRow(e){let t=this._itemStatus(e),n=this._renderMeasure(e);return L`
+      <tr class=${t?`row-${t}`:``}>
         <td>
-          <button class="link" @click=${()=>this._openEdit(t)}>
-            ${t.name}
+          <button class="link" @click=${()=>this._openEdit(e)}>
+            ${e.name}
           </button>
         </td>
-        <td class="status-col">${this._renderStatusBadge(e)}</td>
-        <td>${this._renderQtyText(t)}</td>
-        <td class="measure-col">${r}</td>
-        <td>${t.location||"—"}</td>
-        <td>${t.category||"—"}</td>
-        <td class=${this._expiryClass(e)}>
-          ${this._formatDate(t.expiry_date)}
+        <td class="status-col">${this._renderStatusBadge(t)}</td>
+        <td>${this._renderQtyText(e)}</td>
+        <td class="measure-col">${n}</td>
+        <td>${e.location||`—`}</td>
+        <td>${e.category||`—`}</td>
+        <td class=${this._expiryClass(t)}>
+          ${this._formatDate(e.expiry_date)}
         </td>
         <td class="actions">
-          ${this._mdButton("Edit",{variant:"outlined",onClick:()=>this._openEdit(t)})}
-          ${this._mdButton("Remove",{variant:"danger-text",disabled:this._busy,onClick:()=>void this._remove(t)})}
+          ${this._mdButton(`Edit`,{variant:`outlined`,onClick:()=>this._openEdit(e)})}
+          ${this._mdButton(`Remove`,{variant:`danger-text`,disabled:this._busy,onClick:()=>void this._remove(e)})}
         </td>
       </tr>
-    `}_renderItemCard(t){const e=this._itemStatus(t),r=this._renderMeasure(t),i=[t.location,t.category,r].filter(Boolean).join(" · ");return h`
+    `}_renderItemCard(e){let t=this._itemStatus(e),n=this._renderMeasure(e),r=[e.location,e.category,n].filter(Boolean).join(` · `);return L`
       <article
-        class="item-card ${e?`row-${e}`:""}"
-        @click=${()=>this._openEdit(t)}
+        class="item-card ${t?`row-${t}`:``}"
+        @click=${()=>this._openEdit(e)}
       >
         <div class="item-card-top">
           <div class="item-card-title">
-            <span class="item-name">${t.name}</span>
-            ${this._renderStatusBadge(e)}
+            <span class="item-name">${e.name}</span>
+            ${this._renderStatusBadge(t)}
           </div>
           <button
             type="button"
             class="md-btn md-btn-danger-text"
             ?disabled=${this._busy}
-            @click=${o=>{o.stopPropagation(),this._remove(t)}}
+            @click=${t=>{t.stopPropagation(),this._remove(e)}}
           >
             Remove
           </button>
         </div>
-        ${i?h`<div class="meta">${i}</div>`:d}
+        ${r?L`<div class="meta">${r}</div>`:z}
         <div class="item-card-bottom">
-          ${this._renderQtyText(t)}
-          ${t.expiry_date?h`<span class="${this._expiryClass(e)}"
-                >${this._formatDate(t.expiry_date)}</span
-              >`:d}
+          ${this._renderQtyText(e)}
+          ${e.expiry_date?L`<span class="${this._expiryClass(t)}"
+                >${this._formatDate(e.expiry_date)}</span
+              >`:z}
         </div>
       </article>
-    `}_formReadiness(){return this._readinessKind(this._form.category||"")}_showContentsFields(){const t=this._formReadiness();return t==="food"||t==="water"}_showCaloriesField(){return this._formReadiness()==="food"}_renderDialog(){const t=this._form,e=this._optionList(this._settings?.locations??[],t.location||""),r=this._optionList(this._settings?.categories??[],t.category||""),i=this._formReadiness(),o=this._formTotalContents(),n=this._formTotalLiters(),a=this._formTotalCalories(),c=this._contentsUnitLabel(t.contents_unit||"unit");let u="";return o!=null&&t.contents_unit&&(u=`Total on hand: ${this._formatMeasureNumber(o)} ${c}`,n!=null&&(u+=` · ${this._formatMeasureNumber(n)} L`),a!=null&&(u+=` · ${this._formatMeasureNumber(a)} kcal`)),h`
+    `}_formReadiness(){return this._readinessKind(this._form.category||``)}_showContentsFields(){let e=this._formReadiness();return e===`food`||e===`water`}_showCaloriesField(){return this._formReadiness()===`food`}_renderDialog(){let e=this._form,t=this._optionList(this._settings?.locations??[],e.location||``),n=this._optionList(this._settings?.categories??[],e.category||``),r=this._formReadiness(),i=this._formTotalContents(),a=this._formTotalLiters(),o=this._formTotalCalories(),s=this._contentsUnitLabel(e.contents_unit||`unit`),c=``;return i!=null&&e.contents_unit&&(c=`Total on hand: ${this._formatMeasureNumber(i)} ${s}`,a!=null&&(c+=` · ${this._formatMeasureNumber(a)} L`),o!=null&&(c+=` · ${this._formatMeasureNumber(o)} kcal`)),L`
       <div class="dialog-backdrop" @click=${this._closeDialog}>
         <div
-          class="dialog ${this.narrow?"dialog-narrow":""}"
+          class="dialog ${this.narrow?`dialog-narrow`:``}"
           role="dialog"
           aria-modal="true"
-          aria-label=${this._editing?"Edit item":"Add item"}
-          @click=${l=>l.stopPropagation()}
+          aria-label=${this._editing?`Edit item`:`Add item`}
+          @click=${e=>e.stopPropagation()}
         >
           <div class="dialog-header">
-            <h2>${this._editing?"Edit item":"Add item"}</h2>
+            <h2>${this._editing?`Edit item`:`Add item`}</h2>
             <button
               type="button"
               class="icon-btn dialog-close"
@@ -333,7 +296,7 @@
               @click=${this._closeDialog}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="currentColor" d=${re} />
+                <path fill="currentColor" d=${Re} />
               </svg>
             </button>
           </div>
@@ -341,81 +304,81 @@
           <div class="form-section">
             <div class="form-section-title">Details</div>
             <label
-              >${this._fieldLabel("Name",!0)}
+              >${this._fieldLabel(`Name`,!0)}
               <input
-                class=${this._fieldInvalid("name")?"invalid":""}
-                .value=${t.name||""}
-                @input=${this._onField("name")}
+                class=${this._fieldInvalid(`name`)?`invalid`:``}
+                .value=${e.name||``}
+                @input=${this._onField(`name`)}
               />
-              ${this._fieldError("name")}
+              ${this._fieldError(`name`)}
             </label>
             <div class="row2">
               <label
-                >${this._fieldLabel("Location",!0)}
+                >${this._fieldLabel(`Location`,!0)}
                 <select
-                  class=${this._fieldInvalid("location")?"invalid":""}
-                  .value=${N(t.location||"")}
-                  @change=${this._onField("location")}
+                  class=${this._fieldInvalid(`location`)?`invalid`:``}
+                  .value=${J(e.location||``)}
+                  @change=${this._onField(`location`)}
                 >
-                  <option value="" ?selected=${!t.location}>
+                  <option value="" ?selected=${!e.location}>
                     Select location
                   </option>
-                  ${e.map(l=>h`<option
-                        value=${l}
-                        ?selected=${(t.location||"")===l}
+                  ${t.map(t=>L`<option
+                        value=${t}
+                        ?selected=${(e.location||``)===t}
                       >
-                        ${l}
+                        ${t}
                       </option>`)}
                 </select>
-                ${this._fieldError("location")}
+                ${this._fieldError(`location`)}
               </label>
               <label
-                >${this._fieldLabel("Category",!0)}
+                >${this._fieldLabel(`Category`,!0)}
                 <select
-                  class=${this._fieldInvalid("category")?"invalid":""}
-                  .value=${N(t.category||"")}
-                  @change=${this._onField("category")}
+                  class=${this._fieldInvalid(`category`)?`invalid`:``}
+                  .value=${J(e.category||``)}
+                  @change=${this._onField(`category`)}
                 >
-                  <option value="" ?selected=${!t.category}>
+                  <option value="" ?selected=${!e.category}>
                     Select category
                   </option>
-                  ${r.map(l=>h`<option
-                        value=${l}
-                        ?selected=${(t.category||"")===l}
+                  ${n.map(t=>L`<option
+                        value=${t}
+                        ?selected=${(e.category||``)===t}
                       >
-                        ${l}
+                        ${t}
                       </option>`)}
                 </select>
-                ${this._fieldError("category")}
+                ${this._fieldError(`category`)}
               </label>
             </div>
             <label
               >Priority
               <select
-                .value=${N(t.priority||"important")}
-                @change=${this._onField("priority")}
+                .value=${J(e.priority||`important`)}
+                @change=${this._onField(`priority`)}
               >
-                ${ae.map(l=>h`<option
-                      value=${l}
-                      ?selected=${(t.priority||"important")===l}
+                ${We.map(t=>L`<option
+                      value=${t}
+                      ?selected=${(e.priority||`important`)===t}
                     >
-                      ${U(l)}
+                      ${Q(t)}
                     </option>`)}
               </select>
             </label>
             <label
               >Notes
-              <input .value=${t.notes||""} @input=${this._onField("notes")} />
+              <input .value=${e.notes||``} @input=${this._onField(`notes`)} />
             </label>
             <label
               >Barcode
               <div class="barcode-row">
                 <input
-                  .value=${t.barcode||""}
-                  @input=${this._onField("barcode")}
+                  .value=${e.barcode||``}
+                  @input=${this._onField(`barcode`)}
                 />
-                ${this._mdButton("Scan",{variant:"outlined",disabled:this._busy,onClick:()=>void this._scanBarcode()})}
-                ${this._mdButton("Lookup",{variant:"outlined",disabled:this._busy,onClick:()=>void this._lookupBarcode()})}
+                ${this._mdButton(`Scan`,{variant:`outlined`,disabled:this._busy,onClick:()=>void this._scanBarcode()})}
+                ${this._mdButton(`Lookup`,{variant:`outlined`,disabled:this._busy,onClick:()=>void this._lookupBarcode()})}
               </div>
             </label>
           </div>
@@ -424,17 +387,17 @@
             <div class="form-section-title">Stock</div>
             <div class="row3">
               <label
-                >${this._fieldLabel("Quantity",!0)}
+                >${this._fieldLabel(`Quantity`,!0)}
                 <input
-                  class=${this._fieldInvalid("quantity")?"invalid":""}
+                  class=${this._fieldInvalid(`quantity`)?`invalid`:``}
                   type="number"
                   min="0"
                   step="0.01"
-                  .value=${t.quantity||"1"}
-                  @input=${this._onField("quantity")}
+                  .value=${e.quantity||`1`}
+                  @input=${this._onField(`quantity`)}
                 />
-                ${this._fieldError("quantity")}
-                ${u?h`<div class="field-hint">${u}</div>`:d}
+                ${this._fieldError(`quantity`)}
+                ${c?L`<div class="field-hint">${c}</div>`:z}
               </label>
               <label
                 >Desired quantity
@@ -442,90 +405,90 @@
                   type="number"
                   min="0"
                   step="0.01"
-                  .value=${t.desired_quantity||"0"}
-                  @input=${this._onField("desired_quantity")}
+                  .value=${e.desired_quantity||`0`}
+                  @input=${this._onField(`desired_quantity`)}
                 />
               </label>
               <label
-                >${this._fieldLabel("Unit",!0)}
+                >${this._fieldLabel(`Unit`,!0)}
                 <select
-                  class=${this._fieldInvalid("unit")?"invalid":""}
-                  .value=${N(t.unit||"piece")}
-                  @change=${this._onField("unit")}
+                  class=${this._fieldInvalid(`unit`)?`invalid`:``}
+                  .value=${J(e.unit||`piece`)}
+                  @change=${this._onField(`unit`)}
                 >
-                  ${dt.map(l=>h`<option
-                        value=${l}
-                        ?selected=${(t.unit||"piece")===l}
+                  ${He.map(t=>L`<option
+                        value=${t}
+                        ?selected=${(e.unit||`piece`)===t}
                       >
-                        ${U(l)}
+                        ${Q(t)}
                       </option>`)}
                 </select>
-                ${this._fieldError("unit")}
+                ${this._fieldError(`unit`)}
               </label>
             </div>
-            ${this._showContentsFields()?h`
+            ${this._showContentsFields()?L`
                   <div class="row2">
                     <label
-                      >${this._fieldLabel("Contents per unit",!0)}
+                      >${this._fieldLabel(`Contents per unit`,!0)}
                       <input
-                        class=${this._fieldInvalid("contents_per_unit")?"invalid":""}
+                        class=${this._fieldInvalid(`contents_per_unit`)?`invalid`:``}
                         type="number"
                         min="0"
                         step="0.01"
-                        .value=${t.contents_per_unit||""}
-                        @input=${this._onField("contents_per_unit")}
+                        .value=${e.contents_per_unit||``}
+                        @input=${this._onField(`contents_per_unit`)}
                       />
-                      ${this._fieldError("contents_per_unit")}
+                      ${this._fieldError(`contents_per_unit`)}
                       <div class="field-hint">
                         How much is in one bottle, can, or pack?
                       </div>
                     </label>
                     <label
-                      >${this._fieldLabel("Contents unit",!0)}
+                      >${this._fieldLabel(`Contents unit`,!0)}
                       <select
-                        class=${this._fieldInvalid("contents_unit")?"invalid":""}
-                        .value=${N(t.contents_unit||"")}
-                        @change=${this._onField("contents_unit")}
+                        class=${this._fieldInvalid(`contents_unit`)?`invalid`:``}
+                        .value=${J(e.contents_unit||``)}
+                        @change=${this._onField(`contents_unit`)}
                       >
-                        <option value="" ?selected=${!t.contents_unit}>
+                        <option value="" ?selected=${!e.contents_unit}>
                           Select unit
                         </option>
-                        ${ne.map(l=>h`<option
-                              value=${l}
-                              ?selected=${(t.contents_unit||"")===l}
+                        ${Ue.map(t=>L`<option
+                              value=${t}
+                              ?selected=${(e.contents_unit||``)===t}
                             >
-                              ${U(l)}
+                              ${Q(t)}
                             </option>`)}
                       </select>
-                      ${this._fieldError("contents_unit")}
+                      ${this._fieldError(`contents_unit`)}
                       <div class="field-hint">
                         Liter, milliliter, gram, or kilogram for one stock unit.
                       </div>
                     </label>
                   </div>
-                `:d}
-            ${this._showCaloriesField()?h`
+                `:z}
+            ${this._showCaloriesField()?L`
                   <label
-                    >${this._fieldLabel(`Calories (kcal) per ${c}`,!0)}
+                    >${this._fieldLabel(`Calories (kcal) per ${s}`,!0)}
                     <input
-                      class=${this._fieldInvalid("calories_per_content")?"invalid":""}
+                      class=${this._fieldInvalid(`calories_per_content`)?`invalid`:``}
                       type="number"
                       min="0"
                       step="0.01"
-                      .value=${t.calories_per_content||""}
-                      @input=${this._onField("calories_per_content")}
+                      .value=${e.calories_per_content||``}
+                      @input=${this._onField(`calories_per_content`)}
                     />
-                    ${this._fieldError("calories_per_content")}
+                    ${this._fieldError(`calories_per_content`)}
                     <div class="field-hint">
-                      Calories per contents unit${a!=null?h` · Total calories on hand:
-                            ${this._formatMeasureNumber(a)} kcal`:d}
+                      Calories per contents unit${o==null?z:L` · Total calories on hand:
+                            ${this._formatMeasureNumber(o)} kcal`}
                     </div>
                   </label>
-                `:d}
-            ${i==="none"?h`<div class="field-hint">
+                `:z}
+            ${r===`none`?L`<div class="field-hint">
                   Category is not mapped to food or water — this item will not
                   count toward readiness.
-                </div>`:d}
+                </div>`:z}
           </div>
 
           <div class="form-section">
@@ -534,21 +497,21 @@
               >Expiry
               <input
                 type="date"
-                .value=${t.expiry_date||""}
-                @input=${this._onField("expiry_date")}
+                .value=${e.expiry_date||``}
+                @input=${this._onField(`expiry_date`)}
               />
             </label>
           </div>
 
-          ${this._error?h`<div class="error" role="alert">${this._error}</div>`:d}
+          ${this._error?L`<div class="error" role="alert">${this._error}</div>`:z}
 
           <div class="dialog-actions">
-            ${this._mdButton("Cancel",{variant:"text",onClick:this._closeDialog})}
-            ${this._mdButton("Save",{variant:"filled",disabled:this._busy,onClick:()=>void this._save()})}
+            ${this._mdButton(`Cancel`,{variant:`text`,onClick:this._closeDialog})}
+            ${this._mdButton(`Save`,{variant:`filled`,disabled:this._busy,onClick:()=>void this._save()})}
           </div>
         </div>
       </div>
-    `}_onField(t){return e=>{const r=e.target;if(this._form={...this._form,[t]:r.value},this._fieldErrors[t]){const i={...this._fieldErrors};delete i[t],this._fieldErrors=i}}}_blankForm(){return{name:"",quantity:"1",desired_quantity:"0",unit:"piece",location:"",category:"",priority:"important",notes:"",barcode:"",expiry_date:"",contents_per_unit:"",contents_unit:"",calories_per_content:""}}async _run(t){this._busy=!0,this._error="";try{await t()}catch(e){this._error=String(e)}finally{this._busy=!1}}async _remove(t){confirm(`Remove “${t.name}”?`)&&await this._run(()=>this.hass.callService("ready_home","remove_item",{item_id:t.id}))}async _save(){const t=this._validateForm();if(this._fieldErrors=t,Object.keys(t).length)return;const e=this._form,r=(e.name||"").trim(),i=this._formReadiness(),o={quantity:Number(e.quantity||0),desired_quantity:Number(e.desired_quantity||0),unit:e.unit||"piece",location:e.location||"",category:e.category||"",priority:e.priority||"important",barcode:e.barcode||"",notes:e.notes||""};e.expiry_date&&(o.expiry_date=e.expiry_date),i==="food"||i==="water"?(o.contents_per_unit=Number(e.contents_per_unit),o.contents_unit=e.contents_unit):(o.contents_per_unit=null,o.contents_unit=null,o.calories_per_content=null,o.liters_per_unit=null,o.calories_per_unit=null),i==="food"?o.calories_per_content=Number(e.calories_per_content):i==="water"&&(o.calories_per_content=null,o.calories_per_unit=null),await this._run(async()=>{this._editing?await this.hass.callService("ready_home","update_item",{item_id:this._editing.id,new_name:r,...o}):await this.hass.callService("ready_home","add_item",{name:r,...o}),this._dialogOpen=!1,this._fieldErrors={}})}async _lookupBarcode(){const t=this._form.barcode?.trim();if(t){this._busy=!0,this._error="";try{const e=await Qt(this.hass,t),r=[e.brand,e.name].filter(Boolean).join(" ").trim(),i=this._form.category?.trim()||(this._settings?.food_categories?.[0]??"Food");this._form={...this._form,name:r||this._form.name,category:i,contents_unit:this._form.contents_unit||"gram",calories_per_content:e.calories_per_100g!=null?String(Math.round(e.calories_per_100g/100*1e4)/1e4):this._form.calories_per_content}}catch(e){this._error=`Barcode lookup failed: ${e}`}finally{this._busy=!1}}}async _scanBarcode(){if(typeof BarcodeDetector>"u"){this._error="BarcodeDetector not supported in this browser — enter the code manually.";return}this._busy=!0,this._error="";try{const t=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}),e=document.createElement("video");e.srcObject=t,await e.play();const r=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128"]});await new Promise(o=>setTimeout(o,700));const i=await r.detect(e);t.getTracks().forEach(o=>o.stop()),i[0]?.rawValue?(this._form={...this._form,barcode:i[0].rawValue},this._busy=!1,await this._lookupBarcode()):this._error="No barcode detected — try again or enter manually."}catch(t){this._error=`Camera scan failed: ${t}`}finally{this._busy=!1}}static{this.styles=$t`
+    `}_onField(e){return t=>{let n=t.target;if(this._form={...this._form,[e]:n.value},this._fieldErrors[e]){let t={...this._fieldErrors};delete t[e],this._fieldErrors=t}}}_blankForm(){return{name:``,quantity:`1`,desired_quantity:`0`,unit:`piece`,location:``,category:``,priority:`important`,notes:``,barcode:``,expiry_date:``,contents_per_unit:``,contents_unit:``,calories_per_content:``}}async _run(e){this._busy=!0,this._error=``;try{await e()}catch(e){this._error=String(e)}finally{this._busy=!1}}async _remove(e){confirm(`Remove “${e.name}”?`)&&await this._run(()=>this.hass.callService(`ready_home`,`remove_item`,{item_id:e.id}))}async _save(){let e=this._validateForm();if(this._fieldErrors=e,Object.keys(e).length)return;let t=this._form,n=(t.name||``).trim(),r=this._formReadiness(),i={quantity:Number(t.quantity||0),desired_quantity:Number(t.desired_quantity||0),unit:t.unit||`piece`,location:t.location||``,category:t.category||``,priority:t.priority||`important`,barcode:t.barcode||``,notes:t.notes||``};t.expiry_date&&(i.expiry_date=t.expiry_date),r===`food`||r===`water`?(i.contents_per_unit=Number(t.contents_per_unit),i.contents_unit=t.contents_unit):(i.contents_per_unit=null,i.contents_unit=null,i.calories_per_content=null,i.liters_per_unit=null,i.calories_per_unit=null),r===`food`?i.calories_per_content=Number(t.calories_per_content):r===`water`&&(i.calories_per_content=null,i.calories_per_unit=null),await this._run(async()=>{this._editing?await this.hass.callService(`ready_home`,`update_item`,{item_id:this._editing.id,new_name:n,...i}):await this.hass.callService(`ready_home`,`add_item`,{name:n,...i}),this._dialogOpen=!1,this._fieldErrors={}})}async _lookupBarcode(){let e=this._form.barcode?.trim();if(e){this._busy=!0,this._error=``;try{let t=await Ae(this.hass,e),n=[t.brand,t.name].filter(Boolean).join(` `).trim(),r=this._form.category?.trim()||(this._settings?.food_categories?.[0]??`Food`);this._form={...this._form,name:n||this._form.name,category:r,contents_unit:this._form.contents_unit||`gram`,calories_per_content:t.calories_per_100g==null?this._form.calories_per_content:String(Math.round(t.calories_per_100g/100*1e4)/1e4)}}catch(e){this._error=`Barcode lookup failed: ${e}`}finally{this._busy=!1}}}async _scanBarcode(){if(typeof BarcodeDetector>`u`){this._error=`BarcodeDetector not supported in this browser — enter the code manually.`;return}this._busy=!0,this._error=``;try{let e=await navigator.mediaDevices.getUserMedia({video:{facingMode:`environment`}}),t=document.createElement(`video`);t.srcObject=e,await t.play();let n=new BarcodeDetector({formats:[`ean_13`,`ean_8`,`upc_a`,`upc_e`,`code_128`]});await new Promise(e=>setTimeout(e,700));let r=await n.detect(t);e.getTracks().forEach(e=>e.stop()),r[0]?.rawValue?(this._form={...this._form,barcode:r[0].rawValue},this._busy=!1,await this._lookupBarcode()):this._error=`No barcode detected — try again or enter manually.`}catch(e){this._error=`Camera scan failed: ${e}`}finally{this._busy=!1}}static{this.styles=o`
     :host {
       display: block;
       height: 100%;
@@ -1129,5 +1092,5 @@
         grid-template-columns: 1fr;
       }
     }
-  `}}m([F({attribute:!1})],f.prototype,"hass");m([F({type:Boolean})],f.prototype,"narrow");m([F({attribute:!1})],f.prototype,"panel");m([$()],f.prototype,"_snapshot");m([$()],f.prototype,"_settings");m([$()],f.prototype,"_search");m([$()],f.prototype,"_filterStatus");m([$()],f.prototype,"_filterLocation");m([$()],f.prototype,"_filterCategory");m([$()],f.prototype,"_filterReadiness");m([$()],f.prototype,"_filtersOpen");m([$()],f.prototype,"_sort");m([$()],f.prototype,"_dialogOpen");m([$()],f.prototype,"_editing");m([$()],f.prototype,"_form");m([$()],f.prototype,"_error");m([$()],f.prototype,"_fieldErrors");m([$()],f.prototype,"_busy");try{customElements.define(Xt,f)}catch{}
+  `}};Z([Y({attribute:!1})],$.prototype,`hass`,void 0),Z([Y({type:Boolean})],$.prototype,`narrow`,void 0),Z([Y({attribute:!1})],$.prototype,`panel`,void 0),Z([X()],$.prototype,`_snapshot`,void 0),Z([X()],$.prototype,`_settings`,void 0),Z([X()],$.prototype,`_search`,void 0),Z([X()],$.prototype,`_filterStatus`,void 0),Z([X()],$.prototype,`_filterLocation`,void 0),Z([X()],$.prototype,`_filterCategory`,void 0),Z([X()],$.prototype,`_filterReadiness`,void 0),Z([X()],$.prototype,`_filtersOpen`,void 0),Z([X()],$.prototype,`_sort`,void 0),Z([X()],$.prototype,`_dialogOpen`,void 0),Z([X()],$.prototype,`_editing`,void 0),Z([X()],$.prototype,`_form`,void 0),Z([X()],$.prototype,`_error`,void 0),Z([X()],$.prototype,`_fieldErrors`,void 0),Z([X()],$.prototype,`_busy`,void 0);try{customElements.define(Fe,$)}catch{}
 //# sourceMappingURL=ready-home-panel.js.map
