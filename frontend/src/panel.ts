@@ -18,10 +18,21 @@ import {
   type ScanHandle,
 } from "./barcode-scan";
 import {
+  BARCODE_NOT_FOUND_MESSAGE,
+  formatHassError,
+  isBarcodeNotFound,
+} from "./errors";
+import {
   filterAndSortItems,
   itemStatus,
   readinessKind,
 } from "./inventory_view";
+import {
+  loadPanelViewState,
+  savePanelViewState,
+  sortedOptionList,
+  type PanelSort,
+} from "./panel_view_state";
 import { readinessTone } from "./readiness_tone";
 import type { HomeAssistant } from "./types";
 
@@ -82,21 +93,26 @@ export class ReadyHomePanel extends LitElement {
   @state() private _filterCategory = "";
   @state() private _filterReadiness = "";
   @state() private _filtersOpen = false;
-  @state() private _sort: "name" | "expiry" | "quantity" = "name";
+  @state() private _sort: PanelSort = "name";
   @state() private _dialogOpen = false;
   @state() private _editing: InventoryItemDto | null = null;
   @state() private _form: Record<string, string> = {};
   @state() private _error = "";
+  @state() private _barcodeError = "";
   @state() private _fieldErrors: Record<string, string> = {};
-  @state() private _busy = false;
+  @state() private _saving = false;
+  @state() private _scanning = false;
+  @state() private _pendingRemoveIds: string[] = [];
 
   private _unsub: (() => void) | null = null;
   private _connected = false;
   private _scanHandle: ScanHandle | null = null;
+  private _viewHydrated = false;
 
   connectedCallback(): void {
     super.connectedCallback();
     this._connected = true;
+    this._restoreViewState();
     window.addEventListener("keydown", this._onWindowKeyDown);
     void this._connect();
   }
@@ -121,12 +137,63 @@ export class ReadyHomePanel extends LitElement {
     try {
       this._settings = await getSettings(this.hass);
       this._unsub = await subscribeInventory(this.hass, (snap) => {
-        this._snapshot = snap;
+        this._applySnapshot(snap);
       });
       this._error = "";
     } catch (err) {
-      this._error = String(err);
+      this._error = formatHassError(err);
     }
+  }
+
+  private _entryId(): string | null {
+    const raw = this.panel?.config?.config_entry_id;
+    return typeof raw === "string" && raw ? raw : null;
+  }
+
+  private _restoreViewState() {
+    const saved = loadPanelViewState(
+      typeof localStorage !== "undefined" ? localStorage : null,
+      this._entryId(),
+    );
+    this._search = saved.search;
+    this._filterStatus = saved.filterStatus;
+    this._filterLocation = saved.filterLocation;
+    this._filterCategory = saved.filterCategory;
+    this._filterReadiness = saved.filterReadiness;
+    this._filtersOpen = saved.filtersOpen;
+    this._sort = saved.sort;
+    this._viewHydrated = true;
+  }
+
+  private _persistViewState() {
+    if (!this._viewHydrated) return;
+    savePanelViewState(
+      typeof localStorage !== "undefined" ? localStorage : null,
+      {
+        search: this._search,
+        filterStatus: this._filterStatus,
+        filterLocation: this._filterLocation,
+        filterCategory: this._filterCategory,
+        filterReadiness: this._filterReadiness,
+        filtersOpen: this._filtersOpen,
+        sort: this._sort,
+      },
+      this._entryId(),
+    );
+  }
+
+  private _applySnapshot(snap: Snapshot) {
+    this._snapshot = snap;
+    if (!this._pendingRemoveIds.length) return;
+    const present = new Set(snap.items.map((i) => i.id));
+    const remaining = this._pendingRemoveIds.filter((id) => present.has(id));
+    if (remaining.length !== this._pendingRemoveIds.length) {
+      this._pendingRemoveIds = remaining;
+    }
+  }
+
+  private _isRemovePending(itemId: string): boolean {
+    return this._pendingRemoveIds.includes(itemId);
   }
 
   private get _assessment() {
@@ -155,6 +222,7 @@ export class ReadyHomePanel extends LitElement {
     this._filterLocation = "";
     this._filterCategory = "";
     this._filterReadiness = "";
+    this._persistViewState();
   };
 
   private _readinessKind(category: string): "food" | "water" | "none" {
@@ -187,6 +255,7 @@ export class ReadyHomePanel extends LitElement {
 
   private _setStatusFilter(status: string) {
     this._filterStatus = this._filterStatus === status ? "all" : status;
+    this._persistViewState();
   }
 
   private _pct(value: number | null | undefined): string {
@@ -290,17 +359,7 @@ export class ReadyHomePanel extends LitElement {
   };
 
   private _optionList(options: string[], current: string): string[] {
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const value of [...options, current]) {
-      const v = value?.trim();
-      if (!v) continue;
-      const key = v.toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push(v);
-    }
-    return out;
+    return sortedOptionList(options, current);
   }
 
   private _mdButton(
@@ -327,8 +386,8 @@ export class ReadyHomePanel extends LitElement {
   protected render() {
     const items = this._items;
     const a = this._assessment;
-    const locations = this._settings?.locations ?? [];
-    const categories = this._settings?.categories ?? [];
+    const locations = sortedOptionList(this._settings?.locations ?? []);
+    const categories = sortedOptionList(this._settings?.categories ?? []);
     const overall = a.overall_percent;
     const water = a.water_percent;
     const food = a.food_percent;
@@ -374,12 +433,11 @@ export class ReadyHomePanel extends LitElement {
             <div class="header-actions">
               ${this._mdButton("Scan", {
                 variant: "outlined",
-                disabled: this._busy,
+                disabled: this._scanning,
                 onClick: () => void this._scanFromPanel(),
               })}
               ${this._mdButton("Add item", {
                 variant: "filled",
-                disabled: this._busy,
                 onClick: this._openAdd,
               })}
             </div>
@@ -475,6 +533,7 @@ export class ReadyHomePanel extends LitElement {
                   .value=${this._search}
                   @input=${(e: Event) => {
                     this._search = (e.target as HTMLInputElement).value;
+                    this._persistViewState();
                   }}
                 />
                 <select
@@ -482,7 +541,8 @@ export class ReadyHomePanel extends LitElement {
                   .value=${this._sort}
                   @change=${(e: Event) => {
                     this._sort = (e.target as HTMLSelectElement)
-                      .value as typeof this._sort;
+                      .value as PanelSort;
+                    this._persistViewState();
                   }}
                 >
                   <option value="name">Sort: name</option>
@@ -497,6 +557,7 @@ export class ReadyHomePanel extends LitElement {
                     : ""}"
                   @click=${() => {
                     this._filtersOpen = !this._filtersOpen;
+                    this._persistViewState();
                   }}
                 >
                   Filters${this._activeFilterCount
@@ -513,6 +574,7 @@ export class ReadyHomePanel extends LitElement {
                           this._filterLocation = (
                             e.target as HTMLSelectElement
                           ).value;
+                          this._persistViewState();
                         }}
                       >
                         <option value="">All locations</option>
@@ -526,6 +588,7 @@ export class ReadyHomePanel extends LitElement {
                           this._filterCategory = (
                             e.target as HTMLSelectElement
                           ).value;
+                          this._persistViewState();
                         }}
                       >
                         <option value="">All categories</option>
@@ -539,6 +602,7 @@ export class ReadyHomePanel extends LitElement {
                           this._filterReadiness = (
                             e.target as HTMLSelectElement
                           ).value;
+                          this._persistViewState();
                         }}
                       >
                         <option value="">All readiness</option>
@@ -587,7 +651,7 @@ export class ReadyHomePanel extends LitElement {
         <div class="empty-actions">
           ${this._mdButton("Scan", {
             variant: "outlined",
-            disabled: this._busy,
+            disabled: this._scanning,
             onClick: () => void this._scanFromPanel(),
           })}
           ${this._mdButton("Add an item", {
@@ -670,15 +734,15 @@ export class ReadyHomePanel extends LitElement {
   }
 
   private _formTotalContents(): number | null {
-    const qty = Number(this._form.quantity || 0);
-    const contents = Number(this._form.contents_per_unit || "");
+    const qty = this._parseDecimal(this._form.quantity || "0");
+    const contents = this._parseDecimal(this._form.contents_per_unit || "");
     if (!this._form.contents_per_unit || Number.isNaN(contents)) return null;
     return qty * contents;
   }
 
   private _formTotalCalories(): number | null {
     const total = this._formTotalContents();
-    const cal = Number(this._form.calories_per_content || "");
+    const cal = this._parseDecimal(this._form.calories_per_content || "");
     if (total == null || !this._form.calories_per_content || Number.isNaN(cal)) {
       return null;
     }
@@ -714,7 +778,7 @@ export class ReadyHomePanel extends LitElement {
     if (!(f.name || "").trim()) errors.name = "Name is required";
     if (!(f.location || "").trim()) errors.location = "Location is required";
     if (!(f.category || "").trim()) errors.category = "Category is required";
-    const qty = Number(f.quantity);
+    const qty = this._parseDecimal(f.quantity);
     if (f.quantity === "" || Number.isNaN(qty) || qty < 0) {
       errors.quantity = "Enter a valid quantity";
     }
@@ -722,7 +786,7 @@ export class ReadyHomePanel extends LitElement {
 
     const kind = this._formReadiness();
     if (kind === "food" || kind === "water") {
-      const contents = Number(f.contents_per_unit);
+      const contents = this._parseDecimal(f.contents_per_unit);
       if (
         f.contents_per_unit === "" ||
         Number.isNaN(contents) ||
@@ -741,7 +805,7 @@ export class ReadyHomePanel extends LitElement {
       }
     }
     if (kind === "food") {
-      const cal = Number(f.calories_per_content);
+      const cal = this._parseDecimal(f.calories_per_content);
       if (
         f.calories_per_content === "" ||
         Number.isNaN(cal) ||
@@ -825,7 +889,7 @@ export class ReadyHomePanel extends LitElement {
           })}
           ${this._mdButton("Remove", {
             variant: "danger-text",
-            disabled: this._busy,
+            disabled: this._isRemovePending(item.id),
             onClick: () => void this._remove(item),
           })}
         </td>
@@ -852,7 +916,7 @@ export class ReadyHomePanel extends LitElement {
           <button
             type="button"
             class="md-btn md-btn-danger-text"
-            ?disabled=${this._busy}
+            ?disabled=${this._isRemovePending(item.id)}
             @click=${(e: Event) => {
               e.stopPropagation();
               void this._remove(item);
@@ -914,13 +978,12 @@ export class ReadyHomePanel extends LitElement {
     }
 
     return html`
-      <div class="dialog-backdrop" @click=${this._closeDialog}>
+      <div class="dialog-backdrop">
         <div
           class="dialog ${this.narrow ? "dialog-narrow" : ""}"
           role="dialog"
           aria-modal="true"
           aria-label=${this._editing ? "Edit item" : "Add item"}
-          @click=${(e: Event) => e.stopPropagation()}
         >
           <div class="dialog-header">
             <h2>${this._editing ? "Edit item" : "Add item"}</h2>
@@ -947,15 +1010,20 @@ export class ReadyHomePanel extends LitElement {
                 />
                 ${this._mdButton("Scan", {
                   variant: "outlined",
-                  disabled: this._busy,
+                  disabled: this._scanning,
                   onClick: () => void this._scanBarcode(),
                 })}
                 ${this._mdButton("Lookup", {
                   variant: "outlined",
-                  disabled: this._busy || !(f.barcode || "").trim(),
+                  disabled: this._scanning || !(f.barcode || "").trim(),
                   onClick: () => void this._lookupBarcode(),
                 })}
               </div>
+              ${this._barcodeError
+                ? html`<div class="field-error" role="alert">
+                    ${this._barcodeError}
+                  </div>`
+                : nothing}
             </label>
             <label
               >${this._fieldLabel("Name", true)}
@@ -1042,10 +1110,9 @@ export class ReadyHomePanel extends LitElement {
                 >${this._fieldLabel("Quantity", true)}
                 <input
                   class=${this._fieldInvalid("quantity") ? "invalid" : ""}
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  .value=${f.quantity || "1"}
+                  type="text"
+                  inputmode="decimal"
+                  .value=${live(f.quantity || "1")}
                   @input=${this._onField("quantity")}
                 />
                 ${this._fieldError("quantity")}
@@ -1056,10 +1123,9 @@ export class ReadyHomePanel extends LitElement {
               <label
                 >Desired quantity
                 <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  .value=${f.desired_quantity || "0"}
+                  type="text"
+                  inputmode="decimal"
+                  .value=${live(f.desired_quantity || "0")}
                   @input=${this._onField("desired_quantity")}
                 />
               </label>
@@ -1092,10 +1158,9 @@ export class ReadyHomePanel extends LitElement {
                         class=${this._fieldInvalid("contents_per_unit")
                           ? "invalid"
                           : ""}
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        .value=${f.contents_per_unit || ""}
+                        type="text"
+                        inputmode="decimal"
+                        .value=${live(f.contents_per_unit || "")}
                         @input=${this._onField("contents_per_unit")}
                       />
                       ${this._fieldError("contents_per_unit")}
@@ -1144,10 +1209,9 @@ export class ReadyHomePanel extends LitElement {
                       class=${this._fieldInvalid("calories_per_content")
                         ? "invalid"
                         : ""}
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      .value=${f.calories_per_content || ""}
+                      type="text"
+                      inputmode="decimal"
+                      .value=${live(f.calories_per_content || "")}
                       @input=${this._onField("calories_per_content")}
                     />
                     ${this._fieldError("calories_per_content")}
@@ -1191,7 +1255,7 @@ export class ReadyHomePanel extends LitElement {
             })}
             ${this._mdButton("Save", {
               variant: "filled",
-              disabled: this._busy,
+              disabled: this._saving,
               onClick: () => void this._save(),
             })}
           </div>
@@ -1207,12 +1271,20 @@ export class ReadyHomePanel extends LitElement {
         | HTMLSelectElement
         | HTMLTextAreaElement;
       this._form = { ...this._form, [key]: target.value };
+      if (key === "barcode" && this._barcodeError) {
+        this._barcodeError = "";
+      }
       if (this._fieldErrors[key]) {
         const next = { ...this._fieldErrors };
         delete next[key];
         this._fieldErrors = next;
       }
     };
+  }
+
+  /** Accept comma or dot as decimal separator while typing. */
+  private _parseDecimal(raw: string): number {
+    return Number(String(raw).trim().replace(",", "."));
   }
 
   private _blankForm(): Record<string, string> {
@@ -1238,6 +1310,7 @@ export class ReadyHomePanel extends LitElement {
     this._form = this._blankForm();
     this._fieldErrors = {};
     this._error = "";
+    this._barcodeError = "";
     this._dialogOpen = true;
   };
 
@@ -1280,6 +1353,7 @@ export class ReadyHomePanel extends LitElement {
     };
     this._fieldErrors = {};
     this._error = "";
+    this._barcodeError = "";
     this._dialogOpen = true;
   };
 
@@ -1288,6 +1362,7 @@ export class ReadyHomePanel extends LitElement {
     this._dialogOpen = false;
     this._fieldErrors = {};
     this._error = "";
+    this._barcodeError = "";
   };
 
   private _onWindowKeyDown = (e: KeyboardEvent) => {
@@ -1302,23 +1377,21 @@ export class ReadyHomePanel extends LitElement {
     handle?.abort();
   }
 
-  private async _run(action: () => Promise<unknown>) {
-    this._busy = true;
+  private async _remove(item: InventoryItemDto) {
+    if (this._isRemovePending(item.id)) return;
+    if (!confirm(`Remove “${item.name}”?`)) return;
+    this._pendingRemoveIds = [...this._pendingRemoveIds, item.id];
     this._error = "";
     try {
-      await action();
+      await this.hass.callService("ready_home", "remove_item", {
+        item_id: item.id,
+      });
     } catch (err) {
-      this._error = String(err);
-    } finally {
-      this._busy = false;
+      this._pendingRemoveIds = this._pendingRemoveIds.filter(
+        (id) => id !== item.id,
+      );
+      this._error = formatHassError(err);
     }
-  }
-
-  private async _remove(item: InventoryItemDto) {
-    if (!confirm(`Remove “${item.name}”?`)) return;
-    await this._run(() =>
-      this.hass.callService("ready_home", "remove_item", { item_id: item.id }),
-    );
   }
 
   private async _save() {
@@ -1332,8 +1405,8 @@ export class ReadyHomePanel extends LitElement {
     const name = (f.name || "").trim();
     const kind = this._formReadiness();
     const payload: Record<string, unknown> = {
-      quantity: Number(f.quantity || 0),
-      desired_quantity: Number(f.desired_quantity || 0),
+      quantity: this._parseDecimal(f.quantity || "0"),
+      desired_quantity: this._parseDecimal(f.desired_quantity || "0"),
       unit: f.unit || "piece",
       location: f.location || "",
       category: f.category || "",
@@ -1344,7 +1417,7 @@ export class ReadyHomePanel extends LitElement {
     if (f.expiry_date) payload.expiry_date = f.expiry_date;
 
     if (kind === "food" || kind === "water") {
-      payload.contents_per_unit = Number(f.contents_per_unit);
+      payload.contents_per_unit = this._parseDecimal(f.contents_per_unit);
       payload.contents_unit = f.contents_unit;
     } else {
       payload.contents_per_unit = null;
@@ -1354,13 +1427,15 @@ export class ReadyHomePanel extends LitElement {
       payload.calories_per_unit = null;
     }
     if (kind === "food") {
-      payload.calories_per_content = Number(f.calories_per_content);
+      payload.calories_per_content = this._parseDecimal(f.calories_per_content);
     } else if (kind === "water") {
       payload.calories_per_content = null;
       payload.calories_per_unit = null;
     }
 
-    await this._run(async () => {
+    this._saving = true;
+    this._error = "";
+    try {
       if (this._editing) {
         await this.hass.callService("ready_home", "update_item", {
           item_id: this._editing.id,
@@ -1375,13 +1450,19 @@ export class ReadyHomePanel extends LitElement {
       }
       this._dialogOpen = false;
       this._fieldErrors = {};
-    });
+      this._barcodeError = "";
+    } catch (err) {
+      this._error = formatHassError(err);
+    } finally {
+      this._saving = false;
+    }
   }
 
   private async _lookupBarcode() {
     const code = this._form.barcode?.trim();
     if (!code) return;
-    this._busy = true;
+    this._scanning = true;
+    this._barcodeError = "";
     this._error = "";
     try {
       const result = await lookupBarcode(this.hass, code);
@@ -1389,9 +1470,11 @@ export class ReadyHomePanel extends LitElement {
         this._settings?.food_categories?.[0]?.trim() || "Food";
       this._form = applyBarcodeLookupToForm(this._form, result, fallback);
     } catch (err) {
-      this._error = `Barcode lookup failed: ${err}`;
+      this._barcodeError = isBarcodeNotFound(err)
+        ? BARCODE_NOT_FOUND_MESSAGE
+        : `Barcode lookup failed: ${formatHassError(err)}`;
     } finally {
-      this._busy = false;
+      this._scanning = false;
     }
   }
 
@@ -1399,12 +1482,13 @@ export class ReadyHomePanel extends LitElement {
   private async _scanFromPanel() {
     if (!hasCompanionBarcodeScanner(this.hass)) {
       this._openAdd();
-      this._error = COMPANION_SCAN_MESSAGE;
+      this._barcodeError = COMPANION_SCAN_MESSAGE;
       return;
     }
 
-    this._busy = true;
+    this._scanning = true;
     this._error = "";
+    this._barcodeError = "";
     this._abortScan();
     const handle = scanProductBarcode(this.hass);
     this._scanHandle = handle;
@@ -1414,25 +1498,26 @@ export class ReadyHomePanel extends LitElement {
       if (!code) return;
       this._openAdd();
       this._form = { ...this._form, barcode: code };
-      this._busy = false;
+      this._scanning = false;
       await this._lookupBarcode();
     } catch (err) {
       if (this._scanHandle === handle) this._scanHandle = null;
       this._openAdd();
-      this._error = `Camera scan failed: ${err}`;
+      this._barcodeError = `Camera scan failed: ${formatHassError(err)}`;
     } finally {
-      this._busy = false;
+      this._scanning = false;
     }
   }
 
   /** Dialog Scan button. */
   private async _scanBarcode() {
     if (!hasCompanionBarcodeScanner(this.hass)) {
-      this._error = COMPANION_SCAN_MESSAGE;
+      this._barcodeError = COMPANION_SCAN_MESSAGE;
       return;
     }
 
-    this._busy = true;
+    this._scanning = true;
+    this._barcodeError = "";
     this._error = "";
     this._abortScan();
     const handle = scanProductBarcode(this.hass);
@@ -1442,13 +1527,13 @@ export class ReadyHomePanel extends LitElement {
       if (this._scanHandle === handle) this._scanHandle = null;
       if (!code) return;
       this._form = { ...this._form, barcode: code };
-      this._busy = false;
+      this._scanning = false;
       await this._lookupBarcode();
     } catch (err) {
       if (this._scanHandle === handle) this._scanHandle = null;
-      this._error = `Camera scan failed: ${err}`;
+      this._barcodeError = `Camera scan failed: ${formatHassError(err)}`;
     } finally {
-      this._busy = false;
+      this._scanning = false;
     }
   }
 
