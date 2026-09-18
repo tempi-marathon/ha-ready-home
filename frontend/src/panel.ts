@@ -150,6 +150,11 @@ export class ReadyHomePanel extends LitElement {
     return typeof raw === "string" && raw ? raw : null;
   }
 
+  /** Admins can mutate inventory; other logged-in users are read-only. */
+  private _canWrite(): boolean {
+    return this.hass?.user?.is_admin === true;
+  }
+
   private _restoreViewState() {
     const saved = loadPanelViewState(
       typeof localStorage !== "undefined" ? localStorage : null,
@@ -431,15 +436,19 @@ export class ReadyHomePanel extends LitElement {
               </h1>
             </div>
             <div class="header-actions">
-              ${this._mdButton("Scan", {
-                variant: "outlined",
-                disabled: this._scanning,
-                onClick: () => void this._scanFromPanel(),
-              })}
-              ${this._mdButton("Add item", {
-                variant: "filled",
-                onClick: this._openAdd,
-              })}
+              ${this._canWrite()
+                ? html`
+                    ${this._mdButton("Scan", {
+                      variant: "outlined",
+                      disabled: this._scanning,
+                      onClick: () => void this._scanFromPanel(),
+                    })}
+                    ${this._mdButton("Add item", {
+                      variant: "filled",
+                      onClick: this._openAdd,
+                    })}
+                  `
+                : nothing}
             </div>
           </div>
         </header>
@@ -648,17 +657,21 @@ export class ReadyHomePanel extends LitElement {
     return html`
       <div class="empty">
         No items match.
-        <div class="empty-actions">
-          ${this._mdButton("Scan", {
-            variant: "outlined",
-            disabled: this._scanning,
-            onClick: () => void this._scanFromPanel(),
-          })}
-          ${this._mdButton("Add an item", {
-            variant: "text",
-            onClick: this._openAdd,
-          })}
-        </div>
+        ${this._canWrite()
+          ? html`
+              <div class="empty-actions">
+                ${this._mdButton("Scan", {
+                  variant: "outlined",
+                  disabled: this._scanning,
+                  onClick: () => void this._scanFromPanel(),
+                })}
+                ${this._mdButton("Add an item", {
+                  variant: "text",
+                  onClick: this._openAdd,
+                })}
+              </div>
+            `
+          : nothing}
       </div>
     `;
   }
@@ -883,15 +896,17 @@ export class ReadyHomePanel extends LitElement {
           ${this._formatDate(item.expiry_date)}
         </td>
         <td class="actions">
-          ${this._mdButton("Edit", {
+          ${this._mdButton(this._canWrite() ? "Edit" : "View", {
             variant: "outlined",
             onClick: () => this._openEdit(item),
           })}
-          ${this._mdButton("Remove", {
-            variant: "danger-text",
-            disabled: this._isRemovePending(item.id),
-            onClick: () => void this._remove(item),
-          })}
+          ${this._canWrite()
+            ? this._mdButton("Remove", {
+                variant: "danger-text",
+                disabled: this._isRemovePending(item.id),
+                onClick: () => void this._remove(item),
+              })
+            : nothing}
         </td>
       </tr>
     `;
@@ -917,6 +932,7 @@ export class ReadyHomePanel extends LitElement {
             type="button"
             class="md-btn md-btn-danger-text"
             ?disabled=${this._isRemovePending(item.id)}
+            ?hidden=${!this._canWrite()}
             @click=${(e: Event) => {
               e.stopPropagation();
               void this._remove(item);
@@ -977,16 +993,23 @@ export class ReadyHomePanel extends LitElement {
       }
     }
 
+    const write = this._canWrite();
+    const dialogTitle = this._editing
+      ? write
+        ? "Edit item"
+        : "View item"
+      : "Add item";
+
     return html`
       <div class="dialog-backdrop">
         <div
           class="dialog ${this.narrow ? "dialog-narrow" : ""}"
           role="dialog"
           aria-modal="true"
-          aria-label=${this._editing ? "Edit item" : "Add item"}
+          aria-label=${dialogTitle}
         >
           <div class="dialog-header">
-            <h2>${this._editing ? "Edit item" : "Add item"}</h2>
+            <h2>${dialogTitle}</h2>
             <button
               type="button"
               class="icon-btn dialog-close"
@@ -1006,18 +1029,23 @@ export class ReadyHomePanel extends LitElement {
               <div class="barcode-row">
                 <input
                   .value=${f.barcode || ""}
+                  ?disabled=${!write}
                   @input=${this._onField("barcode")}
                 />
-                ${this._mdButton("Scan", {
-                  variant: "outlined",
-                  disabled: this._scanning,
-                  onClick: () => void this._scanBarcode(),
-                })}
-                ${this._mdButton("Lookup", {
-                  variant: "outlined",
-                  disabled: this._scanning || !(f.barcode || "").trim(),
-                  onClick: () => void this._lookupBarcode(),
-                })}
+                ${write
+                  ? html`
+                      ${this._mdButton("Scan", {
+                        variant: "outlined",
+                        disabled: this._scanning,
+                        onClick: () => void this._scanBarcode(),
+                      })}
+                      ${this._mdButton("Lookup", {
+                        variant: "outlined",
+                        disabled: this._scanning || !(f.barcode || "").trim(),
+                        onClick: () => void this._lookupBarcode(),
+                      })}
+                    `
+                  : nothing}
               </div>
               ${this._barcodeError
                 ? html`<div class="field-error" role="alert">
@@ -1026,20 +1054,22 @@ export class ReadyHomePanel extends LitElement {
                 : nothing}
             </label>
             <label
-              >${this._fieldLabel("Name", true)}
+              >${this._fieldLabel("Name", write)}
               <input
                 class=${this._fieldInvalid("name") ? "invalid" : ""}
                 .value=${f.name || ""}
+                ?disabled=${!write}
                 @input=${this._onField("name")}
               />
               ${this._fieldError("name")}
             </label>
             <div class="row2">
               <label
-                >${this._fieldLabel("Location", true)}
+                >${this._fieldLabel("Location", write)}
                 <select
                   class=${this._fieldInvalid("location") ? "invalid" : ""}
                   .value=${live(f.location || "")}
+                  ?disabled=${!write}
                   @change=${this._onField("location")}
                 >
                   <option value="" ?selected=${!(f.location || "")}>
@@ -1058,10 +1088,11 @@ export class ReadyHomePanel extends LitElement {
                 ${this._fieldError("location")}
               </label>
               <label
-                >${this._fieldLabel("Category", true)}
+                >${this._fieldLabel("Category", write)}
                 <select
                   class=${this._fieldInvalid("category") ? "invalid" : ""}
                   .value=${live(f.category || "")}
+                  ?disabled=${!write}
                   @change=${this._onField("category")}
                 >
                   <option value="" ?selected=${!(f.category || "")}>
@@ -1084,6 +1115,7 @@ export class ReadyHomePanel extends LitElement {
               >Priority
               <select
                 .value=${live(f.priority || "important")}
+                ?disabled=${!write}
                 @change=${this._onField("priority")}
               >
                 ${PRIORITIES.map(
@@ -1099,7 +1131,11 @@ export class ReadyHomePanel extends LitElement {
             </label>
             <label
               >Notes
-              <input .value=${f.notes || ""} @input=${this._onField("notes")} />
+              <input
+                .value=${f.notes || ""}
+                ?disabled=${!write}
+                @input=${this._onField("notes")}
+              />
             </label>
           </div>
 
@@ -1107,12 +1143,13 @@ export class ReadyHomePanel extends LitElement {
             <div class="form-section-title">Stock</div>
             <div class="row3">
               <label
-                >${this._fieldLabel("Quantity", true)}
+                >${this._fieldLabel("Quantity", write)}
                 <input
                   class=${this._fieldInvalid("quantity") ? "invalid" : ""}
                   type="text"
                   inputmode="decimal"
                   .value=${live(f.quantity || "1")}
+                  ?disabled=${!write}
                   @input=${this._onField("quantity")}
                 />
                 ${this._fieldError("quantity")}
@@ -1126,14 +1163,16 @@ export class ReadyHomePanel extends LitElement {
                   type="text"
                   inputmode="decimal"
                   .value=${live(f.desired_quantity || "0")}
+                  ?disabled=${!write}
                   @input=${this._onField("desired_quantity")}
                 />
               </label>
               <label
-                >${this._fieldLabel("Unit", true)}
+                >${this._fieldLabel("Unit", write)}
                 <select
                   class=${this._fieldInvalid("unit") ? "invalid" : ""}
                   .value=${live(f.unit || "piece")}
+                  ?disabled=${!write}
                   @change=${this._onField("unit")}
                 >
                   ${STOCK_UNITS.map(
@@ -1153,7 +1192,7 @@ export class ReadyHomePanel extends LitElement {
               ? html`
                   <div class="row2">
                     <label
-                      >${this._fieldLabel("Contents per unit", true)}
+                      >${this._fieldLabel("Contents per unit", write)}
                       <input
                         class=${this._fieldInvalid("contents_per_unit")
                           ? "invalid"
@@ -1161,6 +1200,7 @@ export class ReadyHomePanel extends LitElement {
                         type="text"
                         inputmode="decimal"
                         .value=${live(f.contents_per_unit || "")}
+                        ?disabled=${!write}
                         @input=${this._onField("contents_per_unit")}
                       />
                       ${this._fieldError("contents_per_unit")}
@@ -1169,12 +1209,13 @@ export class ReadyHomePanel extends LitElement {
                       </div>
                     </label>
                     <label
-                      >${this._fieldLabel("Contents unit", true)}
+                      >${this._fieldLabel("Contents unit", write)}
                       <select
                         class=${this._fieldInvalid("contents_unit")
                           ? "invalid"
                           : ""}
                         .value=${live(f.contents_unit || "")}
+                        ?disabled=${!write}
                         @change=${this._onField("contents_unit")}
                       >
                         <option value="" ?selected=${!(f.contents_unit || "")}>
@@ -1203,7 +1244,7 @@ export class ReadyHomePanel extends LitElement {
                   <label
                     >${this._fieldLabel(
                       `Calories (kcal) per ${contentsLabel}`,
-                      true,
+                      write,
                     )}
                     <input
                       class=${this._fieldInvalid("calories_per_content")
@@ -1212,6 +1253,7 @@ export class ReadyHomePanel extends LitElement {
                       type="text"
                       inputmode="decimal"
                       .value=${live(f.calories_per_content || "")}
+                      ?disabled=${!write}
                       @input=${this._onField("calories_per_content")}
                     />
                     ${this._fieldError("calories_per_content")}
@@ -1239,6 +1281,7 @@ export class ReadyHomePanel extends LitElement {
               <input
                 type="date"
                 .value=${f.expiry_date || ""}
+                ?disabled=${!write}
                 @input=${this._onField("expiry_date")}
               />
             </label>
@@ -1249,15 +1292,17 @@ export class ReadyHomePanel extends LitElement {
             : nothing}
 
           <div class="dialog-actions">
-            ${this._mdButton("Cancel", {
+            ${this._mdButton(write ? "Cancel" : "Close", {
               variant: "text",
               onClick: this._closeDialog,
             })}
-            ${this._mdButton("Save", {
-              variant: "filled",
-              disabled: this._saving,
-              onClick: () => void this._save(),
-            })}
+            ${write
+              ? this._mdButton("Save", {
+                  variant: "filled",
+                  disabled: this._saving,
+                  onClick: () => void this._save(),
+                })
+              : nothing}
           </div>
         </div>
       </div>
@@ -1306,6 +1351,7 @@ export class ReadyHomePanel extends LitElement {
   }
 
   private _openAdd = () => {
+    if (!this._canWrite()) return;
     this._editing = null;
     this._form = this._blankForm();
     this._fieldErrors = {};
@@ -1378,6 +1424,7 @@ export class ReadyHomePanel extends LitElement {
   }
 
   private async _remove(item: InventoryItemDto) {
+    if (!this._canWrite()) return;
     if (this._isRemovePending(item.id)) return;
     if (!confirm(`Remove “${item.name}”?`)) return;
     this._pendingRemoveIds = [...this._pendingRemoveIds, item.id];
@@ -1395,6 +1442,7 @@ export class ReadyHomePanel extends LitElement {
   }
 
   private async _save() {
+    if (!this._canWrite()) return;
     const errors = this._validateForm();
     this._fieldErrors = errors;
     if (Object.keys(errors).length) {
@@ -1459,6 +1507,7 @@ export class ReadyHomePanel extends LitElement {
   }
 
   private async _lookupBarcode() {
+    if (!this._canWrite()) return;
     const code = this._form.barcode?.trim();
     if (!code) return;
     this._scanning = true;
@@ -1480,6 +1529,7 @@ export class ReadyHomePanel extends LitElement {
 
   /** Header / empty-state Scan: camera first; open add dialog only when needed. */
   private async _scanFromPanel() {
+    if (!this._canWrite()) return;
     if (!hasCompanionBarcodeScanner(this.hass)) {
       this._openAdd();
       this._barcodeError = COMPANION_SCAN_MESSAGE;
@@ -1511,6 +1561,7 @@ export class ReadyHomePanel extends LitElement {
 
   /** Dialog Scan button. */
   private async _scanBarcode() {
+    if (!this._canWrite()) return;
     if (!hasCompanionBarcodeScanner(this.hass)) {
       this._barcodeError = COMPANION_SCAN_MESSAGE;
       return;

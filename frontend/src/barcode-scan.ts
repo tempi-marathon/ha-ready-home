@@ -97,11 +97,12 @@ export function scanProductBarcode(
   const finish = (value: string | null) => {
     if (settled) return;
     settled = true;
-    external.receiveMessage = originalReceive;
     try {
       external.fireMessage({ type: "bar_code/close" });
     } catch {
       // Companion may already have closed the overlay.
+    } finally {
+      external.receiveMessage = originalReceive;
     }
     resolve(value);
   };

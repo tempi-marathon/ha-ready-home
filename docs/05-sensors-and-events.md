@@ -34,7 +34,7 @@ Diagnostic attributes (people, duration, targets, totals) are also available on 
 
 ### List attributes (`items` / `urgent_items`)
 
-Each entry is an **item summary** (same shape as event payloads and `list_items` responses). Lists are capped (100 items).
+Each entry is an **item summary** (same shape as `list_items` responses). Lists are capped (100 items).
 
 **Always present:**
 
@@ -67,10 +67,12 @@ There is **no** dedicated “problem” event — use `binary_sensor.ready_home_
 
 ### Event payloads
 
+Event `item` objects use a **lean** summary: same stock / readiness fields as list attributes, but **without** `notes` or `barcode` (those stay on the panel, websocket snapshot, and sensor attributes only).
+
 **Expired / expiring:**
 
 ```yaml
-item:   # item summary (see table above)
+item:   # lean item summary (no notes/barcode)
 bucket: "expired"   # or "expiring"
 ```
 
@@ -79,7 +81,7 @@ bucket: "expired"   # or "expiring"
 **Low stock:**
 
 ```yaml
-item:   # item summary
+item:   # lean item summary (no notes/barcode)
 ```
 
 (no `bucket` field)

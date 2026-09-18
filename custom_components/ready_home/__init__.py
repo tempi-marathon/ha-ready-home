@@ -106,6 +106,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     settings = ReadinessSettings.from_options(options)
     coordinator = ReadyHomeCoordinator(hass, store, settings)
     coordinator.entry_id = entry.entry_id
+    coordinator.config_entry = entry
     # Store already loaded; coordinator.async_setup must not load again.
     await coordinator.async_setup(skip_store_load=True)
 

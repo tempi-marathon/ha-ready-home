@@ -29,6 +29,11 @@ export interface HomeAssistant {
   themes?: {
     darkMode?: boolean;
   };
+  user?: {
+    id?: string;
+    name?: string;
+    is_admin?: boolean;
+  };
   auth?: {
     external?: HassExternalBus;
   };

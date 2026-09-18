@@ -13,8 +13,9 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 
 from .attention import expiry_severity, item_summary
-from .barcode import is_valid_barcode
-from .const import ATTR_CONFIG_ENTRY_ID, DOMAIN
+from .auth import async_require_admin_or_automation
+from .barcode import is_valid_barcode, lookup_product
+from .const import ATTR_CONFIG_ENTRY_ID, DOMAIN, MAX_INVENTORY_ITEMS
 from .helpers import entry_id_from_call_data, get_coordinator
 from .models import (
     ContentsUnit,
@@ -146,6 +147,16 @@ def _item_barcode(value: Any) -> str:
     return text
 
 
+def required_barcode(value: Any) -> str:
+    """Accept a non-empty barcode matching the OFF allowlist."""
+    text = cv.string(value).strip()
+    if not is_valid_barcode(text):
+        raise vol.Invalid(
+            "barcode must be 4–32 alphanumeric characters"
+        )
+    return text
+
+
 ADD_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_NAME): _bounded_string(_MAX_NAME),
@@ -228,7 +239,7 @@ LIST_SCHEMA = vol.Schema(
 )
 
 LOOKUP_SCHEMA = vol.Schema({
-    vol.Required(ATTR_BARCODE): _item_barcode,
+    vol.Required(ATTR_BARCODE): required_barcode,
     vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
 })
 
@@ -255,8 +266,13 @@ def async_register_services(hass: HomeAssistant) -> None:
         return
 
     async def handle_add(call: ServiceCall) -> dict[str, Any]:
+        await async_require_admin_or_automation(hass, call.context.user_id)
         data = ADD_SCHEMA(dict(call.data))
         coordinator = get_coordinator(hass, config_entry_id=entry_id_from_call_data(data))
+        if len(coordinator.store.items) >= MAX_INVENTORY_ITEMS:
+            raise ServiceValidationError(
+                f"Inventory is full (max {MAX_INVENTORY_ITEMS} items)"
+            )
         item = InventoryItem(
             name=data[ATTR_NAME],
             quantity=data[ATTR_QUANTITY],
@@ -284,6 +300,7 @@ def async_register_services(hass: HomeAssistant) -> None:
         return {"item_id": item.id, "item": item_summary(item)}
 
     async def handle_update(call: ServiceCall) -> dict[str, Any]:
+        await async_require_admin_or_automation(hass, call.context.user_id)
         data = UPDATE_SCHEMA(dict(call.data))
         coordinator = get_coordinator(hass, config_entry_id=entry_id_from_call_data(data))
         item = _resolve_item(
@@ -317,6 +334,7 @@ def async_register_services(hass: HomeAssistant) -> None:
         return {"item_id": updated.id, "item": item_summary(updated)}
 
     async def handle_adjust(call: ServiceCall) -> dict[str, Any]:
+        await async_require_admin_or_automation(hass, call.context.user_id)
         data = ADJUST_SCHEMA(dict(call.data))
         coordinator = get_coordinator(hass, config_entry_id=entry_id_from_call_data(data))
         item = _resolve_item(
@@ -330,6 +348,7 @@ def async_register_services(hass: HomeAssistant) -> None:
         return {"item_id": updated.id, "item": item_summary(updated)}
 
     async def handle_remove(call: ServiceCall) -> dict[str, Any]:
+        await async_require_admin_or_automation(hass, call.context.user_id)
         data = REMOVE_SCHEMA(dict(call.data))
         coordinator = get_coordinator(hass, config_entry_id=entry_id_from_call_data(data))
         item = _resolve_item(
@@ -372,10 +391,12 @@ def async_register_services(hass: HomeAssistant) -> None:
         }
 
     async def handle_lookup(call: ServiceCall) -> dict[str, Any]:
-        from .barcode import lookup_product
-
+        await async_require_admin_or_automation(hass, call.context.user_id)
         data = LOOKUP_SCHEMA(dict(call.data))
-        result = await lookup_product(hass, data[ATTR_BARCODE])
+        rate_key = call.context.user_id or "automation"
+        result = await lookup_product(
+            hass, data[ATTR_BARCODE], rate_key=rate_key
+        )
         if result is None:
             return {"found": False, "barcode": data[ATTR_BARCODE]}
         return {"found": True, **result}
@@ -384,42 +405,42 @@ def async_register_services(hass: HomeAssistant) -> None:
         DOMAIN,
         SERVICE_ADD_ITEM,
         handle_add,
-        schema=None,
+        schema=ADD_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
     hass.services.async_register(
         DOMAIN,
         SERVICE_UPDATE_ITEM,
         handle_update,
-        schema=None,
+        schema=UPDATE_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
     hass.services.async_register(
         DOMAIN,
         SERVICE_ADJUST_QUANTITY,
         handle_adjust,
-        schema=None,
+        schema=ADJUST_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
     hass.services.async_register(
         DOMAIN,
         SERVICE_REMOVE_ITEM,
         handle_remove,
-        schema=None,
+        schema=REMOVE_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
     hass.services.async_register(
         DOMAIN,
         SERVICE_LIST_ITEMS,
         handle_list,
-        schema=None,
+        schema=LIST_SCHEMA,
         supports_response=SupportsResponse.ONLY,
     )
     hass.services.async_register(
         DOMAIN,
         SERVICE_LOOKUP_BARCODE,
         handle_lookup,
-        schema=None,
+        schema=LOOKUP_SCHEMA,
         supports_response=SupportsResponse.ONLY,
     )
 

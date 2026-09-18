@@ -85,6 +85,11 @@ def _ensure_homeassistant_stubs() -> None:
     modules["homeassistant.exceptions"].ServiceValidationError = type(
         "ServiceValidationError", (Exception,), {}
     )
+    modules["homeassistant.exceptions"].Unauthorized = type(
+        "Unauthorized",
+        (modules["homeassistant.exceptions"].HomeAssistantError,),
+        {},
+    )
 
     ws = modules["homeassistant.components.websocket_api"]
     ws.websocket_command = lambda schema: (lambda f: f)

@@ -47,5 +47,5 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
-      - name: Ensure panel bundle exists
-        run: test -s custom_components/ready_home/dist/ready-home-panel.js
+      - name: Ensure committed panel bundle matches build
+        run: git diff --exit-code custom_components/ready_home/dist/

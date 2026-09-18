@@ -8,6 +8,7 @@ from custom_components.ready_home.attention import (
     AttentionBuckets,
     attention_cause_attrs,
     build_buckets,
+    event_item_summary,
     expiry_severity,
     item_summary,
 )
@@ -137,6 +138,26 @@ def test_item_summary() -> None:
         "priority": "essential",
         "expiry_date": "2027-01-15",
     }
+
+
+def test_event_item_summary_omits_notes_and_barcode() -> None:
+    item = InventoryItem(
+        name="Beans",
+        quantity=3,
+        desired_quantity=6,
+        unit=InventoryUnit.BOX,
+        location="Pantry",
+        category="Food",
+        notes="organic",
+        barcode="123456",
+        priority=InventoryPriority.ESSENTIAL,
+        expiry_date="2027-01-15",
+    )
+    summary = event_item_summary(item)
+    assert summary["name"] == "Beans"
+    assert summary["location"] == "Pantry"
+    assert "notes" not in summary
+    assert "barcode" not in summary
 
 
 def test_item_summary_includes_measurable_fields() -> None:

@@ -86,7 +86,7 @@ def build_buckets(
 
 
 def item_summary(item: InventoryItem) -> dict[str, Any]:
-    """Compact dict for sensor attributes and events.
+    """Compact dict for sensor attributes and list responses.
 
     Always includes identity and stock fields. Measurable fields
     (contents, kcal, liters) are included only when set / computable.
@@ -101,6 +101,38 @@ def item_summary(item: InventoryItem) -> dict[str, Any]:
         "category": item.category,
         "notes": item.notes,
         "barcode": item.barcode,
+        "priority": item.priority.value,
+        "expiry_date": item.expiry_date,
+    }
+    if item.contents_per_unit is not None:
+        summary["contents_per_unit"] = item.contents_per_unit
+    if item.contents_unit is not None:
+        summary["contents_unit"] = item.contents_unit.value
+    if item.calories_per_content is not None:
+        summary["calories_per_content"] = item.calories_per_content
+    if item.calories_per_unit is not None:
+        summary["calories_per_unit"] = item.calories_per_unit
+    calories = item.calories_on_hand()
+    if calories is not None:
+        summary["calories_on_hand"] = calories
+    if item.liters_per_unit is not None:
+        summary["liters_per_unit"] = item.liters_per_unit
+    liters = item.water_liters_on_hand()
+    if liters is not None:
+        summary["water_liters_on_hand"] = liters
+    return summary
+
+
+def event_item_summary(item: InventoryItem) -> dict[str, Any]:
+    """Lean item dict for bus events (no notes/barcode — recorder privacy)."""
+    summary: dict[str, Any] = {
+        "id": item.id,
+        "name": item.name,
+        "quantity": item.quantity,
+        "desired_quantity": item.desired_quantity,
+        "unit": item.unit.value,
+        "location": item.location,
+        "category": item.category,
         "priority": item.priority.value,
         "expiry_date": item.expiry_date,
     }

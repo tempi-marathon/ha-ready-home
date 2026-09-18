@@ -7,17 +7,44 @@ from unittest.mock import MagicMock, patch
 from urllib.parse import quote
 
 import pytest
+from homeassistant.exceptions import HomeAssistantError
 
 from custom_components.ready_home.barcode import is_valid_barcode, lookup_product
+from custom_components.ready_home.const import BARCODE_LOOKUP_COOLDOWN_SECONDS
+
+
+class _FakeContent:
+    def __init__(self, raw: bytes) -> None:
+        self._raw = raw
+
+    async def read(self, n: int = -1) -> bytes:
+        if n < 0:
+            return self._raw
+        return self._raw[:n]
 
 
 class _FakeResponse:
-    def __init__(self, status: int, payload: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        status: int,
+        payload: dict[str, Any] | bytes | None = None,
+        *,
+        content_type: str = "application/json",
+        raw: bytes | None = None,
+    ) -> None:
         self.status = status
-        self._payload = payload
+        self.headers = {"Content-Type": content_type}
+        if raw is not None:
+            body = raw
+        elif isinstance(payload, (bytes, bytearray)):
+            body = bytes(payload)
+        elif payload is None:
+            body = b""
+        else:
+            import json
 
-    async def json(self) -> dict[str, Any]:
-        return self._payload
+            body = json.dumps(payload).encode("utf-8")
+        self.content = _FakeContent(body)
 
     async def __aenter__(self) -> _FakeResponse:
         return self
@@ -26,10 +53,17 @@ class _FakeResponse:
         return None
 
 
-def _mock_lookup(payload: dict[str, Any]) -> tuple[MagicMock, MagicMock]:
+def _mock_lookup(
+    payload: dict[str, Any],
+    *,
+    content_type: str = "application/json",
+) -> tuple[MagicMock, MagicMock]:
     hass = MagicMock()
+    hass.data = {}
     session = MagicMock()
-    session.get = MagicMock(return_value=_FakeResponse(200, payload))
+    session.get = MagicMock(
+        return_value=_FakeResponse(200, payload, content_type=content_type)
+    )
     return hass, session
 
 
@@ -61,6 +95,8 @@ async def test_lookup_product_success() -> None:
     assert result["contents_unit"] is None
     assert result["barcode"] == "3017620422003"
     session.get.assert_called_once()
+    kwargs = session.get.call_args.kwargs
+    assert kwargs.get("allow_redirects") is False
     url = session.get.call_args.args[0]
     assert url.endswith(f"/{quote('3017620422003', safe='')}.json")
 
@@ -123,6 +159,7 @@ async def test_lookup_parses_quantity_string_fallback() -> None:
 @pytest.mark.asyncio
 async def test_lookup_product_not_found() -> None:
     hass = MagicMock()
+    hass.data = {}
     session = MagicMock()
     session.get = MagicMock(return_value=_FakeResponse(200, {"status": 0}))
 
@@ -154,6 +191,7 @@ async def test_lookup_empty_barcode() -> None:
 @pytest.mark.asyncio
 async def test_lookup_rejects_unsafe_barcode(barcode: str) -> None:
     hass = MagicMock()
+    hass.data = {}
     session = MagicMock()
     with patch(
         "custom_components.ready_home.barcode.async_get_clientsession",
@@ -161,6 +199,54 @@ async def test_lookup_rejects_unsafe_barcode(barcode: str) -> None:
     ):
         assert await lookup_product(hass, barcode) is None
     session.get.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_lookup_rejects_redirect() -> None:
+    hass = MagicMock()
+    hass.data = {}
+    session = MagicMock()
+    session.get = MagicMock(return_value=_FakeResponse(302, {}))
+
+    with patch(
+        "custom_components.ready_home.barcode.async_get_clientsession",
+        return_value=session,
+    ):
+        assert await lookup_product(hass, "3017620422003") is None
+
+
+@pytest.mark.asyncio
+async def test_lookup_rejects_non_json_content_type() -> None:
+    hass, session = _mock_lookup(
+        {"status": 1, "product": {}},
+        content_type="text/html",
+    )
+
+    with patch(
+        "custom_components.ready_home.barcode.async_get_clientsession",
+        return_value=session,
+    ):
+        assert await lookup_product(hass, "3017620422003") is None
+
+
+@pytest.mark.asyncio
+async def test_lookup_rate_limit() -> None:
+    hass, session = _mock_lookup(
+        {
+            "status": 1,
+            "product": {"product_name": "A", "brands": "B"},
+        }
+    )
+
+    with patch(
+        "custom_components.ready_home.barcode.async_get_clientsession",
+        return_value=session,
+    ):
+        assert await lookup_product(hass, "3017620422003", rate_key="u1") is not None
+        with pytest.raises(HomeAssistantError, match="rate limit"):
+            await lookup_product(hass, "3017620422003", rate_key="u1")
+
+    assert BARCODE_LOOKUP_COOLDOWN_SECONDS > 0
 
 
 def test_is_valid_barcode() -> None:

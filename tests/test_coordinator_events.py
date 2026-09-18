@@ -78,6 +78,9 @@ async def test_events_fire_once_on_transition(
 
     for call in coordinator.hass.bus.async_fire.call_args_list:
         assert call.kwargs.get("context") is coordinator.update_context
+        payload = call.args[1]
+        assert "notes" not in payload["item"]
+        assert "barcode" not in payload["item"]
 
     coordinator.hass.bus.async_fire.reset_mock()
 

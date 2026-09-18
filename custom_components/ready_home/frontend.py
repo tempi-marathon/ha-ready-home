@@ -20,10 +20,7 @@ _LEGACY_CARD_PREFIXES = (
 
 async def async_cleanup_legacy_lovelace_resource(hass: HomeAssistant) -> None:
     """Best-effort remove of the old Lovelace card module resource in storage mode."""
-    try:
-        lovelace = hass.data.get("lovelace")
-    except Exception:  # noqa: BLE001
-        lovelace = None
+    lovelace = hass.data.get("lovelace")
 
     if lovelace is None:
         _LOGGER.debug("Lovelace not ready yet; retrying legacy resource cleanup")
