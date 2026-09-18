@@ -67,6 +67,24 @@ def _snapshot(coordinator: ReadyHomeCoordinator) -> dict[str, Any]:
     }
 
 
+def _snapshot_from_store(coordinator: ReadyHomeCoordinator) -> dict[str, Any]:
+    """Items from the store (already committed); assessment/buckets from last refresh.
+
+    Used to push the panel list immediately after a mutation, without waiting for
+    the coordinator recompute and entity writes. Buckets catch up on the next
+    full coordinator push.
+    """
+    data = coordinator.data
+    items = [item.to_dict() for item in coordinator.store.items]
+    if data is None:
+        return {"items": items, "assessment": {}, "buckets": {}}
+    return {
+        "items": items,
+        "assessment": _assessment_dict(data),
+        "buckets": _buckets_dict(data),
+    }
+
+
 def _settings_dict(coordinator: ReadyHomeCoordinator) -> dict[str, Any]:
     s = coordinator.settings
     return {
@@ -114,7 +132,7 @@ async def ws_settings(
 async def ws_subscribe(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
 ) -> None:
-    """Subscribe to inventory changes; push snapshot after each coordinator refresh."""
+    """Subscribe to inventory changes; push after store mutations and refreshes."""
     coordinator = _coordinator(hass, msg)
     subscription_id = msg["id"]
 
@@ -124,13 +142,28 @@ async def ws_subscribe(
             websocket_api.event_message(subscription_id, _snapshot(coordinator))
         )
 
-    # Immediate snapshot, then follow coordinator refreshes (store mutations
-    # request a refresh; pushing from the store listener would be stale).
+    @callback
+    def _push_from_store() -> None:
+        # Store already has the mutation; do not wait for coordinator refresh.
+        connection.send_message(
+            websocket_api.event_message(
+                subscription_id, _snapshot_from_store(coordinator)
+            )
+        )
+
+    # Immediate snapshot, then: store mutations → fast items push; coordinator
+    # refreshes → full snapshot (assessment + buckets + items).
     connection.send_result(subscription_id)
     _push()
 
-    unsubscribe = coordinator.async_add_listener(_push)
-    connection.subscriptions[subscription_id] = unsubscribe
+    unsub_coord = coordinator.async_add_listener(_push)
+    unsub_store = coordinator.store.async_add_listener(_push_from_store)
+
+    def _unsubscribe() -> None:
+        unsub_coord()
+        unsub_store()
+
+    connection.subscriptions[subscription_id] = _unsubscribe
 
 
 @websocket_api.websocket_command(
