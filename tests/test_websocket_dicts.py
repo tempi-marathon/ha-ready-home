@@ -18,6 +18,7 @@ from custom_components.ready_home.websocket_api import (
     _assessment_dict,
     _settings_dict,
     _snapshot,
+    _snapshot_from_store,
 )
 
 
@@ -103,6 +104,28 @@ def test_snapshot_populated() -> None:
     assert snap["buckets"]["expired"][0]["id"] == item.id
     assert snap["buckets"]["expired"][0]["name"] == "Water"
     assert snap["buckets"]["low_stock"] == []
+
+
+def test_snapshot_from_store_uses_store_items() -> None:
+    """Store items are fresh; assessment/buckets come from last coordinator data."""
+    store_item = InventoryItem(name="New", quantity=1)
+    stale_item = InventoryItem(name="Old", quantity=1)
+    data = ReadyHomeData(
+        items=[stale_item],
+        settings=ReadinessSettings(),
+        assessment=_assessment(),
+        buckets=AttentionBuckets([], [], [], []),
+    )
+    store = MagicMock()
+    store.items = [store_item]
+    coordinator = MagicMock()
+    coordinator.data = data
+    coordinator.store = store
+
+    snap = _snapshot_from_store(coordinator)
+    assert len(snap["items"]) == 1
+    assert snap["items"][0]["name"] == "New"
+    assert snap["assessment"]["overall_percent"] == 50.0
 
 
 def test_settings_dict() -> None:
