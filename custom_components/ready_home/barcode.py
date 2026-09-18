@@ -3,21 +3,32 @@
 from __future__ import annotations
 
 import html
+import json
 import logging
 import re
+import time
 from typing import Any
 from urllib.parse import quote
 
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
+from .const import (
+    BARCODE_LOOKUP_COOLDOWN_SECONDS,
+    BARCODE_LOOKUP_MAX_BYTES,
+    DOMAIN,
+    VERSION,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
 OFF_PRODUCT_URL = "https://world.openfoodfacts.org/api/v2/product/{barcode}.json"
-USER_AGENT = "ReadyHomeHomeAssistant/0.1.0"
+USER_AGENT = f"ReadyHomeHomeAssistant/{VERSION}"
 # EAN/UPC digits and Code 128 alphanumerics; blocks path/query separators.
 BARCODE_PATTERN = re.compile(r"^[A-Za-z0-9]{4,32}$")
 _LOG_BARCODE_MAX = 16
+_RATE_LIMIT_KEY = f"{DOMAIN}_barcode_rate"
 
 # OFF unit tokens → (ContentsUnit value, multiplier applied to the numeric amount).
 _UNIT_MAP: dict[str, tuple[str, float]] = {
@@ -127,7 +138,32 @@ def _optional_float(value: Any) -> float | None:
         return None
 
 
-async def lookup_product(hass: HomeAssistant, barcode: str) -> dict[str, Any] | None:
+def _enforce_rate_limit(hass: HomeAssistant, rate_key: str | None) -> None:
+    """Raise when the caller looks up barcodes too frequently."""
+    if not rate_key:
+        return
+    now = time.monotonic()
+    buckets: dict[str, float] = hass.data.setdefault(_RATE_LIMIT_KEY, {})
+    last = buckets.get(rate_key)
+    if last is not None and (now - last) < BARCODE_LOOKUP_COOLDOWN_SECONDS:
+        raise HomeAssistantError(
+            "Barcode lookup rate limit exceeded; try again in a moment"
+        )
+    buckets[rate_key] = now
+
+
+def _is_json_content_type(content_type: str | None) -> bool:
+    if not content_type:
+        return False
+    return "application/json" in content_type.split(";")[0].strip().lower()
+
+
+async def lookup_product(
+    hass: HomeAssistant,
+    barcode: str,
+    *,
+    rate_key: str | None = None,
+) -> dict[str, Any] | None:
     """Look up a barcode on Open Food Facts.
 
     Returns name, brand, contents, calories, and barcode — or None if not found.
@@ -136,12 +172,24 @@ async def lookup_product(hass: HomeAssistant, barcode: str) -> dict[str, Any] | 
     if not barcode or not is_valid_barcode(barcode):
         return None
 
+    _enforce_rate_limit(hass, rate_key)
+
     session = async_get_clientsession(hass)
     url = OFF_PRODUCT_URL.format(barcode=quote(barcode, safe=""))
     try:
         async with session.get(
-            url, headers={"User-Agent": USER_AGENT}, timeout=15
+            url,
+            headers={"User-Agent": USER_AGENT},
+            timeout=15,
+            allow_redirects=False,
         ) as response:
+            if response.status in (301, 302, 303, 307, 308):
+                _LOGGER.warning(
+                    "Open Food Facts redirected for barcode %s (status %s)",
+                    _log_barcode(barcode),
+                    response.status,
+                )
+                return None
             if response.status == 404:
                 return None
             if response.status >= 400:
@@ -151,17 +199,44 @@ async def lookup_product(hass: HomeAssistant, barcode: str) -> dict[str, Any] | 
                     _log_barcode(barcode),
                 )
                 return None
-            payload = await response.json()
+            if not _is_json_content_type(response.headers.get("Content-Type")):
+                _LOGGER.warning(
+                    "Open Food Facts returned non-JSON for barcode %s",
+                    _log_barcode(barcode),
+                )
+                return None
+            raw = await response.content.read(BARCODE_LOOKUP_MAX_BYTES + 1)
+            if len(raw) > BARCODE_LOOKUP_MAX_BYTES:
+                _LOGGER.warning(
+                    "Open Food Facts response too large for barcode %s",
+                    _log_barcode(barcode),
+                )
+                return None
+            try:
+                payload = json.loads(raw.decode("utf-8"))
+            except (UnicodeDecodeError, ValueError, TypeError):
+                _LOGGER.warning(
+                    "Open Food Facts returned invalid JSON for barcode %s",
+                    _log_barcode(barcode),
+                )
+                return None
+    except HomeAssistantError:
+        raise
     except Exception:  # noqa: BLE001
         _LOGGER.exception(
             "Open Food Facts lookup failed for %s", _log_barcode(barcode)
         )
         return None
 
+    if not isinstance(payload, dict):
+        return None
+
     if payload.get("status") != 1:
         return None
 
     product = payload.get("product") or {}
+    if not isinstance(product, dict):
+        product = {}
     name = _decode_text(
         product.get("product_name") or product.get("product_name_en") or ""
     )
@@ -169,6 +244,8 @@ async def lookup_product(hass: HomeAssistant, barcode: str) -> dict[str, Any] | 
     contents_per_unit, contents_unit = _contents_from_product(product)
 
     nutriments = product.get("nutriments") or {}
+    if not isinstance(nutriments, dict):
+        nutriments = {}
     kcal_100g = nutriments.get("energy-kcal_100g")
     if kcal_100g is None:
         kcal_100g = nutriments.get("energy-kcal_value")

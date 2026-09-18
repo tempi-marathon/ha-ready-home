@@ -39,6 +39,12 @@ DEFAULT_EXPIRING_DAYS: Final = 30
 DEFAULT_URGENT_DAYS: Final = 7
 # Cap item lists on expired/expiring/low-stock sensor attributes (HA state size)
 ATTRIBUTE_ITEM_CAP: Final = 100
+# Hard ceiling on inventory size (authenticated DoS guard)
+MAX_INVENTORY_ITEMS: Final = 2000
+# Minimum seconds between Open Food Facts lookups per user / connection
+BARCODE_LOOKUP_COOLDOWN_SECONDS: Final = 1.0
+# Max OFF JSON body we will parse
+BARCODE_LOOKUP_MAX_BYTES: Final = 1_048_576
 DEFAULT_LOCATIONS: Final = ["Pantry", "Garage", "Basement"]
 DEFAULT_CATEGORIES: Final = ["Food", "Water", "Medical", "Tools", "Other"]
 DEFAULT_FOOD_CATEGORIES: Final = ["Food"]

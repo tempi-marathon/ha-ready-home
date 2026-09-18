@@ -10,7 +10,7 @@ from homeassistant.core import CALLBACK_TYPE, Context, HomeAssistant, callback
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .attention import AttentionBuckets, build_buckets, item_summary
+from .attention import AttentionBuckets, build_buckets, event_item_summary, item_summary
 from .const import (
     ATTRIBUTE_ITEM_CAP,
     DOMAIN,
@@ -55,6 +55,7 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
         self.store = store
         self.settings = settings
         self.entry_id: str | None = None
+        self.config_entry: Any | None = None
         self.update_context: Context | None = None
         self._unsub_daily: CALLBACK_TYPE | None = None
         self._unsub_store: CALLBACK_TYPE | None = None
@@ -82,18 +83,30 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
             self._unsub_store()
             self._unsub_store = None
 
+    def _schedule_refresh(self) -> None:
+        """Request a refresh via the config entry when available."""
+        entry = self.config_entry
+        if entry is not None and hasattr(entry, "async_create_task"):
+            entry.async_create_task(
+                self.hass,
+                self.async_request_refresh(),
+                f"{DOMAIN}_refresh",
+            )
+            return
+        self.hass.async_create_task(self.async_request_refresh())
+
     def update_settings(self, settings: ReadinessSettings) -> None:
         """Replace settings (e.g. after options flow) and request refresh."""
         self.settings = settings
-        self.hass.async_create_task(self.async_request_refresh())
+        self._schedule_refresh()
 
     @callback
     def _on_store_changed(self) -> None:
-        self.hass.async_create_task(self.async_request_refresh())
+        self._schedule_refresh()
 
     @callback
     def _on_daily(self, _now: datetime) -> None:
-        self.hass.async_create_task(self.async_request_refresh())
+        self._schedule_refresh()
 
     async def _async_update_data(self) -> ReadyHomeData:
         # One context per refresh so Activity can chain related state changes
@@ -144,7 +157,7 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
             )
             self.hass.bus.async_fire(
                 event_type,
-                {"item": item_summary(item), "bucket": bucket},
+                {"item": event_item_summary(item), "bucket": bucket},
                 context=context,
             )
 
@@ -153,7 +166,7 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
                 continue
             self.hass.bus.async_fire(
                 EVENT_ITEM_LOW_STOCK,
-                {"item": item_summary(item)},
+                {"item": event_item_summary(item)},
                 context=context,
             )
 

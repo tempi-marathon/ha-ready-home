@@ -8,7 +8,9 @@ Open the integration → **Configure**:
 
 ## Access
 
-Ready Home treats inventory as a **shared household** resource. Any logged-in Home Assistant user who can open the sidebar panel or call `ready_home.*` actions can read and change the full inventory. Profile settings (people, targets, lists, thresholds) stay in the integration options flow, which is admin-only.
+Any logged-in Home Assistant user can open the Ready Home sidebar and **view** the inventory (and call `ready_home.list_items`). **Changing** inventory — panel Add / Edit / Remove / barcode lookup, and the `add_item`, `update_item`, `adjust_quantity`, `remove_item`, and `lookup_barcode` actions — requires an **admin** user.
+
+Automations and scripts (no user context) may still call those write actions. Profile settings (people, targets, lists, thresholds) stay in the integration options flow, which is admin-only.
 
 ---
 

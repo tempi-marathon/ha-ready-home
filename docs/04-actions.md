@@ -2,6 +2,8 @@
 
 Use **Developer Tools → Actions**. The sidebar panel uses `add_item`, `update_item`, and `remove_item` for writes; `adjust_quantity`, `list_items`, and `lookup_barcode` are mainly for automations and scripts.
 
+Write actions (`add_item`, `update_item`, `adjust_quantity`, `remove_item`, `lookup_barcode`) require an **admin** user when called from the UI / Developer Tools. Automations and scripts (no user context) may still call them. `list_items` is available to any logged-in user.
+
 **Stock vs contents:** `unit` is how you count stock (`piece` / `pack` / `box`). Package size goes in `contents_per_unit` + `contents_unit` (e.g. 1.5 liter per bottle). Prefer those over `liters_per_unit` / `calories_per_unit`.
 
 ## Add a water six-pack

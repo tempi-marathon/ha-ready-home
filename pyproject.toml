@@ -1,6 +1,6 @@
 [project]
 name = "ha-ready-home"
-version = "0.1.0"
+version = "0.1.14"
 description = "Ready Home — emergency supply inventory and readiness for Home Assistant"
 readme = "README.md"
 requires-python = ">=3.12"

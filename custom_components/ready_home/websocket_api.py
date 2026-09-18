@@ -8,12 +8,15 @@ from typing import Any
 import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError, Unauthorized
 
 from .attention import item_summary
+from .auth import async_require_admin_or_automation
 from .barcode import lookup_product
 from .const import ATTR_CONFIG_ENTRY_ID, DOMAIN
 from .coordinator import ReadyHomeCoordinator, ReadyHomeData
 from .helpers import get_coordinator
+from .services import required_barcode
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -169,15 +172,30 @@ async def ws_subscribe(
 @websocket_api.websocket_command(
     {
         vol.Required("type"): f"{DOMAIN}/barcode/lookup",
-        vol.Required("barcode"): str,
+        vol.Required("barcode"): required_barcode,
     }
 )
 @websocket_api.async_response
 async def ws_barcode_lookup(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
 ) -> None:
-    """Look up a barcode via Open Food Facts."""
-    result = await lookup_product(hass, msg["barcode"])
+    """Look up a barcode via Open Food Facts (admin or automation only)."""
+    try:
+        await async_require_admin_or_automation(hass, connection.user.id)
+    except Unauthorized:
+        connection.send_error(msg["id"], "unauthorized", "Unauthorized")
+        return
+
+    try:
+        result = await lookup_product(
+            hass,
+            msg["barcode"],
+            rate_key=connection.user.id or connection.user.name or "ws",
+        )
+    except HomeAssistantError as err:
+        connection.send_error(msg["id"], "rate_limited", str(err))
+        return
+
     if result is None:
         connection.send_error(msg["id"], "not_found", "Product not found")
         return
