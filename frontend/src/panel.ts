@@ -24,8 +24,13 @@ import {
 } from "./errors";
 import {
   filterAndSortItems,
+  formatItemMeasure,
   itemStatus,
+  measurePayload,
   readinessKind,
+  showCaloriesField,
+  validateMeasureFields,
+  contentsToLiters,
 } from "./inventory_view";
 import {
   loadPanelViewState,
@@ -189,6 +194,9 @@ export class ReadyHomePanel extends LitElement {
 
   private _applySnapshot(snap: Snapshot) {
     this._snapshot = snap;
+    if (snap.settings) {
+      this._settings = snap.settings;
+    }
     if (!this._pendingRemoveIds.length) return;
     const present = new Set(snap.items.map((i) => i.id));
     const remaining = this._pendingRemoveIds.filter((id) => present.has(id));
@@ -688,50 +696,11 @@ export class ReadyHomePanel extends LitElement {
   }
 
   private _renderMeasure(item: InventoryItemDto) {
-    const kind = this._readinessKind(item.category);
-    if (kind === "food") {
-      const kcal = this._itemCaloriesOnHand(item);
-      return kcal == null ? "" : `${this._formatMeasureNumber(kcal)} kcal`;
-    }
-    if (kind === "water") {
-      const liters = this._itemLitersOnHand(item);
-      return liters == null ? "" : `${this._formatMeasureNumber(liters)} L`;
-    }
-    return "";
-  }
-
-  private _itemLitersOnHand(item: InventoryItemDto): number | null {
-    if (item.contents_per_unit != null && item.contents_unit) {
-      const each = this._contentsToLiters(
-        item.contents_per_unit,
-        item.contents_unit,
-      );
-      if (each != null) return item.quantity * each;
-    }
-    if (item.unit === "liter") return item.quantity;
-    if (item.unit === "milliliter") return item.quantity / 1000;
-    if (item.liters_per_unit != null) {
-      return item.quantity * item.liters_per_unit;
-    }
-    return null;
-  }
-
-  private _itemCaloriesOnHand(item: InventoryItemDto): number | null {
-    if (item.contents_per_unit != null && item.calories_per_content != null) {
-      return (
-        item.quantity * item.contents_per_unit * item.calories_per_content
-      );
-    }
-    if (item.calories_per_unit != null) {
-      return item.quantity * item.calories_per_unit;
-    }
-    return null;
+    return formatItemMeasure(item, this._readinessKind(item.category));
   }
 
   private _contentsToLiters(amount: number, unit: string): number | null {
-    if (unit === "liter") return amount;
-    if (unit === "milliliter") return amount / 1000;
-    return null;
+    return contentsToLiters(amount, unit);
   }
 
   private _formatMeasureNumber(value: number): string {
@@ -797,36 +766,14 @@ export class ReadyHomePanel extends LitElement {
     }
     if (!(f.unit || "").trim()) errors.unit = "Unit is required";
 
-    const kind = this._formReadiness();
-    if (kind === "food" || kind === "water") {
-      const contents = this._parseDecimal(f.contents_per_unit);
-      if (
-        f.contents_per_unit === "" ||
-        Number.isNaN(contents) ||
-        contents <= 0
-      ) {
-        errors.contents_per_unit = "Contents per unit is required";
-      }
-      if (!(f.contents_unit || "").trim()) {
-        errors.contents_unit = "Contents unit is required";
-      } else if (
-        kind === "water" &&
-        f.contents_unit !== "liter" &&
-        f.contents_unit !== "milliliter"
-      ) {
-        errors.contents_unit = "Water contents must be liter or milliliter";
-      }
-    }
-    if (kind === "food") {
-      const cal = this._parseDecimal(f.calories_per_content);
-      if (
-        f.calories_per_content === "" ||
-        Number.isNaN(cal) ||
-        cal < 0
-      ) {
-        errors.calories_per_content = "Calories per contents unit is required";
-      }
-    }
+    Object.assign(
+      errors,
+      validateMeasureFields(this._formReadiness(), {
+        contents_per_unit: f.contents_per_unit || "",
+        contents_unit: f.contents_unit || "",
+        calories_per_content: f.calories_per_content || "",
+      }),
+    );
     return errors;
   }
 
@@ -958,13 +905,8 @@ export class ReadyHomePanel extends LitElement {
     return this._readinessKind(this._form.category || "");
   }
 
-  private _showContentsFields(): boolean {
-    const kind = this._formReadiness();
-    return kind === "food" || kind === "water";
-  }
-
   private _showCaloriesField(): boolean {
-    return this._formReadiness() === "food";
+    return showCaloriesField(this._formReadiness());
   }
 
   private _renderDialog() {
@@ -1188,63 +1130,63 @@ export class ReadyHomePanel extends LitElement {
                 ${this._fieldError("unit")}
               </label>
             </div>
-            ${this._showContentsFields()
-              ? html`
-                  <div class="row2">
-                    <label
-                      >${this._fieldLabel("Contents per unit", write)}
-                      <input
-                        class=${this._fieldInvalid("contents_per_unit")
-                          ? "invalid"
-                          : ""}
-                        type="text"
-                        inputmode="decimal"
-                        .value=${live(f.contents_per_unit || "")}
-                        ?disabled=${!write}
-                        @input=${this._onField("contents_per_unit")}
-                      />
-                      ${this._fieldError("contents_per_unit")}
-                      <div class="field-hint">
-                        How much is in one bottle, can, or pack?
-                      </div>
-                    </label>
-                    <label
-                      >${this._fieldLabel("Contents unit", write)}
-                      <select
-                        class=${this._fieldInvalid("contents_unit")
-                          ? "invalid"
-                          : ""}
-                        .value=${live(f.contents_unit || "")}
-                        ?disabled=${!write}
-                        @change=${this._onField("contents_unit")}
+            <div class="row2">
+              <label
+                >${this._fieldLabel(
+                  "Contents per unit",
+                  write && (kind === "food" || kind === "water"),
+                )}
+                <input
+                  class=${this._fieldInvalid("contents_per_unit")
+                    ? "invalid"
+                    : ""}
+                  type="text"
+                  inputmode="decimal"
+                  .value=${live(f.contents_per_unit || "")}
+                  ?disabled=${!write}
+                  @input=${this._onField("contents_per_unit")}
+                />
+                ${this._fieldError("contents_per_unit")}
+                <div class="field-hint">
+                  How much is in one bottle, can, or pack?
+                </div>
+              </label>
+              <label
+                >${this._fieldLabel(
+                  "Contents unit",
+                  write && (kind === "food" || kind === "water"),
+                )}
+                <select
+                  class=${this._fieldInvalid("contents_unit") ? "invalid" : ""}
+                  .value=${live(f.contents_unit || "")}
+                  ?disabled=${!write}
+                  @change=${this._onField("contents_unit")}
+                >
+                  <option value="" ?selected=${!(f.contents_unit || "")}>
+                    Select unit
+                  </option>
+                  ${CONTENTS_UNITS.map(
+                    (u) =>
+                      html`<option
+                        value=${u}
+                        ?selected=${(f.contents_unit || "") === u}
                       >
-                        <option value="" ?selected=${!(f.contents_unit || "")}>
-                          Select unit
-                        </option>
-                        ${CONTENTS_UNITS.map(
-                          (u) =>
-                            html`<option
-                              value=${u}
-                              ?selected=${(f.contents_unit || "") === u}
-                            >
-                              ${ucfirst(u)}
-                            </option>`,
-                        )}
-                      </select>
-                      ${this._fieldError("contents_unit")}
-                      <div class="field-hint">
-                        Liter, milliliter, gram, or kilogram for one stock unit.
-                      </div>
-                    </label>
-                  </div>
-                `
-              : nothing}
+                        ${ucfirst(u)}
+                      </option>`,
+                  )}
+                </select>
+                ${this._fieldError("contents_unit")}
+                <div class="field-hint">
+                  Liter, milliliter, gram, or kilogram for one stock unit.
+                </div>
+              </label>
+            </div>
             ${this._showCaloriesField()
               ? html`
                   <label
                     >${this._fieldLabel(
                       `Calories (kcal) per ${contentsLabel}`,
-                      write,
+                      write && kind === "food",
                     )}
                     <input
                       class=${this._fieldInvalid("calories_per_content")
@@ -1464,22 +1406,14 @@ export class ReadyHomePanel extends LitElement {
     };
     if (f.expiry_date) payload.expiry_date = f.expiry_date;
 
-    if (kind === "food" || kind === "water") {
-      payload.contents_per_unit = this._parseDecimal(f.contents_per_unit);
-      payload.contents_unit = f.contents_unit;
-    } else {
-      payload.contents_per_unit = null;
-      payload.contents_unit = null;
-      payload.calories_per_content = null;
-      payload.liters_per_unit = null;
-      payload.calories_per_unit = null;
-    }
-    if (kind === "food") {
-      payload.calories_per_content = this._parseDecimal(f.calories_per_content);
-    } else if (kind === "water") {
-      payload.calories_per_content = null;
-      payload.calories_per_unit = null;
-    }
+    Object.assign(
+      payload,
+      measurePayload(kind, {
+        contents_per_unit: f.contents_per_unit || "",
+        contents_unit: f.contents_unit || "",
+        calories_per_content: f.calories_per_content || "",
+      }),
+    );
 
     this._saving = true;
     this._error = "";

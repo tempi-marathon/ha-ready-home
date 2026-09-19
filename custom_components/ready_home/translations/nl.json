@@ -27,6 +27,8 @@
           "profile": "Profiel",
           "targets": "Paraatheidsdoelen",
           "lists": "Locaties en categorieën",
+          "rename_location": "Locatie hernoemen",
+          "rename_category": "Categorie hernoemen",
           "thresholds": "Drempels"
         }
       },
@@ -48,7 +50,7 @@
       },
       "lists": {
         "title": "Locaties en categorieën",
-        "description": "Categorieën labelen items. Voedsel- en watercategorieën bepalen welke categorieën meetellen voor paraatheid. Een categorie kan niet zowel voedsel als water zijn.",
+        "description": "Categorieën labelen items. Voedsel- en watercategorieën bepalen welke categorieën meetellen voor paraatheid. Een categorie kan niet zowel voedsel als water zijn. Gebruik Locatie hernoemen of Categorie hernoemen om een bestaande naam te wijzigen (inclusief items die die naam gebruiken).",
         "data": {
           "locations": "Opslaglocaties",
           "categories": "Categorieën",
@@ -58,6 +60,22 @@
         "data_description": {
           "food_categories": "Items in deze categorieën tellen mee voor voedselparaatheid (calorieën).",
           "water_categories": "Items in deze categorieën tellen mee voor waterparaatheid (liters)."
+        }
+      },
+      "rename_location": {
+        "title": "Locatie hernoemen",
+        "description": "Hernoem een opslaglocatie. Alle voorraaditems die de oude naam gebruiken worden bijgewerkt.",
+        "data": {
+          "from_name": "Huidige naam",
+          "to_name": "Nieuwe naam"
+        }
+      },
+      "rename_category": {
+        "title": "Categorie hernoemen",
+        "description": "Hernoem een categorie. Alle voorraaditems die de oude naam gebruiken worden bijgewerkt, inclusief voedsel- en waterparaatheidstoewijzingen.",
+        "data": {
+          "from_name": "Huidige naam",
+          "to_name": "Nieuwe naam"
         }
       },
       "thresholds": {
@@ -70,7 +88,9 @@
     },
     "error": {
       "invalid_name": "Voer een profielnaam in",
-      "category_overlap": "Een categorie kan niet zowel voedsel als water zijn"
+      "category_overlap": "Een categorie kan niet zowel voedsel als water zijn",
+      "name_exists": "Die naam is al in gebruik",
+      "name_not_found": "Kies een naam uit de huidige lijst"
     }
   },
   "entity": {

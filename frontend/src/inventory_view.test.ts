@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 import type { InventoryItemDto, SettingsDto, Snapshot } from "./api";
 import {
   filterAndSortItems,
+  formatItemMeasure,
   itemStatus,
+  measurePayload,
   readinessKind,
+  showCaloriesField,
+  validateMeasureFields,
 } from "./inventory_view";
 
 function item(
@@ -48,6 +52,151 @@ describe("readinessKind", () => {
     expect(readinessKind("Medical", settings)).toBe("none");
     expect(readinessKind("", settings)).toBe("none");
     expect(readinessKind("Food", null)).toBe("none");
+  });
+});
+
+describe("formatItemMeasure", () => {
+  it("shows kcal for food and liters for water", () => {
+    const food = item({
+      id: "f",
+      name: "Rice",
+      quantity: 2,
+      contents_per_unit: 500,
+      contents_unit: "gram",
+      calories_per_content: 3.5,
+    });
+    const water = item({
+      id: "w",
+      name: "Water",
+      quantity: 4,
+      contents_per_unit: 1.5,
+      contents_unit: "liter",
+    });
+    expect(formatItemMeasure(food, "food")).toBe("3500 kcal");
+    expect(formatItemMeasure(water, "water")).toBe("6 L");
+  });
+
+  it("shows kcal and/or liters for unmapped categories", () => {
+    const both = item({
+      id: "m",
+      name: "Gel",
+      quantity: 2,
+      contents_per_unit: 0.5,
+      contents_unit: "liter",
+      calories_per_content: 100,
+    });
+    expect(formatItemMeasure(both, "none")).toBe("100 kcal · 1 L");
+    expect(
+      formatItemMeasure(
+        item({
+          id: "c",
+          name: "Cream",
+          quantity: 1,
+          contents_per_unit: 100,
+          contents_unit: "gram",
+          calories_per_content: 2,
+        }),
+        "none",
+      ),
+    ).toBe("200 kcal");
+    expect(formatItemMeasure(item({ id: "x", name: "Empty" }), "none")).toBe(
+      "",
+    );
+  });
+});
+
+describe("validateMeasureFields", () => {
+  it("requires contents and calories for food", () => {
+    expect(
+      validateMeasureFields("food", {
+        contents_per_unit: "",
+        contents_unit: "",
+        calories_per_content: "",
+      }),
+    ).toMatchObject({
+      contents_per_unit: expect.any(String),
+      contents_unit: expect.any(String),
+      calories_per_content: expect.any(String),
+    });
+  });
+
+  it("allows empty measures for unmapped, but requires both when one is set", () => {
+    expect(
+      validateMeasureFields("none", {
+        contents_per_unit: "",
+        contents_unit: "",
+        calories_per_content: "",
+      }),
+    ).toEqual({});
+    expect(
+      validateMeasureFields("none", {
+        contents_per_unit: "100",
+        contents_unit: "",
+        calories_per_content: "",
+      }),
+    ).toMatchObject({ contents_unit: expect.any(String) });
+    expect(
+      validateMeasureFields("none", {
+        contents_per_unit: "100",
+        contents_unit: "gram",
+        calories_per_content: "2",
+      }),
+    ).toEqual({});
+  });
+});
+
+describe("measurePayload", () => {
+  it("keeps optional measures for unmapped categories", () => {
+    expect(
+      measurePayload("none", {
+        contents_per_unit: "100",
+        contents_unit: "gram",
+        calories_per_content: "2.5",
+      }),
+    ).toEqual({
+      contents_per_unit: 100,
+      contents_unit: "gram",
+      calories_per_content: 2.5,
+    });
+  });
+
+  it("clears calories for water", () => {
+    expect(
+      measurePayload("water", {
+        contents_per_unit: "1.5",
+        contents_unit: "liter",
+        calories_per_content: "999",
+      }),
+    ).toEqual({
+      contents_per_unit: 1.5,
+      contents_unit: "liter",
+      calories_per_content: null,
+      calories_per_unit: null,
+    });
+  });
+
+  it("clears empty unmapped measures", () => {
+    expect(
+      measurePayload("none", {
+        contents_per_unit: "",
+        contents_unit: "",
+        calories_per_content: "",
+      }),
+    ).toEqual({
+      contents_per_unit: null,
+      contents_unit: null,
+      liters_per_unit: null,
+      calories_per_content: null,
+      calories_per_unit: null,
+    });
+  });
+});
+
+describe("showCaloriesField", () => {
+  it("hides calories only for water", () => {
+    expect(showCaloriesField("food")).toBe(true);
+    expect(showCaloriesField("none")).toBe(true);
+    expect(showCaloriesField("water")).toBe(false);
   });
 });
 
