@@ -62,11 +62,17 @@ def _buckets_dict(data: ReadyHomeData) -> dict[str, Any]:
 def _snapshot(coordinator: ReadyHomeCoordinator) -> dict[str, Any]:
     data = coordinator.data
     if data is None:
-        return {"items": [], "assessment": {}, "buckets": {}}
+        return {
+            "items": [],
+            "assessment": {},
+            "buckets": {},
+            "settings": _settings_dict(coordinator),
+        }
     return {
         "items": [item.to_dict() for item in data.items],
         "assessment": _assessment_dict(data),
         "buckets": _buckets_dict(data),
+        "settings": _settings_dict(coordinator),
     }
 
 
@@ -80,11 +86,17 @@ def _snapshot_from_store(coordinator: ReadyHomeCoordinator) -> dict[str, Any]:
     data = coordinator.data
     items = [item.to_dict() for item in coordinator.store.items]
     if data is None:
-        return {"items": items, "assessment": {}, "buckets": {}}
+        return {
+            "items": items,
+            "assessment": {},
+            "buckets": {},
+            "settings": _settings_dict(coordinator),
+        }
     return {
         "items": items,
         "assessment": _assessment_dict(data),
         "buckets": _buckets_dict(data),
+        "settings": _settings_dict(coordinator),
     }
 
 

@@ -27,6 +27,8 @@
           "profile": "Profile",
           "targets": "Readiness targets",
           "lists": "Locations and categories",
+          "rename_location": "Rename location",
+          "rename_category": "Rename category",
           "thresholds": "Thresholds"
         }
       },
@@ -48,7 +50,7 @@
       },
       "lists": {
         "title": "Locations and categories",
-        "description": "Categories label items. Food and water category lists decide which categories count toward readiness. A category cannot be both food and water.",
+        "description": "Categories label items. Food and water category lists decide which categories count toward readiness. A category cannot be both food and water. To rename an existing location or category (and update items that use it), use Rename location or Rename category.",
         "data": {
           "locations": "Storage locations",
           "categories": "Categories",
@@ -58,6 +60,22 @@
         "data_description": {
           "food_categories": "Items in these categories count toward food readiness (calories).",
           "water_categories": "Items in these categories count toward water readiness (liters)."
+        }
+      },
+      "rename_location": {
+        "title": "Rename location",
+        "description": "Rename a storage location. All inventory items that use the old name are updated.",
+        "data": {
+          "from_name": "Current name",
+          "to_name": "New name"
+        }
+      },
+      "rename_category": {
+        "title": "Rename category",
+        "description": "Rename a category. All inventory items that use the old name are updated, including food and water readiness mappings.",
+        "data": {
+          "from_name": "Current name",
+          "to_name": "New name"
         }
       },
       "thresholds": {
@@ -70,7 +88,9 @@
     },
     "error": {
       "invalid_name": "Enter a profile name",
-      "category_overlap": "A category cannot be both food and water"
+      "category_overlap": "A category cannot be both food and water",
+      "name_exists": "That name is already in use",
+      "name_not_found": "Choose a name from the current list"
     }
   },
   "entity": {

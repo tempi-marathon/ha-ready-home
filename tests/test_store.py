@@ -111,3 +111,31 @@ async def test_bucket_state_persists(inventory_store: InventoryStore) -> None:
     await store.async_load()
     await store.async_set_bucket_state({"abc": "expired", "abc:low_stock": "1"})
     assert store.get_bucket_state()["abc"] == "expired"
+
+
+@pytest.mark.asyncio
+async def test_rename_field_cascades(inventory_store: InventoryStore) -> None:
+    store = inventory_store
+    await store.async_load()
+    a = InventoryItem(name="Rice", quantity=1, location="Pantry", category="Food")
+    b = InventoryItem(name="Beans", quantity=2, location="pantry", category="Food")
+    c = InventoryItem(name="Tape", quantity=1, location="Garage", category="Tools")
+    await store.async_add(a)
+    await store.async_add(b)
+    await store.async_add(c)
+
+    count = await store.async_rename_field(
+        field="location", old_name="Pantry", new_name="Pantry room"
+    )
+    assert count == 2
+    assert store.get(a.id).location == "Pantry room"
+    assert store.get(b.id).location == "Pantry room"
+    assert store.get(c.id).location == "Garage"
+
+    count = await store.async_rename_field(
+        field="category", old_name="food", new_name="Dry food"
+    )
+    assert count == 2
+    assert store.get(a.id).category == "Dry food"
+    assert store.get(b.id).category == "Dry food"
+    assert store.get(c.id).category == "Tools"

@@ -17,7 +17,9 @@ The panel shows:
 
 ## Add and edit items
 
-Use **Add item** (or **Edit** on a row). You can set quantity, desired quantity, location, category, priority, contents (liters/calories), and expiry.
+Use **Add item** (or **Edit** on a row). You can set quantity, desired quantity, location, category, priority, package contents (liters/calories), and expiry.
+
+Contents and calories are required for categories mapped to food or water (those count toward readiness). For other categories they are optional and do not affect readiness scores.
 
 ![Add item](images/panel-add-item.png)
 

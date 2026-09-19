@@ -30,6 +30,8 @@ export interface Snapshot {
     within_expiring: InventoryItemDto[];
     low_stock: InventoryItemDto[];
   };
+  /** Present on subscribe/list pushes; optional for older clients. */
+  settings?: SettingsDto;
 }
 
 export interface SettingsDto {
