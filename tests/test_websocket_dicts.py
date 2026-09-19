@@ -63,13 +63,16 @@ def test_assessment_dict_keys() -> None:
 
 
 def test_snapshot_empty_when_no_data() -> None:
+    settings = ReadinessSettings(locations=("Garage",), categories=("Food",))
     coordinator = MagicMock()
     coordinator.data = None
-    assert _snapshot(coordinator) == {
-        "items": [],
-        "assessment": {},
-        "buckets": {},
-    }
+    coordinator.settings = settings
+    snap = _snapshot(coordinator)
+    assert snap["items"] == []
+    assert snap["assessment"] == {}
+    assert snap["buckets"] == {}
+    assert snap["settings"]["locations"] == ["Garage"]
+    assert snap["settings"]["categories"] == ["Food"]
 
 
 def test_snapshot_populated() -> None:
@@ -88,14 +91,16 @@ def test_snapshot_populated() -> None:
         within_expiring=[],
         low_stock=[],
     )
+    settings = ReadinessSettings()
     data = ReadyHomeData(
         items=[item],
-        settings=ReadinessSettings(),
+        settings=settings,
         assessment=_assessment(),
         buckets=buckets,
     )
     coordinator = MagicMock()
     coordinator.data = data
+    coordinator.settings = settings
 
     snap = _snapshot(coordinator)
     assert len(snap["items"]) == 1
@@ -104,15 +109,18 @@ def test_snapshot_populated() -> None:
     assert snap["buckets"]["expired"][0]["id"] == item.id
     assert snap["buckets"]["expired"][0]["name"] == "Water"
     assert snap["buckets"]["low_stock"] == []
+    assert "locations" in snap["settings"]
+    assert "categories" in snap["settings"]
 
 
 def test_snapshot_from_store_uses_store_items() -> None:
     """Store items are fresh; assessment/buckets come from last coordinator data."""
     store_item = InventoryItem(name="New", quantity=1)
     stale_item = InventoryItem(name="Old", quantity=1)
+    settings = ReadinessSettings()
     data = ReadyHomeData(
         items=[stale_item],
-        settings=ReadinessSettings(),
+        settings=settings,
         assessment=_assessment(),
         buckets=AttentionBuckets([], [], [], []),
     )
@@ -121,11 +129,13 @@ def test_snapshot_from_store_uses_store_items() -> None:
     coordinator = MagicMock()
     coordinator.data = data
     coordinator.store = store
+    coordinator.settings = settings
 
     snap = _snapshot_from_store(coordinator)
     assert len(snap["items"]) == 1
     assert snap["items"][0]["name"] == "New"
     assert snap["assessment"]["overall_percent"] == 50.0
+    assert snap["settings"]["duration_hours"] == settings.duration_hours
 
 
 def test_settings_dict() -> None:
