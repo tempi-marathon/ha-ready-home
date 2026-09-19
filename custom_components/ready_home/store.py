@@ -165,39 +165,6 @@ class InventoryStore:
         await self._notify_listeners()
         return item
 
-    async def async_rename_field(
-        self,
-        *,
-        field: str,
-        old_name: str,
-        new_name: str,
-    ) -> int:
-        """Rename location or category on all matching items (case-insensitive).
-
-        Returns the number of items updated. Persists once if any changed.
-        """
-        if field not in ("location", "category"):
-            raise ValueError(f"Unsupported rename field: {field}")
-        old_key = str(old_name).strip().lower()
-        new_cleaned = str(new_name).strip()
-        if not old_key or not new_cleaned:
-            return 0
-
-        updated = 0
-        for item_id, item in list(self._items.items()):
-            current = getattr(item, field) or ""
-            if current.strip().lower() != old_key:
-                continue
-            if current == new_cleaned:
-                continue
-            self._items[item_id] = item.with_updates(**{field: new_cleaned})
-            updated += 1
-
-        if updated:
-            self._schedule_save()
-            await self._notify_listeners()
-        return updated
-
     async def async_remove(self, item_id: str) -> InventoryItem | None:
         """Remove an item by id. Returns the removed item or None."""
         item = self._items.pop(item_id, None)

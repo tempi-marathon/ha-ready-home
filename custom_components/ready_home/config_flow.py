@@ -46,10 +46,6 @@ from .const import (
     DEFAULT_WATER_LITERS_PER_PERSON_PER_DAY,
     DOMAIN,
 )
-from .lists import RenameKind, apply_list_rename
-
-CONF_FROM_NAME = "from_name"
-CONF_TO_NAME = "to_name"
 
 
 def _merge_category_lists(
@@ -164,8 +160,6 @@ class ReadyHomeOptionsFlow(OptionsFlow):
                 "profile",
                 "targets",
                 "lists",
-                "rename_location",
-                "rename_category",
                 "thresholds",
             ],
         )
@@ -351,108 +345,6 @@ class ReadyHomeOptionsFlow(OptionsFlow):
         )
         return self.async_show_form(
             step_id="lists", data_schema=schema, errors=errors
-        )
-
-    async def async_step_rename_location(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Rename a storage location and cascade to inventory items."""
-        return await self._async_rename_step("location", user_input)
-
-    async def async_step_rename_category(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Rename a category and cascade to inventory items and mappings."""
-        return await self._async_rename_step("category", user_input)
-
-    async def _async_rename_step(
-        self,
-        kind: RenameKind,
-        user_input: dict[str, Any] | None,
-    ) -> ConfigFlowResult:
-        """Shared rename form for locations or categories."""
-        options = dict(self.config_entry.options)
-        locations = list(options.get(CONF_LOCATIONS) or DEFAULT_LOCATIONS)
-        categories = list(options.get(CONF_CATEGORIES) or DEFAULT_CATEGORIES)
-        food_categories = list(
-            options.get(CONF_FOOD_CATEGORIES) or DEFAULT_FOOD_CATEGORIES
-        )
-        water_categories = list(
-            options.get(CONF_WATER_CATEGORIES) or DEFAULT_WATER_CATEGORIES
-        )
-        choices = locations if kind == "location" else categories
-        step_id = "rename_location" if kind == "location" else "rename_category"
-        errors: dict[str, str] = {}
-
-        if user_input is not None:
-            old_name = str(user_input.get(CONF_FROM_NAME) or "").strip()
-            new_name = str(user_input.get(CONF_TO_NAME) or "").strip()
-            if not old_name or not new_name:
-                errors["base"] = "invalid_name"
-            else:
-                renamed = apply_list_rename(
-                    kind=kind,
-                    old_name=old_name,
-                    new_name=new_name,
-                    locations=locations,
-                    categories=categories,
-                    food_categories=food_categories,
-                    water_categories=water_categories,
-                )
-                if renamed is None:
-                    # Distinguish not-found vs collision when possible.
-                    old_key = old_name.lower()
-                    present = any(
-                        str(c).strip().lower() == old_key for c in choices
-                    )
-                    errors["base"] = (
-                        "name_exists" if present else "name_not_found"
-                    )
-                else:
-                    options.update(
-                        {
-                            CONF_LOCATIONS: renamed["locations"],
-                            CONF_CATEGORIES: renamed["categories"],
-                            CONF_FOOD_CATEGORIES: renamed["food_categories"],
-                            CONF_WATER_CATEGORIES: renamed["water_categories"],
-                        }
-                    )
-                    await self._async_cascade_item_rename(
-                        field=kind, old_name=old_name, new_name=new_name
-                    )
-                    return await self._async_save_and_menu(options=options)
-
-        default_from = choices[0] if choices else ""
-        schema = vol.Schema(
-            {
-                vol.Required(
-                    CONF_FROM_NAME, default=default_from
-                ): SelectSelector(
-                    SelectSelectorConfig(
-                        options=choices,
-                        mode=SelectSelectorMode.DROPDOWN,
-                    )
-                ),
-                vol.Required(CONF_TO_NAME, default=""): TextSelector(),
-            }
-        )
-        return self.async_show_form(
-            step_id=step_id, data_schema=schema, errors=errors
-        )
-
-    async def _async_cascade_item_rename(
-        self, *, field: str, old_name: str, new_name: str
-    ) -> None:
-        """Update matching inventory items after a list rename."""
-        from .coordinator import ReadyHomeCoordinator
-
-        coordinator: ReadyHomeCoordinator | None = self.hass.data.get(
-            DOMAIN, {}
-        ).get(self.config_entry.entry_id)
-        if coordinator is None:
-            return
-        await coordinator.store.async_rename_field(
-            field=field, old_name=old_name, new_name=new_name
         )
 
     async def async_step_thresholds(
