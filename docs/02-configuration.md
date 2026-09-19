@@ -4,7 +4,6 @@ Open the integration → **Configure**:
 
 - **Readiness targets** — people, duration hours, liters/person/day, kcal/person/day
 - **Locations and categories** — storage locations, category labels, and which categories count as **food** or **water** for readiness
-- **Rename location / Rename category** — change an existing name and update all inventory items that use it (and food/water mappings for categories). Adding or removing names in **Locations and categories** does **not** rewrite items — use rename for that.
 - **Thresholds** — expiring window (default 30 days), urgent window (7 days)
 
 ## Access
