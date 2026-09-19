@@ -839,7 +839,7 @@ export class ReadyHomePanel extends LitElement {
         <td class="measure-col">${measure}</td>
         <td>${item.location || "—"}</td>
         <td>${item.category || "—"}</td>
-        <td class=${this._expiryClass(status)}>
+        <td class="expiry-col ${this._expiryClass(status)}">
           ${this._formatDate(item.expiry_date)}
         </td>
         <td class="actions">
@@ -1835,6 +1835,9 @@ export class ReadyHomePanel extends LitElement {
       white-space: nowrap;
       color: var(--secondary-text-color);
       font-size: 0.9rem;
+    }
+    .expiry-col {
+      white-space: nowrap;
     }
     tbody tr:last-child td {
       border-bottom: none;

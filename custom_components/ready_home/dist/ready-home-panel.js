@@ -251,7 +251,7 @@ var e=globalThis,t=e.ShadowRoot&&(e.ShadyCSS===void 0||e.ShadyCSS.nativeShadow)&
         <td class="measure-col">${n}</td>
         <td>${e.location||`—`}</td>
         <td>${e.category||`—`}</td>
-        <td class=${this._expiryClass(t)}>
+        <td class="expiry-col ${this._expiryClass(t)}">
           ${this._formatDate(e.expiry_date)}
         </td>
         <td class="actions">
@@ -847,6 +847,9 @@ var e=globalThis,t=e.ShadowRoot&&(e.ShadyCSS===void 0||e.ShadyCSS.nativeShadow)&
       white-space: nowrap;
       color: var(--secondary-text-color);
       font-size: 0.9rem;
+    }
+    .expiry-col {
+      white-space: nowrap;
     }
     tbody tr:last-child td {
       border-bottom: none;
