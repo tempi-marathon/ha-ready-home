@@ -624,7 +624,7 @@ var e=globalThis,t=e.ShadowRoot&&(e.ShadyCSS===void 0||e.ShadyCSS.nativeShadow)&
     }
     .stat {
       padding: 16px;
-      border-radius: 8px;
+      border-radius: var(--ha-border-radius-md, 8px);
       border-left: 3px solid var(--divider-color);
       background: var(--card-background-color, #fff);
       box-shadow: var(--ha-card-box-shadow, none);
@@ -763,7 +763,7 @@ var e=globalThis,t=e.ShadowRoot&&(e.ShadyCSS===void 0||e.ShadyCSS.nativeShadow)&
     select,
     input {
       padding: 8px 10px;
-      border-radius: 6px;
+      border-radius: var(--ha-border-radius-lg, 12px);
       border: 1px solid var(--divider-color);
       background: var(--card-background-color, var(--primary-background-color));
       color: var(--primary-text-color);
@@ -774,7 +774,7 @@ var e=globalThis,t=e.ShadowRoot&&(e.ShadyCSS===void 0||e.ShadyCSS.nativeShadow)&
       justify-content: center;
       height: 36px;
       padding: 0 16px;
-      border-radius: var(--ha-button-border-radius, 4px);
+      border-radius: var(--ha-button-border-radius, var(--ha-border-radius-pill, 9999px));
       border: none;
       cursor: pointer;
       font-size: 0.875rem;
@@ -861,7 +861,7 @@ var e=globalThis,t=e.ShadowRoot&&(e.ShadyCSS===void 0||e.ShadyCSS.nativeShadow)&
     }
     .item-card {
       border: 1px solid var(--divider-color);
-      border-radius: 10px;
+      border-radius: var(--ha-border-radius-lg, 12px);
       padding: 16px;
       background: var(--secondary-background-color, rgba(0, 0, 0, 0.03));
       cursor: pointer;
@@ -973,7 +973,7 @@ var e=globalThis,t=e.ShadowRoot&&(e.ShadyCSS===void 0||e.ShadyCSS.nativeShadow)&
       background: var(--card-background-color, #fff);
       color: var(--primary-text-color);
       padding: 20px;
-      border-radius: 12px;
+      border-radius: var(--ha-dialog-border-radius, var(--ha-border-radius-lg, 12px));
       width: min(520px, 100%);
       max-height: 90vh;
       overflow: auto;
@@ -1000,7 +1000,7 @@ var e=globalThis,t=e.ShadowRoot&&(e.ShadyCSS===void 0||e.ShadyCSS.nativeShadow)&
     .dialog.dialog-narrow {
       width: 100%;
       max-height: 100%;
-      border-radius: 12px;
+      border-radius: var(--ha-dialog-border-radius, var(--ha-border-radius-lg, 12px));
       padding: 20px;
       padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
     }
@@ -1017,7 +1017,7 @@ var e=globalThis,t=e.ShadowRoot&&(e.ShadyCSS===void 0||e.ShadyCSS.nativeShadow)&
       gap: 12px;
       padding: 12px;
       border: 1px solid var(--divider-color);
-      border-radius: 8px;
+      border-radius: var(--ha-border-radius-md, 8px);
       background: var(--secondary-background-color, rgba(0, 0, 0, 0.02));
     }
     .form-section-title {
