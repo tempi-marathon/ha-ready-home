@@ -82,3 +82,16 @@ jobs:
         run: |
           set -euo pipefail
           gh release upload "$TAG" ready_home.zip --clobber
+
+      # Publish only from workflow_dispatch. Publishing fires release:published,
+      # which re-runs this workflow to attach/replace the zip if needed — that
+      # follow-up must not publish again (would be a no-op loop).
+      - name: Publish release
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release edit "$TAG" --draft=false
+          echo "Published ${TAG}"
