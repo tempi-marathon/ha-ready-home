@@ -1,11 +1,13 @@
 # 1. Installation
 
-Ready Home installs through [HACS](https://hacs.xyz/) as a **custom repository** (category: **Integration**). A default-store listing (and one-click add button) may follow once approved.
+Ready Home installs through [HACS](https://hacs.xyz/) (category: **Integration**).
+
+[![Open Ready Home on Home Assistant Community Store (HACS).](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=tempi-marathon&repository=ha-ready-home&category=integration)
 
 ## Steps
 
-1. In HACS → Integrations → ⋮ → **Custom repositories**, add this repository URL with category **Integration**.
-2. Install **Ready Home**, then restart Home Assistant.
+1. Open HACS → search for **Ready Home**, or use the button above (custom repository if needed).
+2. Download **Ready Home**, restart Home Assistant.
 3. Settings → Devices & Services → Add Integration → **Ready Home**.
 4. Enter the number of people in the household.
 

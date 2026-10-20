@@ -39,13 +39,12 @@ Track household emergency supplies, measure readiness against water and calorie 
 
 ## Install
 
-Installable through [HACS](https://hacs.xyz/) as a **custom repository** (category: **Integration**). Default-store listing is pending.
+[![Open Ready Home on Home Assistant Community Store (HACS).](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=tempi-marathon&repository=ha-ready-home&category=integration)
 
-1. HACS → Integrations → ⋮ → **Custom repositories**
-2. Add this repository URL, category **Integration**
-3. Install **Ready Home**, then restart Home Assistant
-4. Settings → Devices & Services → Add Integration → **Ready Home**
-5. Enter the number of people in the household
+1. Open HACS → search for **Ready Home**, or use the button above (custom repository if needed)
+2. Download **Ready Home**, restart Home Assistant
+3. Settings → Devices & Services → Add Integration → **Ready Home**
+4. Enter the number of people in the household
 
 Full guide: [1. Installation](docs/01-installation.md) · [2. Configuration](docs/02-configuration.md) · [3. Usage](docs/03-usage.md)
 
