@@ -28,6 +28,20 @@ DIST_DIR = Path(__file__).parent / "dist"
 BRAND_DIR = Path(__file__).parent / "brand"
 
 
+def _panel_fs_state(panel_path: Path) -> tuple[bool, int, bool]:
+    """Return (panel_exists, cache_bust_mtime, brand_dir_exists).
+
+    Runs in the executor so path checks do not block the event loop.
+    """
+    if not panel_path.is_file():
+        return False, 0, False
+    try:
+        cache_bust = int(panel_path.stat().st_mtime)
+    except OSError:
+        cache_bust = 0
+    return True, cache_bust, BRAND_DIR.is_dir()
+
+
 async def async_setup_panel(hass: HomeAssistant) -> None:
     """Serve the panel JS as a single file and register the sidebar panel.
 
@@ -40,17 +54,15 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         return
 
     panel_path = DIST_DIR / PANEL_FILENAME
-    if not panel_path.is_file():
+    panel_exists, cache_bust, brand_exists = await hass.async_add_executor_job(
+        _panel_fs_state, panel_path
+    )
+    if not panel_exists:
         _LOGGER.warning(
             "Ready Home panel bundle missing (%s) — run `npm run build`",
             panel_path,
         )
         return
-
-    try:
-        cache_bust = int(panel_path.stat().st_mtime)
-    except OSError:
-        cache_bust = 0
 
     static_paths = [
         StaticPathConfig(
@@ -59,7 +71,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
             cache_headers=False,
         )
     ]
-    if BRAND_DIR.is_dir():
+    if brand_exists:
         static_paths.append(
             StaticPathConfig(
                 url_path=BRAND_URL_PATH,
