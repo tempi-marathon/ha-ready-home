@@ -1,7 +1,6 @@
 {
   "domain": "ready_home",
   "name": "Ready Home",
-  "categories": ["productivity_information"],
   "codeowners": ["@tempi-marathon"],
   "config_flow": true,
   "dependencies": ["http", "frontend", "websocket_api", "panel_custom", "logbook"],
