@@ -19,12 +19,12 @@ I’ll look into reports as soon as I can and follow up when there’s a fix or 
 
 ## Scope
 
-This is a Home Assistant integration via HACS. Please report security issues in **this** repository’s code or its direct dependencies. Problems in Home Assistant, HACS, other integrations, or Open Food Facts belong upstream unless this integration mishandles their data.
+This is a Home Assistant custom integration distributed through HACS and, from Home Assistant 2026.11, the built-in Marketplace. Please report security issues in **this** repository’s code or its direct dependencies. Problems in Home Assistant, HACS/Marketplace, other integrations, or Open Food Facts belong upstream unless this integration mishandles their data.
 
 In-scope examples: inventory storage, websocket/actions, the sidebar panel bundle, and how this integration talks to Home Assistant.
 
 ## Distribution integrity
 
-HACS installs the integration from this repository, including the committed panel bundle at `custom_components/ready_home/dist/ready-home-panel.js`. Home Assistant serves that file as the sidebar panel.
+HACS and the Marketplace install the integration from this repository, including the committed panel bundle at `custom_components/ready_home/dist/ready-home-panel.js`. Home Assistant serves that file as the sidebar panel.
 
 Treat that file as part of the trusted release surface: tag releases from verified CI builds, and verify the committed `dist/` artifact matches a local `npm run build` before publishing.
