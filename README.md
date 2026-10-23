@@ -8,7 +8,9 @@
 
 Track household emergency supplies, measure readiness against water and calorie targets, and surface expired, expiring, and low-stock items as Home Assistant sensors, events, and a sidebar management panel.
 
-![Ready Home](docs/images/hero.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/tempi-marathon/ha-ready-home/main/docs/images/hero.png" alt="Ready Home" width="640" />
+</p>
 
 ## Features
 
@@ -23,17 +25,17 @@ Track household emergency supplies, measure readiness against water and calorie 
 ## Screenshots
 
 <p align="center">
-  <img src="docs/images/panel-mobile.png" alt="Ready Home on mobile" width="280" /><br />
+  <img src="https://raw.githubusercontent.com/tempi-marathon/ha-ready-home/main/docs/images/panel-mobile.png" alt="Ready Home on mobile" width="280" /><br />
   <em>Mobile panel — readiness cards and inventory list</em>
 </p>
 
 <p align="center">
-  <img src="docs/images/panel-add-item.png" alt="Add item with barcode lookup" width="360" /><br />
+  <img src="https://raw.githubusercontent.com/tempi-marathon/ha-ready-home/main/docs/images/panel-add-item.png" alt="Add item with barcode lookup" width="360" /><br />
   <em>Add / edit item — barcode lookup, stock, calories, expiry</em>
 </p>
 
 <p align="center">
-  <img src="docs/images/ha-sensors.png" alt="Home Assistant readiness sensors" width="280" /><br />
+  <img src="https://raw.githubusercontent.com/tempi-marathon/ha-ready-home/main/docs/images/ha-sensors.png" alt="Home Assistant readiness sensors" width="280" /><br />
   <em>Home Assistant sensors — readiness %, expired, expiring, low stock</em>
 </p>
 
