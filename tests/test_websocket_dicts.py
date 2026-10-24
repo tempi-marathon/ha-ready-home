@@ -8,6 +8,7 @@ from unittest.mock import MagicMock
 from custom_components.ready_home.attention import AttentionBuckets
 from custom_components.ready_home.coordinator import ReadyHomeData
 from custom_components.ready_home.models import (
+    CategoryCompleteness,
     InventoryItem,
     InventoryPriority,
     InventoryUnit,
@@ -49,16 +50,19 @@ def test_assessment_dict_keys() -> None:
         settings=ReadinessSettings(),
         assessment=_assessment(),
         buckets=AttentionBuckets([], [], [], []),
+        completeness=CategoryCompleteness(overall_percent=None, categories=()),
     )
     result = _assessment_dict(data)
     assert result["water_percent"] == 50.0
     assert result["unmeasurable_food_count"] == 1
     assert result["needs_people_count"] is False
+    assert result["essential_overall_percent"] == 0.0
     assert set(result) >= {
         "water_on_hand",
         "food_on_hand",
         "overall_percent",
         "supply_hours",
+        "essential_overall_percent",
     }
 
 
@@ -97,6 +101,7 @@ def test_snapshot_populated() -> None:
         settings=settings,
         assessment=_assessment(),
         buckets=buckets,
+        completeness=CategoryCompleteness(overall_percent=None, categories=()),
     )
     coordinator = MagicMock()
     coordinator.data = data
@@ -123,6 +128,7 @@ def test_snapshot_from_store_uses_store_items() -> None:
         settings=settings,
         assessment=_assessment(),
         buckets=AttentionBuckets([], [], [], []),
+        completeness=CategoryCompleteness(overall_percent=None, categories=()),
     )
     store = MagicMock()
     store.items = [store_item]

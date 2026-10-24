@@ -6,10 +6,11 @@ After [installation](01-installation.md), open **Ready Home** in the Home Assist
 
 The panel shows:
 
-- Readiness cards (overall, water, food)
+- Readiness cards (overall, water, food, essential) and category completeness when checklist items exist
 - Filters for expired, expiring, and low-stock items
 - Search, sort, and filters
 - Full inventory list with edit / remove
+- **Add from template** (admins) for first-aid / go-bag / tools checklists
 
 ![Desktop panel](images/panel-desktop.png)
 

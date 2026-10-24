@@ -9,6 +9,7 @@ import pytest
 from custom_components.ready_home.models import (
     ContentsUnit,
     InventoryItem,
+    InventoryPriority,
     InventoryUnit,
     ReadinessSettings,
 )
@@ -251,3 +252,48 @@ def test_percent_capped_at_100() -> None:
     ]
     result = assess(items, settings)
     assert result.water_percent == 100.0
+
+
+def test_essential_excludes_optional_stock() -> None:
+    settings = ReadinessSettings(number_of_people=1, duration_hours=24)
+    items = [
+        InventoryItem(
+            name="Essential water",
+            quantity=1.5,
+            unit=InventoryUnit.LITER,
+            category="Water",
+            priority=InventoryPriority.ESSENTIAL,
+        ),
+        InventoryItem(
+            name="Optional water",
+            quantity=1.5,
+            unit=InventoryUnit.LITER,
+            category="Water",
+            priority=InventoryPriority.OPTIONAL,
+        ),
+        InventoryItem(
+            name="Essential food",
+            quantity=1,
+            unit=InventoryUnit.PACK,
+            category="Food",
+            calories_per_unit=2000,
+            priority=InventoryPriority.ESSENTIAL,
+        ),
+        InventoryItem(
+            name="Snack",
+            quantity=1,
+            unit=InventoryUnit.PACK,
+            category="Food",
+            calories_per_unit=2000,
+            priority=InventoryPriority.OPTIONAL,
+        ),
+    ]
+    result = assess(items, settings)
+    assert result.water_percent == 100.0
+    assert result.food_percent == 100.0
+    assert result.overall_percent == 100.0
+    assert result.essential_water_on_hand == 1.5
+    assert result.essential_water_percent == 50.0
+    assert result.essential_food_on_hand == 2000.0
+    assert result.essential_food_percent == 100.0
+    assert result.essential_overall_percent == 50.0

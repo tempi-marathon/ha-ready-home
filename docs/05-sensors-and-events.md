@@ -7,11 +7,15 @@ Ready Home exposes entities such as:
 | Entity (object id) | Platform | State | Useful attributes |
 |--------------------|----------|-------|-------------------|
 | `readiness` / `water_readiness` / `food_readiness` | sensor | % ready | people, duration, on-hand / target totals |
+| `essential_readiness` / `essential_water_readiness` / `essential_food_readiness` | sensor | % ready from **essential** priority items only | same targets as overall; optional/important stock excluded |
+| `category_completeness` | sensor | average % for non–food/water checklist categories | `categories` — per-category percent / complete / total / missing names |
 | `expired_items` | sensor | count | `items` — capped list of item summaries |
 | `expiring_items` | sensor | urgent + expiring count | `items`, `urgent_count`, `urgent_items` |
 | `low_stock_items` | sensor | count | `items` |
 | `items` | sensor | total inventory count | (diagnostic) |
 | `needs_attention` | binary_sensor (`problem`) | `on` when any attention bucket is non-empty | see below |
+
+Category completeness only scores items with `desired_quantity > 0` in categories that are **not** mapped to food or water. An item counts as complete when it is not expired and `quantity >= desired_quantity`.
 
 Suggested entity ids depend on your device name, e.g. `sensor.ready_home_expired_items`, `binary_sensor.ready_home_needs_attention`.
 
