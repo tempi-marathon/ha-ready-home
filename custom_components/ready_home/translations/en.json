@@ -27,7 +27,8 @@
           "profile": "Profile",
           "targets": "Readiness targets",
           "lists": "Locations and categories",
-          "thresholds": "Thresholds"
+          "thresholds": "Thresholds",
+          "restock": "Restock"
         }
       },
       "profile": {
@@ -65,6 +66,14 @@
         "data": {
           "expiring_days": "Expiring window (days)",
           "urgent_days": "Urgent window (days)"
+        }
+      },
+      "restock": {
+        "title": "Restock",
+        "description": "Push low-stock items to a Home Assistant todo / shopping list. Optional auto-push runs when an item newly becomes low stock.",
+        "data": {
+          "todo_entity_id": "Todo list",
+          "auto_push_restock": "Automatically push new low-stock items"
         }
       }
     },

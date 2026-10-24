@@ -105,6 +105,16 @@ data:
   template_id: first_aid
 ```
 
+## Push low-stock items to a todo list
+
+Uses the todo entity from **Configure → Restock**, or `entity_id` in the call. Skips lines that already exist on the list.
+
+```yaml
+action: ready_home.push_restock_list
+data:
+  entity_id: todo.shopping_list
+```
+
 ---
 
 **Previous:** [3. Usage](03-usage.md) · **Next:** [5. Sensors and events](05-sensors-and-events.md)

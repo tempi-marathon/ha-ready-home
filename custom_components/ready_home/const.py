@@ -30,6 +30,8 @@ CONF_FOOD_CATEGORIES: Final = "food_categories"
 CONF_WATER_CATEGORIES: Final = "water_categories"
 CONF_EXPIRING_DAYS: Final = "expiring_days"
 CONF_URGENT_DAYS: Final = "urgent_days"
+CONF_TODO_ENTITY_ID: Final = "todo_entity_id"
+CONF_AUTO_PUSH_RESTOCK: Final = "auto_push_restock"
 
 ATTR_CONFIG_ENTRY_ID: Final = "config_entry_id"
 ATTR_CATEGORIES: Final = "categories"
@@ -59,6 +61,9 @@ DEFAULT_WATER_CATEGORIES: Final = ["Water"]
 EVENT_ITEM_EXPIRED: Final = f"{DOMAIN}_item_expired"
 EVENT_ITEM_EXPIRING: Final = f"{DOMAIN}_item_expiring"
 EVENT_ITEM_LOW_STOCK: Final = f"{DOMAIN}_item_low_stock"
+EVENT_ITEM_EXPIRED_CLEARED: Final = f"{DOMAIN}_item_expired_cleared"
+EVENT_ITEM_EXPIRING_CLEARED: Final = f"{DOMAIN}_item_expiring_cleared"
+EVENT_ITEM_LOW_STOCK_CLEARED: Final = f"{DOMAIN}_item_low_stock_cleared"
 
 # Platforms
 PLATFORMS: Final = ["sensor", "binary_sensor"]

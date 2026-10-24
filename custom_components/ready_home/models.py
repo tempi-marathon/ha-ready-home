@@ -284,6 +284,8 @@ class ReadinessSettings:
     water_categories: tuple[str, ...] = ("Water",)
     expiring_days: int = 30
     urgent_days: int = 7
+    todo_entity_id: str | None = None
+    auto_push_restock: bool = False
 
     @classmethod
     def from_options(cls, options: dict[str, Any]) -> ReadinessSettings:
@@ -298,6 +300,10 @@ class ReadinessSettings:
         water_categories = (
             ("Water",) if water_categories is None else tuple(water_categories)
         )
+        todo_raw = options.get("todo_entity_id")
+        todo_entity_id = (
+            str(todo_raw).strip() or None if todo_raw is not None else None
+        )
         return cls(
             number_of_people=int(people) if people is not None else None,
             duration_hours=int(options.get("duration_hours", 72)),
@@ -311,6 +317,8 @@ class ReadinessSettings:
             water_categories=water_categories,
             expiring_days=int(options.get("expiring_days", 30)),
             urgent_days=int(options.get("urgent_days", 7)),
+            todo_entity_id=todo_entity_id,
+            auto_push_restock=bool(options.get("auto_push_restock", False)),
         )
 
     def is_food_category(self, category: str) -> bool:

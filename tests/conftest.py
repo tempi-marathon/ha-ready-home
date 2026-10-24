@@ -145,6 +145,7 @@ def _ensure_homeassistant_stubs() -> None:
     # Minimal cv stubs used by service schemas at import time.
     cv = modules["homeassistant.helpers.config_validation"]
     cv.string = str
+    cv.entity_id = str
 
     # Selector stubs so config_flow can import without real HA.
     selector = modules["homeassistant.helpers.selector"]
@@ -169,6 +170,9 @@ def _ensure_homeassistant_stubs() -> None:
     selector.SelectSelectorConfig = _ConfigStub
     selector.SelectSelectorMode = _ModeStub
     selector.TextSelector = _SelectorStub
+    selector.BooleanSelector = _SelectorStub
+    selector.EntitySelector = _SelectorStub
+    selector.EntitySelectorConfig = _ConfigStub
 
     class ConfigFlow:  # noqa: D101
         def __init_subclass__(cls, domain: str | None = None, **kwargs: Any) -> None:

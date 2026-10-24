@@ -16,8 +16,11 @@ from .const import (
     ATTRIBUTE_ITEM_CAP,
     DOMAIN,
     EVENT_ITEM_EXPIRED,
+    EVENT_ITEM_EXPIRED_CLEARED,
     EVENT_ITEM_EXPIRING,
+    EVENT_ITEM_EXPIRING_CLEARED,
     EVENT_ITEM_LOW_STOCK,
+    EVENT_ITEM_LOW_STOCK_CLEARED,
 )
 from .models import (
     CategoryCompleteness,
@@ -140,7 +143,7 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
         )
 
     async def _async_fire_transition_events(self, buckets: AttentionBuckets) -> None:
-        """Fire events only when an item newly enters a bucket."""
+        """Fire events when an item enters or leaves an attention bucket."""
         previous = self.store.get_bucket_state()
         current: dict[str, str] = {}
         context = self.update_context
@@ -148,12 +151,12 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
         for item in buckets.expired:
             current[item.id] = "expired"
         for item in buckets.within_urgent:
-            # Prefer expired if somehow in both; urgent is distinct
             current.setdefault(item.id, "expiring")
         for item in buckets.within_expiring:
             current.setdefault(item.id, "expiring")
 
         low_stock_ids = {item.id for item in buckets.low_stock}
+        newly_low_stock: list[InventoryItem] = []
 
         for item_id, bucket in current.items():
             prev = previous.get(item_id)
@@ -171,11 +174,49 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
                 context=context,
             )
 
+        # Cleared: was in an expiry bucket, not in current (or changed away)
+        for item_id, prev_bucket in previous.items():
+            if item_id.endswith(":low_stock"):
+                continue
+            if item_id in current:
+                continue
+            item = self.store.get(item_id)
+            if item is None:
+                continue
+            cleared_type = (
+                EVENT_ITEM_EXPIRED_CLEARED
+                if prev_bucket == "expired"
+                else EVENT_ITEM_EXPIRING_CLEARED
+            )
+            self.hass.bus.async_fire(
+                cleared_type,
+                {"item": event_item_summary(item), "bucket": prev_bucket},
+                context=context,
+            )
+
         for item in buckets.low_stock:
-            if previous.get(f"{item.id}:low_stock") == "1":
+            key = f"{item.id}:low_stock"
+            if previous.get(key) == "1":
                 continue
             self.hass.bus.async_fire(
                 EVENT_ITEM_LOW_STOCK,
+                {"item": event_item_summary(item)},
+                context=context,
+            )
+            newly_low_stock.append(item)
+
+        # Cleared low stock
+        for key, value in previous.items():
+            if not key.endswith(":low_stock") or value != "1":
+                continue
+            item_id = key[: -len(":low_stock")]
+            if item_id in low_stock_ids:
+                continue
+            item = self.store.get(item_id)
+            if item is None:
+                continue
+            self.hass.bus.async_fire(
+                EVENT_ITEM_LOW_STOCK_CLEARED,
                 {"item": event_item_summary(item)},
                 context=context,
             )
@@ -186,6 +227,23 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
             new_state[f"{item_id}:low_stock"] = "1"
 
         await self.store.async_set_bucket_state(new_state)
+
+        if newly_low_stock and self.settings.auto_push_restock:
+            await self._async_auto_push_restock(newly_low_stock)
+
+    async def _async_auto_push_restock(self, items: list[InventoryItem]) -> None:
+        """Push newly low-stock items to the configured todo list."""
+        from .restock import async_push_items_to_todo
+
+        entity_id = self.settings.todo_entity_id
+        if not entity_id:
+            return
+        try:
+            await async_push_items_to_todo(self.hass, entity_id, items)
+        except Exception:  # noqa: BLE001 — never fail a coordinator refresh
+            _LOGGER.exception(
+                "Auto-push restock to %s failed", entity_id
+            )
 
     def capped_item_dicts(self, items: list[InventoryItem]) -> list[dict[str, Any]]:
         """Return item summaries capped for sensor attributes."""

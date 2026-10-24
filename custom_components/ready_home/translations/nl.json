@@ -27,7 +27,8 @@
           "profile": "Profiel",
           "targets": "Paraatheidsdoelen",
           "lists": "Locaties en categorieën",
-          "thresholds": "Drempels"
+          "thresholds": "Drempels",
+          "restock": "Aanvullen"
         }
       },
       "profile": {
@@ -65,6 +66,14 @@
         "data": {
           "expiring_days": "Houdbaarheidswaarschuwing (dagen)",
           "urgent_days": "Urgente houdbaarheid (dagen)"
+        }
+      },
+      "restock": {
+        "title": "Aanvullen",
+        "description": "Zet items met lage voorraad op een Home Assistant taken-/boodschappenlijst. Optioneel automatisch bij nieuw lage voorraad.",
+        "data": {
+          "todo_entity_id": "Takenlijst",
+          "auto_push_restock": "Nieuwe lage-voorraaditems automatisch toevoegen"
         }
       }
     },

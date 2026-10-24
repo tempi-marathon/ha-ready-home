@@ -39,6 +39,8 @@ actions:
 
 ## Add low-stock items to a todo list
 
+Prefer **Configure → Restock** (todo entity + optional auto-push) or `ready_home.push_restock_list`. Manual automation still works:
+
 ```yaml
 alias: Ready Home low stock to shopping list
 triggers:
@@ -52,6 +54,20 @@ actions:
       item: >-
         Restock {{ trigger.event.data.item.name }}
         ({{ trigger.event.data.item.quantity }}/{{ trigger.event.data.item.desired_quantity }})
+```
+
+## Notify when low stock is cleared
+
+```yaml
+alias: Ready Home low stock cleared
+triggers:
+  - trigger: event
+    event_type: ready_home_item_low_stock_cleared
+actions:
+  - action: notify.persistent_notification
+    data:
+      title: Restocked
+      message: "{{ trigger.event.data.item.name }} is no longer low stock."
 ```
 
 ## When anything needs attention (problem sensor)

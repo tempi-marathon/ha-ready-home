@@ -475,6 +475,12 @@ export class ReadyHomePanel extends LitElement {
                       variant: "outlined",
                       onClick: () => void this._openTemplates(),
                     })}
+                    ${this._settings?.todo_entity_id
+                      ? this._mdButton("Push restock", {
+                          variant: "outlined",
+                          onClick: () => void this._pushRestock(),
+                        })
+                      : nothing}
                     ${this._mdButton("Add item", {
                       variant: "filled",
                       onClick: this._openAdd,
@@ -1377,6 +1383,16 @@ export class ReadyHomePanel extends LitElement {
       this._error = formatHassError(err);
     } finally {
       this._templateBusy = false;
+    }
+  }
+
+  private async _pushRestock() {
+    if (!this.hass) return;
+    this._error = "";
+    try {
+      await this.hass.callService("ready_home", "push_restock_list", {});
+    } catch (err) {
+      this._error = formatHassError(err);
     }
   }
 
