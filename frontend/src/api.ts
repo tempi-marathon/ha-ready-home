@@ -52,6 +52,23 @@ export interface SettingsDto {
   water_categories: string[];
   expiring_days: number;
   urgent_days: number;
+  todo_entity_id?: string | null;
+  auto_push_restock?: boolean;
+}
+
+export interface KitTemplateDto {
+  id: string;
+  name: string;
+  description: string;
+  item_count: number;
+  items: Array<{
+    name: string;
+    category: string;
+    desired_quantity: number;
+    quantity: number;
+    priority: string;
+    unit: string;
+  }>;
 }
 
 export interface KitTemplateDto {

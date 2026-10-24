@@ -39,6 +39,7 @@ var e=globalThis,t=e.ShadowRoot&&(e.ShadyCSS===void 0||e.ShadyCSS.nativeShadow)&
               ${this._canWrite()?M`
                     ${this._mdButton(`Scan`,{variant:`outlined`,disabled:this._scanning,onClick:()=>void this._scanFromPanel()})}
                     ${this._mdButton(`Add from template`,{variant:`outlined`,onClick:()=>void this._openTemplates()})}
+                    ${this._settings?.todo_entity_id?this._mdButton(`Push restock`,{variant:`outlined`,onClick:()=>void this._pushRestock()}):P}
                     ${this._mdButton(`Add item`,{variant:`filled`,onClick:this._openAdd})}
                   `:P}
             </div>
@@ -563,7 +564,7 @@ var e=globalThis,t=e.ShadowRoot&&(e.ShadyCSS===void 0||e.ShadyCSS.nativeShadow)&
           </div>
         </div>
       </div>
-    `}_onField(e){return t=>{let n=t.target;if(this._form={...this._form,[e]:n.value},e===`barcode`&&this._barcodeError&&(this._barcodeError=``),this._fieldErrors[e]){let t={...this._fieldErrors};delete t[e],this._fieldErrors=t}}}_parseDecimal(e){return Number(String(e).trim().replace(`,`,`.`))}_blankForm(){return{name:``,quantity:`1`,desired_quantity:`0`,unit:`piece`,location:``,category:``,priority:`important`,notes:``,barcode:``,expiry_date:``,contents_per_unit:``,contents_unit:``,calories_per_content:``}}async _applyTemplate(e){if(this.hass&&!this._templateBusy){this._templateBusy=!0,this._error=``;try{await this.hass.callService(`ready_home`,`apply_kit_template`,{template_id:e}),this._templateOpen=!1}catch(e){this._error=K(e)}finally{this._templateBusy=!1}}}_renderTemplateDialog(){return M`
+    `}_onField(e){return t=>{let n=t.target;if(this._form={...this._form,[e]:n.value},e===`barcode`&&this._barcodeError&&(this._barcodeError=``),this._fieldErrors[e]){let t={...this._fieldErrors};delete t[e],this._fieldErrors=t}}}_parseDecimal(e){return Number(String(e).trim().replace(`,`,`.`))}_blankForm(){return{name:``,quantity:`1`,desired_quantity:`0`,unit:`piece`,location:``,category:``,priority:`important`,notes:``,barcode:``,expiry_date:``,contents_per_unit:``,contents_unit:``,calories_per_content:``}}async _applyTemplate(e){if(this.hass&&!this._templateBusy){this._templateBusy=!0,this._error=``;try{await this.hass.callService(`ready_home`,`apply_kit_template`,{template_id:e}),this._templateOpen=!1}catch(e){this._error=K(e)}finally{this._templateBusy=!1}}}async _pushRestock(){if(this.hass){this._error=``;try{await this.hass.callService(`ready_home`,`push_restock_list`,{})}catch(e){this._error=K(e)}}}_renderTemplateDialog(){return M`
       <div
         class="dialog-backdrop"
         @click=${e=>{e.target===e.currentTarget&&this._closeTemplates()}}

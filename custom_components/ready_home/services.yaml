@@ -353,3 +353,20 @@ apply_kit_template:
             - first_aid
             - go_bag
             - basic_tools
+
+push_restock_list:
+  name: Push restock list
+  description: Add low-stock items to a Home Assistant todo / shopping list.
+  fields:
+    config_entry_id:
+      name: Config entry
+      description: Ready Home profile (optional while only one profile exists)
+      selector:
+        config_entry:
+          integration: ready_home
+    entity_id:
+      name: Todo list
+      description: Overrides the todo entity configured in Ready Home options
+      selector:
+        entity:
+          domain: todo

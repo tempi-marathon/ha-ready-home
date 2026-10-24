@@ -59,13 +59,16 @@ Each entry is an **item summary** (same shape as `list_items` responses). Lists 
 
 ## Events
 
-These fire **once when an item newly enters** an attention bucket (deduped via persisted bucket state). Clearing attention does **not** fire an event. Leaving a bucket and entering again later can fire again.
+These fire **once when an item newly enters or leaves** an attention bucket (deduped via persisted bucket state). Leaving a bucket and entering again later can fire again.
 
 | Event | When |
 |-------|------|
 | `ready_home_item_expired` | Item moves into the expired bucket |
 | `ready_home_item_expiring` | Item moves into the urgent **or** wider expiring window |
 | `ready_home_item_low_stock` | Item newly becomes low stock |
+| `ready_home_item_expired_cleared` | Item leaves the expired bucket |
+| `ready_home_item_expiring_cleared` | Item leaves the urgent/expiring window |
+| `ready_home_item_low_stock_cleared` | Item is no longer low stock |
 
 There is **no** dedicated “problem” event — use `binary_sensor.ready_home_needs_attention` (or the list sensors) for state-based automations.
 
@@ -82,13 +85,15 @@ bucket: "expired"   # or "expiring"
 
 `bucket` is only `"expired"` or `"expiring"`. Urgent vs wider-expiring is **not** distinguished in the payload (both use `ready_home_item_expiring` with `bucket: expiring`).
 
-**Low stock:**
+**Low stock / low stock cleared:**
 
 ```yaml
 item:   # lean item summary (no notes/barcode)
 ```
 
 (no `bucket` field)
+
+**Expired / expiring cleared:** same shape as enter events (`item` + `bucket`).
 
 See [6. Automations](06-automations.md) for examples.
 

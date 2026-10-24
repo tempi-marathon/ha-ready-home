@@ -11,7 +11,9 @@ import pytest
 from custom_components.ready_home.attention import build_buckets
 from custom_components.ready_home.const import (
     EVENT_ITEM_EXPIRED,
+    EVENT_ITEM_EXPIRED_CLEARED,
     EVENT_ITEM_LOW_STOCK,
+    EVENT_ITEM_LOW_STOCK_CLEARED,
 )
 from custom_components.ready_home.coordinator import ReadyHomeCoordinator
 from custom_components.ready_home.models import InventoryItem, ReadinessSettings
@@ -87,6 +89,35 @@ async def test_events_fire_once_on_transition(
     # Second recompute with same state should not re-fire
     await coordinator._async_update_data()
     assert coordinator.hass.bus.async_fire.call_count == 0
+
+
+@pytest.mark.asyncio
+async def test_cleared_events_on_exit(
+    coordinator: ReadyHomeCoordinator,
+) -> None:
+    today = date.today()
+    await coordinator.store.async_load()
+    expired = InventoryItem(
+        name="Old",
+        quantity=1,
+        expiry_date=(today - timedelta(days=1)).isoformat(),
+    )
+    low = InventoryItem(name="Low", quantity=1, desired_quantity=5)
+    await coordinator.store.async_add(expired)
+    await coordinator.store.async_add(low)
+    await coordinator._async_update_data()
+    coordinator.hass.bus.async_fire.reset_mock()
+
+    # Fix both attention conditions
+    await coordinator.store.async_update(
+        expired.with_updates(expiry_date=(today + timedelta(days=60)).isoformat())
+    )
+    await coordinator.store.async_update(low.with_updates(quantity=5))
+    await coordinator._async_update_data()
+
+    fired = [c.args[0] for c in coordinator.hass.bus.async_fire.call_args_list]
+    assert EVENT_ITEM_EXPIRED_CLEARED in fired
+    assert EVENT_ITEM_LOW_STOCK_CLEARED in fired
 
 
 @pytest.mark.asyncio

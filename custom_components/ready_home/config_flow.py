@@ -13,6 +13,9 @@ from homeassistant.config_entries import (
 )
 from homeassistant.core import callback
 from homeassistant.helpers.selector import (
+    BooleanSelector,
+    EntitySelector,
+    EntitySelectorConfig,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
@@ -23,6 +26,7 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
+    CONF_AUTO_PUSH_RESTOCK,
     CONF_CALORIES_PER_PERSON_PER_DAY,
     CONF_CATEGORIES,
     CONF_DURATION_HOURS,
@@ -31,6 +35,7 @@ from .const import (
     CONF_LOCATIONS,
     CONF_NAME,
     CONF_NUMBER_OF_PEOPLE,
+    CONF_TODO_ENTITY_ID,
     CONF_URGENT_DAYS,
     CONF_WATER_CATEGORIES,
     CONF_WATER_LITERS_PER_PERSON_PER_DAY,
@@ -161,6 +166,7 @@ class ReadyHomeOptionsFlow(OptionsFlow):
                 "targets",
                 "lists",
                 "thresholds",
+                "restock",
             ],
         )
 
@@ -384,3 +390,43 @@ class ReadyHomeOptionsFlow(OptionsFlow):
             }
         )
         return self.async_show_form(step_id="thresholds", data_schema=schema)
+
+    async def async_step_restock(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Configure shopping-list restock push."""
+        options = dict(self.config_entry.options)
+
+        if user_input is not None:
+            todo_raw = user_input.get(CONF_TODO_ENTITY_ID)
+            if isinstance(todo_raw, list):
+                todo_raw = todo_raw[0] if todo_raw else None
+            todo_entity = str(todo_raw).strip() if todo_raw else ""
+            options.update(
+                {
+                    CONF_TODO_ENTITY_ID: todo_entity or None,
+                    CONF_AUTO_PUSH_RESTOCK: bool(
+                        user_input.get(CONF_AUTO_PUSH_RESTOCK, False)
+                    ),
+                }
+            )
+            return await self._async_save_and_menu(options=options)
+
+        current_todo = options.get(CONF_TODO_ENTITY_ID) or vol.UNDEFINED
+        schema_dict: dict[Any, Any] = {
+            vol.Optional(
+                CONF_AUTO_PUSH_RESTOCK,
+                default=bool(options.get(CONF_AUTO_PUSH_RESTOCK, False)),
+            ): BooleanSelector(),
+        }
+        if current_todo is vol.UNDEFINED:
+            schema_dict[vol.Optional(CONF_TODO_ENTITY_ID)] = EntitySelector(
+                EntitySelectorConfig(domain="todo", multiple=False)
+            )
+        else:
+            schema_dict[
+                vol.Optional(CONF_TODO_ENTITY_ID, default=current_todo)
+            ] = EntitySelector(EntitySelectorConfig(domain="todo", multiple=False))
+        return self.async_show_form(
+            step_id="restock", data_schema=vol.Schema(schema_dict)
+        )

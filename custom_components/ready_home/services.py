@@ -24,6 +24,7 @@ from .models import (
     InventoryPriority,
     InventoryUnit,
 )
+from .restock import async_push_items_to_todo
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ SERVICE_REMOVE_ITEM = "remove_item"
 SERVICE_LIST_ITEMS = "list_items"
 SERVICE_LOOKUP_BARCODE = "lookup_barcode"
 SERVICE_APPLY_KIT_TEMPLATE = "apply_kit_template"
+SERVICE_PUSH_RESTOCK_LIST = "push_restock_list"
 
 ATTR_ITEM_ID = "item_id"
 ATTR_NAME = "name"
@@ -55,6 +57,7 @@ ATTR_DELTA = "delta"
 ATTR_STATUS = "status"
 ATTR_READINESS = "readiness"
 ATTR_TEMPLATE_ID = "template_id"
+ATTR_ENTITY_ID = "entity_id"
 
 _MAX_NUMERIC = 1e9
 _MAX_NAME = 200
@@ -251,6 +254,13 @@ APPLY_KIT_SCHEMA = vol.Schema(
         vol.Required(ATTR_TEMPLATE_ID): vol.In(
             [t["id"] for t in list_kit_templates()]
         ),
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+    }
+)
+
+PUSH_RESTOCK_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_ENTITY_ID): cv.entity_id,
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
     }
 )
@@ -457,6 +467,20 @@ def async_register_services(hass: HomeAssistant) -> None:
             "skipped_count": len(skipped),
         }
 
+    async def handle_push_restock(call: ServiceCall) -> dict[str, Any]:
+        await async_require_admin_or_automation(hass, call.context.user_id)
+        data = PUSH_RESTOCK_SCHEMA(dict(call.data))
+        coordinator = get_coordinator(
+            hass, config_entry_id=entry_id_from_call_data(data)
+        )
+        entity_id = data.get(ATTR_ENTITY_ID) or coordinator.settings.todo_entity_id
+        if not entity_id:
+            raise ServiceValidationError(
+                "Configure a todo list in Ready Home options or pass entity_id"
+            )
+        low_stock = [i for i in coordinator.store.items if i.is_low_stock()]
+        return await async_push_items_to_todo(hass, entity_id, low_stock)
+
     hass.services.async_register(
         DOMAIN,
         SERVICE_ADD_ITEM,
@@ -506,6 +530,13 @@ def async_register_services(hass: HomeAssistant) -> None:
         schema=APPLY_KIT_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_PUSH_RESTOCK_LIST,
+        handle_push_restock,
+        schema=PUSH_RESTOCK_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
 
 
 def async_unregister_services(hass: HomeAssistant) -> None:
@@ -518,6 +549,7 @@ def async_unregister_services(hass: HomeAssistant) -> None:
         SERVICE_LIST_ITEMS,
         SERVICE_LOOKUP_BARCODE,
         SERVICE_APPLY_KIT_TEMPLATE,
+        SERVICE_PUSH_RESTOCK_LIST,
     ):
         if hass.services.has_service(DOMAIN, service):
             hass.services.async_remove(DOMAIN, service)
