@@ -65,6 +65,9 @@ EVENT_ITEM_EXPIRED_CLEARED: Final = f"{DOMAIN}_item_expired_cleared"
 EVENT_ITEM_EXPIRING_CLEARED: Final = f"{DOMAIN}_item_expiring_cleared"
 EVENT_ITEM_LOW_STOCK_CLEARED: Final = f"{DOMAIN}_item_low_stock_cleared"
 
+# Import/export payload version
+EXPORT_FORMAT_VERSION: Final = 1
+
 # Platforms
 PLATFORMS: Final = ["sensor", "binary_sensor"]
 

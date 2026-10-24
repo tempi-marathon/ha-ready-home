@@ -370,3 +370,39 @@ push_restock_list:
       selector:
         entity:
           domain: todo
+
+export_inventory:
+  name: Export inventory
+  description: Export all inventory items as JSON (response only).
+  fields:
+    config_entry_id:
+      name: Config entry
+      description: Ready Home profile (optional while only one profile exists)
+      selector:
+        config_entry:
+          integration: ready_home
+
+import_inventory:
+  name: Import inventory
+  description: Import inventory items from a JSON items list (merge or replace).
+  fields:
+    config_entry_id:
+      name: Config entry
+      description: Ready Home profile (optional while only one profile exists)
+      selector:
+        config_entry:
+          integration: ready_home
+    mode:
+      name: Mode
+      required: true
+      selector:
+        select:
+          options:
+            - merge
+            - replace
+    items:
+      name: Items
+      required: true
+      description: List of item objects (same shape as export)
+      selector:
+        object:

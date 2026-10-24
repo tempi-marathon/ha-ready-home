@@ -115,6 +115,28 @@ data:
   entity_id: todo.shopping_list
 ```
 
+## Export / import inventory
+
+```yaml
+action: ready_home.export_inventory
+```
+
+Response shape: `{ version, exported_at, items: [...] }` (full item dicts).
+
+```yaml
+action: ready_home.import_inventory
+data:
+  mode: merge   # or replace
+  items:
+    - name: Bottled water
+      quantity: 6
+      desired_quantity: 12
+      unit: piece
+      category: Water
+```
+
+`merge` upserts by `id`, else by unique case-insensitive name. `replace` clears inventory first.
+
 ---
 
 **Previous:** [3. Usage](03-usage.md) · **Next:** [5. Sensors and events](05-sensors-and-events.md)

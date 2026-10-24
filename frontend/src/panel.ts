@@ -34,6 +34,7 @@ import {
   validateMeasureFields,
   contentsToLiters,
 } from "./inventory_view";
+import { statusLabel, t } from "./localize";
 import {
   loadPanelViewState,
   savePanelViewState,
@@ -42,9 +43,6 @@ import {
 } from "./panel_view_state";
 import { readinessTone } from "./readiness_tone";
 import type { HomeAssistant } from "./types";
-
-const COMPANION_SCAN_MESSAGE =
-  "Scanning needs the Home Assistant Companion app. Enter the barcode and tap Lookup.";
 
 const PANEL_TAG = "ready-home-panel";
 const BRAND_BASE = "/api/ready_home/brand";
@@ -78,13 +76,6 @@ const MDI_CLIPBOARD_CHECK =
 const STOCK_UNITS = ["box", "pack", "piece"] as const;
 const CONTENTS_UNITS = ["gram", "kilogram", "liter", "milliliter"] as const;
 const PRIORITIES = ["essential", "important", "optional"] as const;
-
-const STATUS_LABELS: Record<string, string> = {
-  expired: "Expired",
-  urgent: "Urgent",
-  expiring: "Expiring",
-  low: "Low stock",
-};
 
 function ucfirst(value: string): string {
   if (!value) return value;
@@ -273,8 +264,12 @@ export class ReadyHomePanel extends LitElement {
     return itemStatus(item, this._snapshot?.buckets);
   }
 
+  private _t(key: string): string {
+    return t(this.hass, key);
+  }
+
   private _statusLabel(status: string): string {
-    return STATUS_LABELS[status] || status;
+    return statusLabel(this.hass, status);
   }
 
   private _setStatusFilter(status: string) {
@@ -444,7 +439,7 @@ export class ReadyHomePanel extends LitElement {
                     <button
                       type="button"
                       class="icon-btn"
-                      aria-label="Open menu"
+                      aria-label=${this._t("action.open_menu")}
                       @click=${this._toggleMenu}
                     >
                       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -466,22 +461,22 @@ export class ReadyHomePanel extends LitElement {
             <div class="header-actions">
               ${this._canWrite()
                 ? html`
-                    ${this._mdButton("Scan", {
+                    ${this._mdButton(this._t("action.scan"), {
                       variant: "outlined",
                       disabled: this._scanning,
                       onClick: () => void this._scanFromPanel(),
                     })}
-                    ${this._mdButton("Add from template", {
+                    ${this._mdButton(this._t("action.add_from_template"), {
                       variant: "outlined",
                       onClick: () => void this._openTemplates(),
                     })}
                     ${this._settings?.todo_entity_id
-                      ? this._mdButton("Push restock", {
+                      ? this._mdButton(this._t("action.push_restock"), {
                           variant: "outlined",
                           onClick: () => void this._pushRestock(),
                         })
                       : nothing}
-                    ${this._mdButton("Add item", {
+                    ${this._mdButton(this._t("action.add_item"), {
                       variant: "filled",
                       onClick: this._openAdd,
                     })}
@@ -498,11 +493,11 @@ export class ReadyHomePanel extends LitElement {
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="currentColor" d=${MDI_SHIELD_CHECK} />
                 </svg>
-                Overall
+                ${this._t("stat.readiness")}
               </span>
               <span class="stat-value">${this._pct(overall)}</span>
               <span class="stat-duration ${this._durationClass(supply)}"
-                >Lasts ${this._formatHours(supply)}</span
+                >${this._formatHours(supply)}</span
               >
             </div>
             <div class="stat ${this._statToneClass(waterSupply)}">
@@ -510,17 +505,17 @@ export class ReadyHomePanel extends LitElement {
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="currentColor" d=${MDI_WATER} />
                 </svg>
-                Water
+                ${this._t("stat.water")}
               </span>
               <span class="stat-value"
                 >${this._formatAmount(a.water_on_hand, "L")}</span
               >
               <span class="stat-meta"
-                >${this._pct(water)} · goal
+                >${this._pct(water)} ·
                 ${this._formatAmount(a.water_target, "L")}</span
               >
               <span class="stat-duration ${this._durationClass(waterSupply)}"
-                >Lasts ${this._formatHours(waterSupply)}</span
+                >${this._formatHours(waterSupply)}</span
               >
             </div>
             <div class="stat ${this._statToneClass(foodSupply)}">
@@ -528,17 +523,17 @@ export class ReadyHomePanel extends LitElement {
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="currentColor" d=${MDI_FOOD} />
                 </svg>
-                Food
+                ${this._t("stat.food")}
               </span>
               <span class="stat-value"
                 >${this._formatAmount(a.food_on_hand, "kcal")}</span
               >
               <span class="stat-meta"
-                >${this._pct(food)} · goal
+                >${this._pct(food)} ·
                 ${this._formatAmount(a.food_target, "kcal")}</span
               >
               <span class="stat-duration ${this._durationClass(foodSupply)}"
-                >Lasts ${this._formatHours(foodSupply)}</span
+                >${this._formatHours(foodSupply)}</span
               >
             </div>
             <div class="stat ${this._statToneClass(essentialSupply)}">
@@ -546,11 +541,11 @@ export class ReadyHomePanel extends LitElement {
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="currentColor" d=${MDI_SHIELD_STAR} />
                 </svg>
-                Essential
+                ${this._t("stat.essential")}
               </span>
               <span class="stat-value">${this._pct(essential)}</span>
               <span class="stat-duration ${this._durationClass(essentialSupply)}"
-                >Lasts ${this._formatHours(essentialSupply)}</span
+                >${this._formatHours(essentialSupply)}</span
               >
             </div>
             ${completeness != null
@@ -564,7 +559,7 @@ export class ReadyHomePanel extends LitElement {
                       >
                         <path fill="currentColor" d=${MDI_CLIPBOARD_CHECK} />
                       </svg>
-                      Completeness
+                      ${this._t("stat.completeness")}
                     </span>
                     <span class="stat-value">${this._pct(completeness)}</span>
                   </div>
@@ -578,7 +573,7 @@ export class ReadyHomePanel extends LitElement {
               class="chip ${this._filterStatus === "expired" ? "active" : ""}"
               @click=${() => this._setStatusFilter("expired")}
             >
-              Expired
+              ${this._t("status.expired")}
               <span class="chip-count">${counts.expired}</span>
             </button>
             <button
@@ -586,7 +581,7 @@ export class ReadyHomePanel extends LitElement {
               class="chip ${this._filterStatus === "expiring" ? "active" : ""}"
               @click=${() => this._setStatusFilter("expiring")}
             >
-              Expiring
+              ${this._t("status.expiring")}
               <span class="chip-count">${counts.expiring}</span>
             </button>
             <button
@@ -594,7 +589,7 @@ export class ReadyHomePanel extends LitElement {
               class="chip ${this._filterStatus === "low_stock" ? "active" : ""}"
               @click=${() => this._setStatusFilter("low_stock")}
             >
-              Low stock
+              ${this._t("status.low")}
               <span class="chip-count">${counts.low_stock}</span>
             </button>
           </div>
@@ -605,7 +600,7 @@ export class ReadyHomePanel extends LitElement {
                 <input
                   class="search"
                   type="search"
-                  placeholder="Search name, location, barcode…"
+                  placeholder=${this._t("filter.search_placeholder")}
                   .value=${this._search}
                   @input=${(e: Event) => {
                     this._search = (e.target as HTMLInputElement).value;
@@ -621,9 +616,11 @@ export class ReadyHomePanel extends LitElement {
                     this._persistViewState();
                   }}
                 >
-                  <option value="name">Sort: name</option>
-                  <option value="expiry">Sort: expiry</option>
-                  <option value="quantity">Sort: quantity</option>
+                  <option value="name">${this._t("filter.sort")}: name</option>
+                  <option value="expiry">${this._t("filter.sort")}: expiry</option>
+                  <option value="quantity"
+                    >${this._t("filter.sort")}: quantity</option
+                  >
                 </select>
                 <button
                   type="button"
@@ -653,7 +650,9 @@ export class ReadyHomePanel extends LitElement {
                           this._persistViewState();
                         }}
                       >
-                        <option value="">All locations</option>
+                        <option value=""
+                          >${this._t("filter.all_location")}</option
+                        >
                         ${locations.map(
                           (l) => html`<option value=${l}>${l}</option>`,
                         )}
@@ -667,7 +666,9 @@ export class ReadyHomePanel extends LitElement {
                           this._persistViewState();
                         }}
                       >
-                        <option value="">All categories</option>
+                        <option value=""
+                          >${this._t("filter.all_category")}</option
+                        >
                         ${categories.map(
                           (c) => html`<option value=${c}>${c}</option>`,
                         )}
@@ -681,10 +682,18 @@ export class ReadyHomePanel extends LitElement {
                           this._persistViewState();
                         }}
                       >
-                        <option value="">All readiness</option>
-                        <option value="water">Water</option>
-                        <option value="food">Food</option>
-                        <option value="none">Neither</option>
+                        <option value=""
+                          >${this._t("filter.all_readiness")}</option
+                        >
+                        <option value="water"
+                          >${this._t("filter.readiness_water")}</option
+                        >
+                        <option value="food"
+                          >${this._t("filter.readiness_food")}</option
+                        >
+                        <option value="none"
+                          >${this._t("filter.readiness_none")}</option
+                        >
                       </select>
                       ${this._activeFilterCount
                         ? this._mdButton("Reset", {
@@ -998,9 +1007,9 @@ export class ReadyHomePanel extends LitElement {
     const write = this._canWrite();
     const dialogTitle = this._editing
       ? write
-        ? "Edit item"
-        : "View item"
-      : "Add item";
+        ? this._t("dialog.edit_title")
+        : this._t("dialog.edit_title")
+      : this._t("dialog.add_title");
 
     return html`
       <div class="dialog-backdrop">
@@ -1015,7 +1024,7 @@ export class ReadyHomePanel extends LitElement {
             <button
               type="button"
               class="icon-btn dialog-close"
-              aria-label="Close"
+              aria-label=${this._t("action.close")}
               @click=${this._closeDialog}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1027,7 +1036,7 @@ export class ReadyHomePanel extends LitElement {
           <div class="form-section">
             <div class="form-section-title">Details</div>
             <label
-              >Barcode
+              >${this._t("field.barcode")}
               <div class="barcode-row">
                 <input
                   .value=${f.barcode || ""}
@@ -1036,12 +1045,12 @@ export class ReadyHomePanel extends LitElement {
                 />
                 ${write
                   ? html`
-                      ${this._mdButton("Scan", {
+                      ${this._mdButton(this._t("action.scan"), {
                         variant: "outlined",
                         disabled: this._scanning,
                         onClick: () => void this._scanBarcode(),
                       })}
-                      ${this._mdButton("Lookup", {
+                      ${this._mdButton(this._t("action.lookup"), {
                         variant: "outlined",
                         disabled: this._scanning || !(f.barcode || "").trim(),
                         onClick: () => void this._lookupBarcode(),
@@ -1114,7 +1123,7 @@ export class ReadyHomePanel extends LitElement {
               </label>
             </div>
             <label
-              >Priority
+              >${this._t("field.priority")}
               <select
                 .value=${live(f.priority || "important")}
                 ?disabled=${!write}
@@ -1126,13 +1135,13 @@ export class ReadyHomePanel extends LitElement {
                       value=${p}
                       ?selected=${(f.priority || "important") === p}
                     >
-                      ${ucfirst(p)}
+                      ${this._t(`priority.${p}`)}
                     </option>`,
                 )}
               </select>
             </label>
             <label
-              >Notes
+              >${this._t("field.notes")}
               <input
                 .value=${f.notes || ""}
                 ?disabled=${!write}
@@ -1294,12 +1303,15 @@ export class ReadyHomePanel extends LitElement {
             : nothing}
 
           <div class="dialog-actions">
-            ${this._mdButton(write ? "Cancel" : "Close", {
-              variant: "text",
-              onClick: this._closeDialog,
-            })}
+            ${this._mdButton(
+              write ? this._t("action.cancel") : this._t("action.close"),
+              {
+                variant: "text",
+                onClick: this._closeDialog,
+              },
+            )}
             ${write
-              ? this._mdButton("Save", {
+              ? this._mdButton(this._t("action.save"), {
                   variant: "filled",
                   disabled: this._saving,
                   onClick: () => void this._save(),
@@ -1408,14 +1420,14 @@ export class ReadyHomePanel extends LitElement {
           class="dialog"
           role="dialog"
           aria-modal="true"
-          aria-label="Add from template"
+          aria-label=${this._t("dialog.template_title")}
         >
           <div class="dialog-header">
-            <h2>Add from template</h2>
+            <h2>${this._t("dialog.template_title")}</h2>
             <button
               type="button"
               class="icon-btn"
-              aria-label="Close"
+              aria-label=${this._t("action.close")}
               @click=${this._closeTemplates}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1423,9 +1435,7 @@ export class ReadyHomePanel extends LitElement {
               </svg>
             </button>
           </div>
-          <p class="field-hint">
-            Existing item names are skipped (case-insensitive).
-          </p>
+          <p class="field-hint">${this._t("template.skip_existing")}</p>
           <div class="template-list">
             ${this._templates.map(
               (tpl) => html`
@@ -1433,9 +1443,11 @@ export class ReadyHomePanel extends LitElement {
                   <div class="template-card-body">
                     <strong>${tpl.name}</strong>
                     <p>${tpl.description}</p>
-                    <span class="item-count">${tpl.item_count} items</span>
+                    <span class="item-count"
+                      >${tpl.item_count} ${this._t("template.items")}</span
+                    >
                   </div>
-                  ${this._mdButton("Apply template", {
+                  ${this._mdButton(this._t("action.apply_template"), {
                     variant: "filled",
                     disabled: this._templateBusy,
                     onClick: () => void this._applyTemplate(tpl.id),
@@ -1445,7 +1457,7 @@ export class ReadyHomePanel extends LitElement {
             )}
           </div>
           <div class="dialog-actions">
-            ${this._mdButton("Close", {
+            ${this._mdButton(this._t("action.close"), {
               variant: "text",
               onClick: this._closeTemplates,
             })}
@@ -1629,7 +1641,7 @@ export class ReadyHomePanel extends LitElement {
     if (!this._canWrite()) return;
     if (!hasCompanionBarcodeScanner(this.hass)) {
       this._openAdd();
-      this._barcodeError = COMPANION_SCAN_MESSAGE;
+      this._barcodeError = this._t("companion.scan_needed");
       return;
     }
 
@@ -1660,7 +1672,7 @@ export class ReadyHomePanel extends LitElement {
   private async _scanBarcode() {
     if (!this._canWrite()) return;
     if (!hasCompanionBarcodeScanner(this.hass)) {
-      this._barcodeError = COMPANION_SCAN_MESSAGE;
+      this._barcodeError = this._t("companion.scan_needed");
       return;
     }
 
