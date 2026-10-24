@@ -30,6 +30,13 @@ export interface Snapshot {
     within_expiring: InventoryItemDto[];
     low_stock: InventoryItemDto[];
   };
+  completeness?: {
+    overall_percent: number | null;
+    categories: Record<
+      string,
+      { percent: number; complete: number; total: number; missing: string[] }
+    >;
+  };
   /** Present on subscribe/list pushes; optional for older clients. */
   settings?: SettingsDto;
 }
@@ -45,6 +52,21 @@ export interface SettingsDto {
   water_categories: string[];
   expiring_days: number;
   urgent_days: number;
+}
+
+export interface KitTemplateDto {
+  id: string;
+  name: string;
+  description: string;
+  item_count: number;
+  items: Array<{
+    name: string;
+    category: string;
+    desired_quantity: number;
+    quantity: number;
+    priority: string;
+    unit: string;
+  }>;
 }
 
 export async function listItems(hass: HomeAssistant): Promise<Snapshot> {
@@ -84,4 +106,15 @@ export async function lookupBarcode(
     type: "ready_home/barcode/lookup",
     barcode,
   });
+}
+
+export async function listKitTemplates(
+  hass: HomeAssistant,
+): Promise<KitTemplateDto[]> {
+  const result = await hass.connection.sendMessagePromise<{
+    templates: KitTemplateDto[];
+  }>({
+    type: "ready_home/kit_templates/list",
+  });
+  return result.templates;
 }

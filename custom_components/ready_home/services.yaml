@@ -333,3 +333,23 @@ lookup_barcode:
       example: "3017620422003"
       selector:
         text:
+
+apply_kit_template:
+  name: Apply kit template
+  description: Add missing checklist items from a built-in kit template (skips names that already exist).
+  fields:
+    config_entry_id:
+      name: Config entry
+      description: Ready Home profile (optional while only one profile exists)
+      selector:
+        config_entry:
+          integration: ready_home
+    template_id:
+      name: Template
+      required: true
+      selector:
+        select:
+          options:
+            - first_aid
+            - go_bag
+            - basic_tools

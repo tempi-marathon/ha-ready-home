@@ -17,6 +17,7 @@ from .auth import async_require_admin_or_automation
 from .barcode import is_valid_barcode, lookup_product
 from .const import ATTR_CONFIG_ENTRY_ID, DOMAIN, MAX_INVENTORY_ITEMS
 from .helpers import entry_id_from_call_data, get_coordinator
+from .kit_templates import get_kit_template, list_kit_templates
 from .models import (
     ContentsUnit,
     InventoryItem,
@@ -32,6 +33,7 @@ SERVICE_ADJUST_QUANTITY = "adjust_quantity"
 SERVICE_REMOVE_ITEM = "remove_item"
 SERVICE_LIST_ITEMS = "list_items"
 SERVICE_LOOKUP_BARCODE = "lookup_barcode"
+SERVICE_APPLY_KIT_TEMPLATE = "apply_kit_template"
 
 ATTR_ITEM_ID = "item_id"
 ATTR_NAME = "name"
@@ -52,6 +54,7 @@ ATTR_CALORIES_PER_CONTENT = "calories_per_content"
 ATTR_DELTA = "delta"
 ATTR_STATUS = "status"
 ATTR_READINESS = "readiness"
+ATTR_TEMPLATE_ID = "template_id"
 
 _MAX_NUMERIC = 1e9
 _MAX_NAME = 200
@@ -243,6 +246,15 @@ LOOKUP_SCHEMA = vol.Schema({
     vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
 })
 
+APPLY_KIT_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_TEMPLATE_ID): vol.In(
+            [t["id"] for t in list_kit_templates()]
+        ),
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+    }
+)
+
 
 def _matches_status(
     status: str, item: InventoryItem, severity: str | None
@@ -401,6 +413,50 @@ def async_register_services(hass: HomeAssistant) -> None:
             return {"found": False, "barcode": data[ATTR_BARCODE]}
         return {"found": True, **result}
 
+    async def handle_apply_kit(call: ServiceCall) -> dict[str, Any]:
+        await async_require_admin_or_automation(hass, call.context.user_id)
+        data = APPLY_KIT_SCHEMA(dict(call.data))
+        coordinator = get_coordinator(
+            hass, config_entry_id=entry_id_from_call_data(data)
+        )
+        template = get_kit_template(data[ATTR_TEMPLATE_ID])
+        if template is None:
+            raise ServiceValidationError(
+                f"Unknown template_id: {data[ATTR_TEMPLATE_ID]}"
+            )
+        existing_names = {
+            i.name.strip().lower() for i in coordinator.store.items
+        }
+        added: list[dict[str, Any]] = []
+        skipped: list[str] = []
+        for row in template.items:
+            key = row.name.strip().lower()
+            if key in existing_names:
+                skipped.append(row.name)
+                continue
+            if len(coordinator.store.items) + len(added) >= MAX_INVENTORY_ITEMS:
+                raise ServiceValidationError(
+                    f"Inventory is full (max {MAX_INVENTORY_ITEMS} items)"
+                )
+            item = InventoryItem(
+                name=row.name,
+                quantity=row.quantity,
+                desired_quantity=row.desired_quantity,
+                unit=row.unit,
+                category=row.category,
+                priority=row.priority,
+            )
+            await coordinator.store.async_add(item)
+            existing_names.add(key)
+            added.append(item_summary(item))
+        return {
+            "template_id": template.id,
+            "added": added,
+            "skipped": skipped,
+            "added_count": len(added),
+            "skipped_count": len(skipped),
+        }
+
     hass.services.async_register(
         DOMAIN,
         SERVICE_ADD_ITEM,
@@ -443,6 +499,13 @@ def async_register_services(hass: HomeAssistant) -> None:
         schema=LOOKUP_SCHEMA,
         supports_response=SupportsResponse.ONLY,
     )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_APPLY_KIT_TEMPLATE,
+        handle_apply_kit,
+        schema=APPLY_KIT_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
 
 
 def async_unregister_services(hass: HomeAssistant) -> None:
@@ -454,6 +517,7 @@ def async_unregister_services(hass: HomeAssistant) -> None:
         SERVICE_REMOVE_ITEM,
         SERVICE_LIST_ITEMS,
         SERVICE_LOOKUP_BARCODE,
+        SERVICE_APPLY_KIT_TEMPLATE,
     ):
         if hass.services.has_service(DOMAIN, service):
             hass.services.async_remove(DOMAIN, service)

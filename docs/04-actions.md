@@ -95,6 +95,16 @@ data:
   location: Pantry
 ```
 
+## Apply a kit template
+
+Adds checklist items from a built-in template (`first_aid`, `go_bag`, `basic_tools`). Existing names (case-insensitive) are skipped; new items start at quantity `0` with a `desired_quantity`.
+
+```yaml
+action: ready_home.apply_kit_template
+data:
+  template_id: first_aid
+```
+
 ---
 
 **Previous:** [3. Usage](03-usage.md) · **Next:** [5. Sensors and events](05-sensors-and-events.md)

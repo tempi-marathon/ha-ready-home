@@ -84,6 +84,18 @@
       "food_readiness": {
         "name": "Voedselparaatheid"
       },
+      "essential_readiness": {
+        "name": "Essentiële paraatheid"
+      },
+      "essential_water_readiness": {
+        "name": "Essentiële waterparaatheid"
+      },
+      "essential_food_readiness": {
+        "name": "Essentiële voedselparaatheid"
+      },
+      "category_completeness": {
+        "name": "Categoriecompleetheid"
+      },
       "expired_items": {
         "name": "Verlopen items"
       },

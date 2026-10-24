@@ -376,6 +376,36 @@ class ReadinessAssessment:
     supply_hours: float | None
     unmeasurable_water_count: int = 0
     unmeasurable_food_count: int = 0
+    # Essential-priority subset (same targets; optional stock excluded)
+    essential_water_on_hand: float = 0.0
+    essential_water_percent: float = 0.0
+    essential_food_on_hand: float = 0.0
+    essential_food_percent: float = 0.0
+    essential_overall_percent: float = 0.0
+    essential_water_supply_hours: float | None = None
+    essential_food_supply_hours: float | None = None
+    essential_supply_hours: float | None = None
+    essential_unmeasurable_water_count: int = 0
+    essential_unmeasurable_food_count: int = 0
+
+
+@dataclass(frozen=True, slots=True)
+class CategoryScore:
+    """Completeness for one non–food/water category."""
+
+    category: str
+    percent: float
+    complete: int
+    total: int
+    missing: tuple[str, ...]  # item names not meeting desired / expired
+
+
+@dataclass(frozen=True, slots=True)
+class CategoryCompleteness:
+    """Overall and per-category completeness for checklist-style categories."""
+
+    overall_percent: float | None
+    categories: tuple[CategoryScore, ...]
 
 
 def _optional_float(value: Any) -> float | None:

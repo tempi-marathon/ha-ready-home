@@ -84,6 +84,18 @@
       "food_readiness": {
         "name": "Food readiness"
       },
+      "essential_readiness": {
+        "name": "Essential readiness"
+      },
+      "essential_water_readiness": {
+        "name": "Essential water readiness"
+      },
+      "essential_food_readiness": {
+        "name": "Essential food readiness"
+      },
+      "category_completeness": {
+        "name": "Category completeness"
+      },
       "expired_items": {
         "name": "Expired items"
       },

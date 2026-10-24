@@ -15,9 +15,10 @@ Track household emergency supplies, measure readiness against water and calorie 
 ## Features
 
 - **Inventory** — Items with quantity, desired quantity, expiry, priority, location, and category
-- **Readiness** — Water (liters) and food (calories) on-hand vs per-person targets over a configurable duration (default 72 hours)
-- **Sensors** — Overall / water / food readiness %, expired / expiring / low-stock counts, total items, needs-attention binary sensor
-- **Actions** — `add_item`, `update_item`, `adjust_quantity`, `remove_item`, `list_items`, `lookup_barcode`
+- **Readiness** — Water (liters) and food (calories) on-hand vs per-person targets over a configurable duration (default 72 hours), plus **essential-only** readiness
+- **Category completeness** — Checklist scoring for non–food/water categories; kit templates seed first-aid / go-bag / tools
+- **Sensors** — Overall / water / food / essential readiness %, category completeness, expired / expiring / low-stock counts, needs-attention binary sensor
+- **Actions** — Inventory CRUD, barcode lookup, kit templates (`apply_kit_template`)
 - **Events** — `ready_home_item_expired`, `ready_home_item_expiring`, `ready_home_item_low_stock` (fire once on transition)
 - **Sidebar** — Ready Home panel for full inventory management
 - **Barcode** — Open Food Facts lookup via action, websocket, or sidebar panel. Camera scan uses the Home Assistant Companion app; on desktop enter the code and tap Lookup

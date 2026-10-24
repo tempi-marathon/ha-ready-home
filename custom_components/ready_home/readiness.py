@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from datetime import date
 
-from .models import InventoryItem, ReadinessAssessment, ReadinessSettings
+from .models import (
+    InventoryItem,
+    InventoryPriority,
+    ReadinessAssessment,
+    ReadinessSettings,
+)
 
 
 def assess(
@@ -12,7 +17,11 @@ def assess(
     settings: ReadinessSettings,
     today: date | None = None,
 ) -> ReadinessAssessment:
-    """Compare on-hand water/food against per-person targets."""
+    """Compare on-hand water/food against per-person targets.
+
+    Overall scores use all non-expired mapped items. Essential scores use only
+    items with priority ``essential`` (same targets).
+    """
     today = today or date.today()
 
     if settings.number_of_people is None:
@@ -49,6 +58,18 @@ def assess(
     )
     supply_hours = min(water_supply_hours, food_supply_hours)
 
+    essential_items = [
+        i for i in items if i.priority == InventoryPriority.ESSENTIAL
+    ]
+    e_water, e_un_water = _aggregate_water(essential_items, settings, today)
+    e_food, e_un_food = _aggregate_food(essential_items, settings, today)
+    e_water_percent = _percent(e_water, water_target)
+    e_food_percent = _percent(e_food, food_target)
+    e_overall = min(e_water_percent, e_food_percent)
+    e_water_hours = _supply_hours(e_water, water_target, settings.duration_hours)
+    e_food_hours = _supply_hours(e_food, food_target, settings.duration_hours)
+    e_supply = min(e_water_hours, e_food_hours)
+
     return ReadinessAssessment(
         needs_people_count=False,
         water_on_hand=water_on_hand,
@@ -64,6 +85,16 @@ def assess(
         supply_hours=supply_hours,
         unmeasurable_water_count=unmeasurable_water,
         unmeasurable_food_count=unmeasurable_food,
+        essential_water_on_hand=e_water,
+        essential_water_percent=e_water_percent,
+        essential_food_on_hand=e_food,
+        essential_food_percent=e_food_percent,
+        essential_overall_percent=e_overall,
+        essential_water_supply_hours=e_water_hours,
+        essential_food_supply_hours=e_food_hours,
+        essential_supply_hours=e_supply,
+        essential_unmeasurable_water_count=e_un_water,
+        essential_unmeasurable_food_count=e_un_food,
     )
 
 

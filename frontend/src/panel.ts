@@ -5,9 +5,11 @@ import { live } from "lit/directives/live.js";
 import { property, state } from "lit/decorators.js";
 import {
   type InventoryItemDto,
+  type KitTemplateDto,
   type SettingsDto,
   type Snapshot,
   getSettings,
+  listKitTemplates,
   lookupBarcode,
   subscribeInventory,
 } from "./api";
@@ -66,6 +68,12 @@ const MDI_WATER =
 /** mdi:food — food readiness. */
 const MDI_FOOD =
   "M18.06 23H19.72C20.56 23 21.25 22.35 21.35 21.53L23 5.05H18V1H16.03V5.05H11.06L11.36 7.39C13.07 7.86 14.67 8.71 15.63 9.65C17.07 11.07 18.06 12.54 18.06 14.94V23M1 22V21H16.03V22C16.03 22.54 15.58 23 15 23H2C1.45 23 1 22.54 1 22M16.03 15C16.03 7 1 7 1 15H16.03M1 17H16V19H1V17Z";
+/** mdi:shield-star — essential readiness. */
+const MDI_SHIELD_STAR =
+  "M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M14.94,15.54L12,13.75L9.06,15.54L9.87,12.19L7.24,9.95L10.68,9.67L12,6.5L13.32,9.67L16.76,9.95L14.13,12.19L14.94,15.54Z";
+/** mdi:clipboard-check — category completeness. */
+const MDI_CLIPBOARD_CHECK =
+  "M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3Z";
 
 const STOCK_UNITS = ["box", "pack", "piece"] as const;
 const CONTENTS_UNITS = ["gram", "kilogram", "liter", "milliliter"] as const;
@@ -108,6 +116,9 @@ export class ReadyHomePanel extends LitElement {
   @state() private _saving = false;
   @state() private _scanning = false;
   @state() private _pendingRemoveIds: string[] = [];
+  @state() private _templateOpen = false;
+  @state() private _templates: KitTemplateDto[] = [];
+  @state() private _templateBusy = false;
 
   private _unsub: (() => void) | null = null;
   private _connected = false;
@@ -276,6 +287,12 @@ export class ReadyHomePanel extends LitElement {
     return `${Math.round(Number(value))}%`;
   }
 
+  private _completenessPercent(): number | null {
+    const raw = this._snapshot?.completeness?.overall_percent;
+    if (raw == null || Number.isNaN(Number(raw))) return null;
+    return Number(raw);
+  }
+
   private _formatHours(hours: number | null | undefined): string {
     if (hours == null || Number.isNaN(Number(hours))) return "—";
     const h = Math.max(0, Math.round(Number(hours)));
@@ -404,6 +421,9 @@ export class ReadyHomePanel extends LitElement {
     const overall = a.overall_percent;
     const water = a.water_percent;
     const food = a.food_percent;
+    const essential = a.essential_overall_percent;
+    const essentialSupply = a.essential_supply_hours;
+    const completeness = this._completenessPercent();
     const counts = this._bucketCounts;
     const supply = a.supply_hours;
     const waterSupply = a.water_supply_hours;
@@ -450,6 +470,10 @@ export class ReadyHomePanel extends LitElement {
                       variant: "outlined",
                       disabled: this._scanning,
                       onClick: () => void this._scanFromPanel(),
+                    })}
+                    ${this._mdButton("Add from template", {
+                      variant: "outlined",
+                      onClick: () => void this._openTemplates(),
                     })}
                     ${this._mdButton("Add item", {
                       variant: "filled",
@@ -511,6 +535,35 @@ export class ReadyHomePanel extends LitElement {
                 >Lasts ${this._formatHours(foodSupply)}</span
               >
             </div>
+            <div class="stat ${this._statToneClass(essentialSupply)}">
+              <span class="stat-label">
+                <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor" d=${MDI_SHIELD_STAR} />
+                </svg>
+                Essential
+              </span>
+              <span class="stat-value">${this._pct(essential)}</span>
+              <span class="stat-duration ${this._durationClass(essentialSupply)}"
+                >Lasts ${this._formatHours(essentialSupply)}</span
+              >
+            </div>
+            ${completeness != null
+              ? html`
+                  <div class="stat">
+                    <span class="stat-label">
+                      <svg
+                        class="stat-icon"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path fill="currentColor" d=${MDI_CLIPBOARD_CHECK} />
+                      </svg>
+                      Completeness
+                    </span>
+                    <span class="stat-value">${this._pct(completeness)}</span>
+                  </div>
+                `
+              : nothing}
           </div>
 
           <div class="attention" role="group" aria-label="Attention filters">
@@ -655,6 +708,7 @@ export class ReadyHomePanel extends LitElement {
       </div>
 
       ${this._dialogOpen ? this._renderDialog() : nothing}
+      ${this._templateOpen ? this._renderTemplateDialog() : nothing}
     `;
   }
 
@@ -1290,6 +1344,99 @@ export class ReadyHomePanel extends LitElement {
       contents_unit: "",
       calories_per_content: "",
     };
+  }
+
+  private _openTemplates = async () => {
+    if (!this.hass) return;
+    this._templateBusy = true;
+    this._error = "";
+    try {
+      this._templates = await listKitTemplates(this.hass);
+      this._templateOpen = true;
+    } catch (err) {
+      this._error = formatHassError(err);
+    } finally {
+      this._templateBusy = false;
+    }
+  };
+
+  private _closeTemplates = () => {
+    this._templateOpen = false;
+  };
+
+  private async _applyTemplate(templateId: string) {
+    if (!this.hass || this._templateBusy) return;
+    this._templateBusy = true;
+    this._error = "";
+    try {
+      await this.hass.callService("ready_home", "apply_kit_template", {
+        template_id: templateId,
+      });
+      this._templateOpen = false;
+    } catch (err) {
+      this._error = formatHassError(err);
+    } finally {
+      this._templateBusy = false;
+    }
+  }
+
+  private _renderTemplateDialog() {
+    return html`
+      <div
+        class="dialog-backdrop"
+        @click=${(e: Event) => {
+          if (e.target === e.currentTarget) this._closeTemplates();
+        }}
+      >
+        <div
+          class="dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Add from template"
+        >
+          <div class="dialog-header">
+            <h2>Add from template</h2>
+            <button
+              type="button"
+              class="icon-btn"
+              aria-label="Close"
+              @click=${this._closeTemplates}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d=${MDI_CLOSE} />
+              </svg>
+            </button>
+          </div>
+          <p class="field-hint">
+            Existing item names are skipped (case-insensitive).
+          </p>
+          <div class="template-list">
+            ${this._templates.map(
+              (tpl) => html`
+                <div class="template-card">
+                  <div class="template-card-body">
+                    <strong>${tpl.name}</strong>
+                    <p>${tpl.description}</p>
+                    <span class="item-count">${tpl.item_count} items</span>
+                  </div>
+                  ${this._mdButton("Apply template", {
+                    variant: "filled",
+                    disabled: this._templateBusy,
+                    onClick: () => void this._applyTemplate(tpl.id),
+                  })}
+                </div>
+              `,
+            )}
+          </div>
+          <div class="dialog-actions">
+            ${this._mdButton("Close", {
+              variant: "text",
+              onClick: this._closeTemplates,
+            })}
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   private _openAdd = () => {
@@ -2059,6 +2206,29 @@ export class ReadyHomePanel extends LitElement {
       font-size: 0.75rem;
       margin-top: 4px;
       line-height: 1.35;
+    }
+    .template-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .template-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--divider-color, #e0e0e0);
+      border-radius: 8px;
+    }
+    .template-card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .template-card-body p {
+      margin: 0;
+      color: var(--secondary-text-color);
+      font-size: 0.9rem;
     }
     .dialog-actions {
       display: flex;

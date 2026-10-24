@@ -32,6 +32,8 @@ CONF_EXPIRING_DAYS: Final = "expiring_days"
 CONF_URGENT_DAYS: Final = "urgent_days"
 
 ATTR_CONFIG_ENTRY_ID: Final = "config_entry_id"
+ATTR_CATEGORIES: Final = "categories"
+ATTR_MISSING: Final = "missing"
 
 # Defaults (match Ready Home App)
 DEFAULT_PROFILE_NAME: Final = "Ready Home"
@@ -86,6 +88,14 @@ ATTR_DURATION_HOURS: Final = "duration_hours"
 ATTR_UNMEASURABLE_WATER: Final = "unmeasurable_water_count"
 ATTR_UNMEASURABLE_FOOD: Final = "unmeasurable_food_count"
 ATTR_NEEDS_PEOPLE_COUNT: Final = "needs_people_count"
+ATTR_ESSENTIAL_WATER_ON_HAND: Final = "essential_water_on_hand"
+ATTR_ESSENTIAL_WATER_PERCENT: Final = "essential_water_percent"
+ATTR_ESSENTIAL_FOOD_ON_HAND: Final = "essential_food_on_hand"
+ATTR_ESSENTIAL_FOOD_PERCENT: Final = "essential_food_percent"
+ATTR_ESSENTIAL_OVERALL_PERCENT: Final = "essential_overall_percent"
+ATTR_ESSENTIAL_SUPPLY_HOURS: Final = "essential_supply_hours"
+ATTR_ESSENTIAL_WATER_SUPPLY_HOURS: Final = "essential_water_supply_hours"
+ATTR_ESSENTIAL_FOOD_SUPPLY_HOURS: Final = "essential_food_supply_hours"
 
 # Companion unit attributes (HA cannot attach UoM to attributes)
 ATTR_WATER_ON_HAND_UNIT: Final = "water_on_hand_unit"

@@ -11,6 +11,7 @@ from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .attention import AttentionBuckets, build_buckets, event_item_summary, item_summary
+from .completeness import assess_category_completeness
 from .const import (
     ATTRIBUTE_ITEM_CAP,
     DOMAIN,
@@ -18,7 +19,12 @@ from .const import (
     EVENT_ITEM_EXPIRING,
     EVENT_ITEM_LOW_STOCK,
 )
-from .models import InventoryItem, ReadinessAssessment, ReadinessSettings
+from .models import (
+    CategoryCompleteness,
+    InventoryItem,
+    ReadinessAssessment,
+    ReadinessSettings,
+)
 from .readiness import assess
 from .store import InventoryStore
 
@@ -35,11 +41,13 @@ class ReadyHomeData:
         settings: ReadinessSettings,
         assessment: ReadinessAssessment,
         buckets: AttentionBuckets,
+        completeness: CategoryCompleteness,
     ) -> None:
         self.items = items
         self.settings = settings
         self.assessment = assessment
         self.buckets = buckets
+        self.completeness = completeness
 
 
 class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
@@ -121,12 +129,14 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
             urgent_days=self.settings.urgent_days,
             expiring_days=self.settings.expiring_days,
         )
+        completeness = assess_category_completeness(items, self.settings, today)
         await self._async_fire_transition_events(buckets)
         return ReadyHomeData(
             items=items,
             settings=self.settings,
             assessment=assessment,
             buckets=buckets,
+            completeness=completeness,
         )
 
     async def _async_fire_transition_events(self, buckets: AttentionBuckets) -> None:
