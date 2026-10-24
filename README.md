@@ -1,7 +1,7 @@
 # Ready Home for Home Assistant
 
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=for-the-badge&logo=homeassistantcommunitystore&logoColor=white)](https://hacs.xyz/)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.12%2B-41BDF5?style=for-the-badge&logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
+[![HACS / Marketplace](https://img.shields.io/badge/HACS-Marketplace-41BDF5?style=for-the-badge&logo=homeassistantcommunitystore&logoColor=white)](https://www.hacs.xyz/docs/marketplace/)
 [![GitHub Release](https://img.shields.io/github/v/release/tempi-marathon/ha-ready-home?style=for-the-badge&include_prereleases&logo=github&logoColor=white)](https://github.com/tempi-marathon/ha-ready-home/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 [![Security Policy](https://img.shields.io/badge/Security-Policy-green?style=for-the-badge&logo=github&logoColor=white)](SECURITY.md)
@@ -41,16 +41,25 @@ Track household emergency supplies, measure readiness against water and calorie 
 
 ## Install
 
-[![Open Ready Home on Home Assistant Community Store (HACS).](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=tempi-marathon&repository=ha-ready-home&category=integration)
+### Home Assistant 2026.11+ (Marketplace)
 
-From Home Assistant 2026.11, install and updates use **Settings → Marketplace** (the HACS button above still works and opens Ready Home there after you upgrade).
+[![Open Ready Home in the Home Assistant Marketplace.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=tempi-marathon&repository=ha-ready-home&category=integration)
 
-1. Open HACS → search for **Ready Home**, or use the button above (custom repository if needed)
-2. Download **Ready Home**, restart Home Assistant
-3. Settings → Devices & Services → Add Integration → **Ready Home**, or use the button below
+1. Settings → **Marketplace** → search for **Ready Home**, or use the button above (custom repository if needed)
+2. Download **Ready Home** (restart if Home Assistant asks)
+3. Settings → Devices & Services → Add Integration → **Ready Home**, or use the setup button below
 4. Enter the number of people in the household
 
 [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=ready_home)
+
+### Home Assistant 2026.10 and older (HACS)
+
+[![Open Ready Home on Home Assistant Community Store (HACS).](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=tempi-marathon&repository=ha-ready-home&category=integration)
+
+1. Open HACS → search for **Ready Home**, or use the button above (custom repository if needed)
+2. Download **Ready Home**, restart Home Assistant
+3. Settings → Devices & Services → Add Integration → **Ready Home**, or use the setup button above
+4. Enter the number of people in the household
 
 Full guide: [1. Installation](docs/01-installation.md) · [2. Configuration](docs/02-configuration.md) · [3. Usage](docs/03-usage.md)
 
