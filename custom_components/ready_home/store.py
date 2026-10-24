@@ -171,6 +171,21 @@ class InventoryStore:
         if item is None:
             return None
         self._bucket_state.pop(item_id, None)
+        self._bucket_state.pop(f"{item_id}:low_stock", None)
+        self._schedule_save()
+        await self._notify_listeners()
+        return item
+
+    async def async_clear(self) -> None:
+        """Remove all inventory items and attention bucket state."""
+        self._items = {}
+        self._bucket_state = {}
+        self._schedule_save()
+        await self._notify_listeners()
+
+    async def async_upsert(self, item: InventoryItem) -> InventoryItem:
+        """Insert or replace an item by id and persist."""
+        self._items[item.id] = item
         self._schedule_save()
         await self._notify_listeners()
         return item

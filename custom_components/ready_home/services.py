@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import logging
 import math
-from datetime import date
+from dataclasses import replace
+from datetime import UTC, date, datetime
 from typing import Any
 
 import voluptuous as vol
@@ -15,7 +16,12 @@ from homeassistant.helpers import config_validation as cv
 from .attention import expiry_severity, item_summary
 from .auth import async_require_admin_or_automation
 from .barcode import is_valid_barcode, lookup_product
-from .const import ATTR_CONFIG_ENTRY_ID, DOMAIN, MAX_INVENTORY_ITEMS
+from .const import (
+    ATTR_CONFIG_ENTRY_ID,
+    DOMAIN,
+    EXPORT_FORMAT_VERSION,
+    MAX_INVENTORY_ITEMS,
+)
 from .helpers import entry_id_from_call_data, get_coordinator
 from .kit_templates import get_kit_template, list_kit_templates
 from .models import (
@@ -36,6 +42,8 @@ SERVICE_LIST_ITEMS = "list_items"
 SERVICE_LOOKUP_BARCODE = "lookup_barcode"
 SERVICE_APPLY_KIT_TEMPLATE = "apply_kit_template"
 SERVICE_PUSH_RESTOCK_LIST = "push_restock_list"
+SERVICE_EXPORT_INVENTORY = "export_inventory"
+SERVICE_IMPORT_INVENTORY = "import_inventory"
 
 ATTR_ITEM_ID = "item_id"
 ATTR_NAME = "name"
@@ -58,6 +66,8 @@ ATTR_STATUS = "status"
 ATTR_READINESS = "readiness"
 ATTR_TEMPLATE_ID = "template_id"
 ATTR_ENTITY_ID = "entity_id"
+ATTR_MODE = "mode"
+ATTR_ITEMS = "items"
 
 _MAX_NUMERIC = 1e9
 _MAX_NAME = 200
@@ -261,6 +271,20 @@ APPLY_KIT_SCHEMA = vol.Schema(
 PUSH_RESTOCK_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_ENTITY_ID): cv.entity_id,
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+    }
+)
+
+EXPORT_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+    }
+)
+
+IMPORT_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_MODE): vol.In(["merge", "replace"]),
+        vol.Required(ATTR_ITEMS): [dict],
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
     }
 )
@@ -481,6 +505,78 @@ def async_register_services(hass: HomeAssistant) -> None:
         low_stock = [i for i in coordinator.store.items if i.is_low_stock()]
         return await async_push_items_to_todo(hass, entity_id, low_stock)
 
+    async def handle_export(call: ServiceCall) -> dict[str, Any]:
+        await async_require_admin_or_automation(hass, call.context.user_id)
+        data = EXPORT_SCHEMA(dict(call.data))
+        coordinator = get_coordinator(
+            hass, config_entry_id=entry_id_from_call_data(data)
+        )
+        return {
+            "version": EXPORT_FORMAT_VERSION,
+            "exported_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
+            "items": [item.to_dict() for item in coordinator.store.items],
+        }
+
+    async def handle_import(call: ServiceCall) -> dict[str, Any]:
+        await async_require_admin_or_automation(hass, call.context.user_id)
+        data = IMPORT_SCHEMA(dict(call.data))
+        coordinator = get_coordinator(
+            hass, config_entry_id=entry_id_from_call_data(data)
+        )
+        mode = data[ATTR_MODE]
+        raw_items = data[ATTR_ITEMS]
+        if len(raw_items) > MAX_INVENTORY_ITEMS:
+            raise ServiceValidationError(
+                f"Import has {len(raw_items)} items; max is {MAX_INVENTORY_ITEMS}"
+            )
+
+        parsed: list[InventoryItem] = []
+        for index, raw in enumerate(raw_items):
+            try:
+                parsed.append(InventoryItem.from_dict(raw).with_synced_derived())
+            except (KeyError, TypeError, ValueError) as err:
+                raise ServiceValidationError(
+                    f"Invalid item at index {index}: {err}"
+                ) from err
+
+        if mode == "replace":
+            await coordinator.store.async_clear()
+            for item in parsed:
+                await coordinator.store.async_add(item)
+            return {
+                "mode": mode,
+                "imported": len(parsed),
+                "updated": 0,
+                "added": len(parsed),
+            }
+
+        # merge: upsert by id, else by unique case-insensitive name
+        updated = 0
+        added = 0
+        for item in parsed:
+            existing = coordinator.store.get(item.id)
+            if existing is not None:
+                await coordinator.store.async_update(item)
+                updated += 1
+                continue
+            by_name = coordinator.store.find_by_name(item.name)
+            if by_name is not None:
+                await coordinator.store.async_update(replace(item, id=by_name.id))
+                updated += 1
+                continue
+            if len(coordinator.store.items) >= MAX_INVENTORY_ITEMS:
+                raise ServiceValidationError(
+                    f"Inventory is full (max {MAX_INVENTORY_ITEMS} items)"
+                )
+            await coordinator.store.async_add(item)
+            added += 1
+        return {
+            "mode": mode,
+            "imported": len(parsed),
+            "updated": updated,
+            "added": added,
+        }
+
     hass.services.async_register(
         DOMAIN,
         SERVICE_ADD_ITEM,
@@ -537,6 +633,20 @@ def async_register_services(hass: HomeAssistant) -> None:
         schema=PUSH_RESTOCK_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_EXPORT_INVENTORY,
+        handle_export,
+        schema=EXPORT_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_IMPORT_INVENTORY,
+        handle_import,
+        schema=IMPORT_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
 
 
 def async_unregister_services(hass: HomeAssistant) -> None:
@@ -550,6 +660,8 @@ def async_unregister_services(hass: HomeAssistant) -> None:
         SERVICE_LOOKUP_BARCODE,
         SERVICE_APPLY_KIT_TEMPLATE,
         SERVICE_PUSH_RESTOCK_LIST,
+        SERVICE_EXPORT_INVENTORY,
+        SERVICE_IMPORT_INVENTORY,
     ):
         if hass.services.has_service(DOMAIN, service):
             hass.services.async_remove(DOMAIN, service)

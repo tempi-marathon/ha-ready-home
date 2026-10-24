@@ -71,21 +71,6 @@ export interface KitTemplateDto {
   }>;
 }
 
-export interface KitTemplateDto {
-  id: string;
-  name: string;
-  description: string;
-  item_count: number;
-  items: Array<{
-    name: string;
-    category: string;
-    desired_quantity: number;
-    quantity: number;
-    priority: string;
-    unit: string;
-  }>;
-}
-
 export async function listItems(hass: HomeAssistant): Promise<Snapshot> {
   return hass.connection.sendMessagePromise<Snapshot>({
     type: "ready_home/items/list",
