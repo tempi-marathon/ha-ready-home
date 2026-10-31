@@ -5,6 +5,7 @@
 [![GitHub Release](https://img.shields.io/github/v/release/tempi-marathon/ha-ready-home?style=for-the-badge&include_prereleases&logo=github&logoColor=white)](https://github.com/tempi-marathon/ha-ready-home/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 [![Security Policy](https://img.shields.io/badge/Security-Policy-green?style=for-the-badge&logo=github&logoColor=white)](SECURITY.md)
+[![Buy me a coffee](https://img.shields.io/badge/Donate-Buy%20me%20a%20coffee-red?style=for-the-badge&logo=kofi)]([https://www.buymeacoffee.com/clooos](https://ko-fi.com/tempi_marathon/tip))
 
 Track household emergency supplies, measure readiness against water and calorie targets, and surface expired, expiring, and low-stock items as Home Assistant sensors, events, and a sidebar management panel.
 
@@ -64,6 +65,10 @@ Full guide: [1. Installation](docs/01-installation.md) · [2. Configuration](doc
 5. [Sensors and events](docs/05-sensors-and-events.md)
 6. [Automations](docs/06-automations.md)
 7. [Readiness math](docs/07-readiness.md)
+
+## Donate
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Z6A229BZSN)
 
 ## License
 
