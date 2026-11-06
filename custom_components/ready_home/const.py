@@ -88,6 +88,14 @@ DEFAULT_EXPIRING_DAYS: Final = 30
 DEFAULT_URGENT_DAYS: Final = 7
 # Cap item lists on expired/expiring/low-stock sensor attributes (HA state size)
 ATTRIBUTE_ITEM_CAP: Final = 100
+
+# Sensor keys (unique id suffixes) removed in a later release; their registry
+# entries are deleted on setup so they do not linger as "unavailable".
+RETIRED_SENSOR_KEYS: Final = (
+    "essential_readiness",
+    "essential_water_readiness",
+    "essential_food_readiness",
+)
 # Hard ceiling on inventory size (authenticated DoS guard)
 MAX_INVENTORY_ITEMS: Final = 2000
 # Minimum seconds between Open Food Facts lookups per user / connection
@@ -147,14 +155,6 @@ ATTR_AGE_CATEGORIES: Final = "age_categories"
 ATTR_UNMEASURABLE_WATER: Final = "unmeasurable_water_count"
 ATTR_UNMEASURABLE_FOOD: Final = "unmeasurable_food_count"
 ATTR_NEEDS_PEOPLE_COUNT: Final = "needs_people_count"
-ATTR_ESSENTIAL_WATER_ON_HAND: Final = "essential_water_on_hand"
-ATTR_ESSENTIAL_WATER_PERCENT: Final = "essential_water_percent"
-ATTR_ESSENTIAL_FOOD_ON_HAND: Final = "essential_food_on_hand"
-ATTR_ESSENTIAL_FOOD_PERCENT: Final = "essential_food_percent"
-ATTR_ESSENTIAL_OVERALL_PERCENT: Final = "essential_overall_percent"
-ATTR_ESSENTIAL_SUPPLY_HOURS: Final = "essential_supply_hours"
-ATTR_ESSENTIAL_WATER_SUPPLY_HOURS: Final = "essential_water_supply_hours"
-ATTR_ESSENTIAL_FOOD_SUPPLY_HOURS: Final = "essential_food_supply_hours"
 
 # Companion unit attributes (HA cannot attach UoM to attributes)
 ATTR_WATER_ON_HAND_UNIT: Final = "water_on_hand_unit"

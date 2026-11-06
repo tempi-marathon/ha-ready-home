@@ -233,18 +233,6 @@ def test_pet_food_excludes_expired_and_counts_unmeasurable() -> None:
     assert result.unmeasurable_pet_food_count == 1
 
 
-def test_pet_food_essential_variant() -> None:
-    items = [
-        _kibble(300, priority=InventoryPriority.ESSENTIAL),
-        _kibble(600, priority=InventoryPriority.OPTIONAL),
-    ]
-    result = assess(items, _pet_settings(), TODAY)
-    assert result.pet_food_on_hand == 900.0
-    assert result.essential_pet_food_on_hand == 300.0
-    assert result.essential_pet_food_percent == pytest.approx(25.0)
-    assert result.essential_pet_food_supply_hours == pytest.approx(18.0)
-
-
 def test_overall_includes_pet_food_only_when_target_positive() -> None:
     water = InventoryItem(
         name="W", quantity=100, unit=InventoryUnit.LITER, category="Water"
@@ -255,7 +243,6 @@ def test_overall_includes_pet_food_only_when_target_positive() -> None:
     assert with_pets.food_percent == 100.0
     assert with_pets.overall_percent == pytest.approx(25.0)
     assert with_pets.supply_hours == pytest.approx(18.0)
-    assert with_pets.essential_overall_percent == 0.0
 
     no_pets = assess([water, food], _pet_settings(pets=()), TODAY)
     assert no_pets.pet_food_target == 0.0
@@ -290,8 +277,7 @@ def test_pet_food_attr_dict() -> None:
     assert attrs["pet_food_on_hand_unit"] == "g"
     assert attrs["pet_food_target"] == pytest.approx(1200.0)
     assert attrs["pet_food_supply_hours_unit"] == "h"
-    essential = pet_food_attr_dict(result, essential=True)
-    assert essential["pet_food_percent"] == pytest.approx(50.0)
+    assert attrs["pet_food_percent"] == pytest.approx(50.0)
 
 
 # ---------------------------------------------------------------- category mapping
@@ -506,7 +492,8 @@ def test_assessment_dict_includes_pet_fields() -> None:
     assert result["pet_food_on_hand"] == 600.0
     assert result["pet_food_target"] == pytest.approx(1200.0)
     assert result["pet_food_percent"] == pytest.approx(50.0)
-    assert {"essential_pet_food_on_hand", "unmeasurable_pet_food_count"} <= set(result)
+    assert "unmeasurable_pet_food_count" in result
+    assert not any(key.startswith("essential_") for key in result)
 
 
 def test_snapshot_buckets_carry_pet_food_grams() -> None:

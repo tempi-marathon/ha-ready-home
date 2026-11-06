@@ -56,13 +56,12 @@ def test_assessment_dict_keys() -> None:
     assert result["water_percent"] == 50.0
     assert result["unmeasurable_food_count"] == 1
     assert result["needs_people_count"] is False
-    assert result["essential_overall_percent"] == 0.0
+    assert not any(key.startswith("essential_") for key in result)
     assert set(result) >= {
         "water_on_hand",
         "food_on_hand",
         "overall_percent",
         "supply_hours",
-        "essential_overall_percent",
     }
 
 

@@ -9,12 +9,30 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 
-from .const import CONF_NAME, DEFAULT_PROFILE_NAME, DOMAIN, VERSION, storage_key_for_entry
+from .const import (
+    CONF_NAME,
+    DEFAULT_PROFILE_NAME,
+    DOMAIN,
+    RETIRED_SENSOR_KEYS,
+    VERSION,
+    storage_key_for_entry,
+)
 
 if TYPE_CHECKING:
     from .coordinator import ReadyHomeCoordinator
 
 _GENERIC_PROFILES = frozenset({"home", "ready home"})
+
+
+def remove_retired_sensors(registry: Any, entry_id: str) -> list[str]:
+    """Remove registry entries of sensors that no longer exist; return their ids."""
+    removed: list[str] = []
+    for key in RETIRED_SENSOR_KEYS:
+        entity_id = registry.async_get_entity_id("sensor", DOMAIN, f"{entry_id}_{key}")
+        if entity_id:
+            registry.async_remove(entity_id)
+            removed.append(entity_id)
+    return removed
 
 
 def profile_name(entry: ConfigEntry) -> str:

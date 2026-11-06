@@ -237,16 +237,6 @@ LEGACY_ASSESSMENT: dict[str, Any] = {
     "supply_hours": 26.666666666666664,
     "unmeasurable_water_count": 0,
     "unmeasurable_food_count": 0,
-    "essential_water_on_hand": 10.0,
-    "essential_water_percent": 37.03703703703704,
-    "essential_food_on_hand": 7000.0,
-    "essential_food_percent": 38.88888888888889,
-    "essential_overall_percent": 37.03703703703704,
-    "essential_water_supply_hours": 26.666666666666664,
-    "essential_food_supply_hours": 28.0,
-    "essential_supply_hours": 26.666666666666664,
-    "essential_unmeasurable_water_count": 0,
-    "essential_unmeasurable_food_count": 0,
 }
 
 # (category, percent, complete, total, missing) for the completeness categories
