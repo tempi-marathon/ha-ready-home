@@ -15,9 +15,9 @@ Track household emergency supplies, measure readiness against water and calorie 
 ## Features
 
 - **Inventory** — Items with quantity, desired quantity, expiry, priority, location, and category
-- **Readiness** — Water (liters) and food (calories) on-hand vs per-person targets over a configurable duration (default 72 hours), plus **essential-only** readiness
+- **Readiness** — Water (liters) and food (calories) on-hand vs per-person targets over a configurable duration (default 72 hours)
 - **Category completeness** — Checklist scoring for non–food/water categories; kit templates seed first-aid / go-bag / tools
-- **Sensors** — Overall / water / food / essential readiness %, category completeness, expired / expiring / low-stock counts, needs-attention binary sensor
+- **Sensors** — Overall / water / food readiness %, category completeness, expired / expiring / low-stock counts, needs-attention binary sensor
 - **Actions** — Inventory CRUD, barcode lookup, kit templates, restock → todo list, import/export
 - **Events** — Enter and clear transitions for expired / expiring / low stock
 - **Sidebar** — Ready Home panel (en/nl) for inventory management

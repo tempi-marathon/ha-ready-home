@@ -66,9 +66,6 @@ const MDI_WATER =
 /** mdi:food — food readiness. */
 const MDI_FOOD =
   "M18.06 23H19.72C20.56 23 21.25 22.35 21.35 21.53L23 5.05H18V1H16.03V5.05H11.06L11.36 7.39C13.07 7.86 14.67 8.71 15.63 9.65C17.07 11.07 18.06 12.54 18.06 14.94V23M1 22V21H16.03V22C16.03 22.54 15.58 23 15 23H2C1.45 23 1 22.54 1 22M16.03 15C16.03 7 1 7 1 15H16.03M1 17H16V19H1V17Z";
-/** mdi:shield-star — essential readiness. */
-const MDI_SHIELD_STAR =
-  "M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M14.94,15.54L12,13.75L9.06,15.54L9.87,12.19L7.24,9.95L10.68,9.67L12,6.5L13.32,9.67L16.76,9.95L14.13,12.19L14.94,15.54Z";
 /** mdi:clipboard-check — category completeness. */
 const MDI_CLIPBOARD_CHECK =
   "M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3Z";
@@ -107,6 +104,7 @@ export class ReadyHomePanel extends LitElement {
   @state() private _saving = false;
   @state() private _scanning = false;
   @state() private _pendingRemoveIds: string[] = [];
+  @state() private _completenessOpen = false;
   @state() private _templateOpen = false;
   @state() private _templates: KitTemplateDto[] = [];
   @state() private _templateBusy = false;
@@ -264,8 +262,8 @@ export class ReadyHomePanel extends LitElement {
     return itemStatus(item, this._snapshot?.buckets);
   }
 
-  private _t(key: string): string {
-    return t(this.hass, key);
+  private _t(key: string, vars?: Record<string, string | number>): string {
+    return t(this.hass, key, vars);
   }
 
   private _statusLabel(status: string): string {
@@ -416,8 +414,6 @@ export class ReadyHomePanel extends LitElement {
     const overall = a.overall_percent;
     const water = a.water_percent;
     const food = a.food_percent;
-    const essential = a.essential_overall_percent;
-    const essentialSupply = a.essential_supply_hours;
     const completeness = this._completenessPercent();
     const counts = this._bucketCounts;
     const supply = a.supply_hours;
@@ -536,21 +532,15 @@ export class ReadyHomePanel extends LitElement {
                 >${this._formatHours(foodSupply)}</span
               >
             </div>
-            <div class="stat ${this._statToneClass(essentialSupply)}">
-              <span class="stat-label">
-                <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="currentColor" d=${MDI_SHIELD_STAR} />
-                </svg>
-                ${this._t("stat.essential")}
-              </span>
-              <span class="stat-value">${this._pct(essential)}</span>
-              <span class="stat-duration ${this._durationClass(essentialSupply)}"
-                >${this._formatHours(essentialSupply)}</span
-              >
-            </div>
             ${completeness != null
               ? html`
-                  <div class="stat">
+                  <button
+                    type="button"
+                    class="stat stat-button"
+                    aria-haspopup="dialog"
+                    aria-label=${this._t("completeness.open")}
+                    @click=${this._openCompleteness}
+                  >
                     <span class="stat-label">
                       <svg
                         class="stat-icon"
@@ -562,7 +552,7 @@ export class ReadyHomePanel extends LitElement {
                       ${this._t("stat.completeness")}
                     </span>
                     <span class="stat-value">${this._pct(completeness)}</span>
-                  </div>
+                  </button>
                 `
               : nothing}
           </div>
@@ -723,6 +713,7 @@ export class ReadyHomePanel extends LitElement {
       </div>
 
       ${this._dialogOpen ? this._renderDialog() : nothing}
+      ${this._completenessOpen ? this._renderCompletenessDialog() : nothing}
       ${this._templateOpen ? this._renderTemplateDialog() : nothing}
     `;
   }
@@ -1378,6 +1369,105 @@ export class ReadyHomePanel extends LitElement {
     }
   };
 
+  private _openCompleteness = () => {
+    this._completenessOpen = true;
+  };
+
+  private _closeCompleteness = () => {
+    this._completenessOpen = false;
+    void this.updateComplete.then(() =>
+      this.shadowRoot?.querySelector<HTMLElement>(".stat-button")?.focus(),
+    );
+  };
+
+  private _renderCompletenessDialog() {
+    const completeness = this._snapshot?.completeness;
+    const categories = Object.entries(completeness?.categories ?? {});
+    const overall = this._completenessPercent();
+    const title = this._t("completeness.title");
+    const allComplete = categories.every(([, c]) => c.missing.length === 0);
+    return html`
+      <div
+        class="dialog-backdrop"
+        @click=${(e: Event) => {
+          if (e.target === e.currentTarget) this._closeCompleteness();
+        }}
+      >
+        <div
+          class="dialog completeness-dialog ${this.narrow ? "dialog-narrow" : ""}"
+          role="dialog"
+          aria-modal="true"
+          aria-label=${title}
+        >
+          <div class="dialog-header">
+            <h2>${title}</h2>
+            <button
+              type="button"
+              class="icon-btn dialog-close"
+              aria-label=${this._t("action.close")}
+              @click=${this._closeCompleteness}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d=${MDI_CLOSE} />
+              </svg>
+            </button>
+          </div>
+          <div class="completeness-overall">
+            ${this._t("completeness.overall")}:
+            <strong>${this._pct(overall)}</strong>
+          </div>
+          ${allComplete
+            ? html`<p class="completeness-all">
+                ${this._t("completeness.all_complete")}
+              </p>`
+            : nothing}
+          ${categories.map(
+            ([name, c]) => html`
+              <section class="completeness-category">
+                <div class="completeness-category-head">
+                  <span class="completeness-category-name">${name}</span>
+                  <span class="completeness-category-score">
+                    ${c.complete}/${c.total} · ${this._pct(c.percent)}
+                    ${c.missing.length === 0
+                      ? html`<span
+                          class="completeness-check"
+                          title=${this._t("completeness.category_complete")}
+                          aria-label=${this._t("completeness.category_complete")}
+                          >✓</span
+                        >`
+                      : nothing}
+                  </span>
+                </div>
+                ${c.missing.length > 0
+                  ? html`<ul class="completeness-missing">
+                      ${c.missing.map(
+                        (m) => html`
+                          <li>
+                            <span class="completeness-item-name">${m.name}</span>
+                            <span
+                              class="completeness-reason ${m.expired
+                                ? "completeness-reason-expired"
+                                : ""}"
+                              >${m.expired
+                                ? this._t("completeness.expired")
+                                : this._t("completeness.stock", {
+                                    quantity: m.quantity,
+                                    desired: m.desired_quantity,
+                                  })}</span
+                            >
+                          </li>
+                        `,
+                      )}
+                    </ul>`
+                  : nothing}
+              </section>
+            `,
+          )}
+        </div>
+      </div>
+    `;
+  }
+
   private _closeTemplates = () => {
     this._templateOpen = false;
   };
@@ -1529,7 +1619,13 @@ export class ReadyHomePanel extends LitElement {
   };
 
   private _onWindowKeyDown = (e: KeyboardEvent) => {
-    if (e.key !== "Escape" || !this._dialogOpen) return;
+    if (e.key !== "Escape") return;
+    if (this._completenessOpen) {
+      e.preventDefault();
+      this._closeCompleteness();
+      return;
+    }
+    if (!this._dialogOpen) return;
     e.preventDefault();
     this._closeDialog();
   };
@@ -1800,6 +1896,58 @@ export class ReadyHomePanel extends LitElement {
     }
     .stat.stat-bad {
       border-left-color: var(--error-color, #c62828);
+    }
+    button.stat-button {
+      font: inherit;
+      color: inherit;
+      text-align: left;
+      border-top: none;
+      border-right: none;
+      border-bottom: none;
+      cursor: pointer;
+    }
+    button.stat-button:hover {
+      background: var(--secondary-background-color, rgba(0, 0, 0, 0.04));
+    }
+    button.stat-button:focus-visible {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+    .completeness-overall {
+      font-size: 1.1rem;
+    }
+    .completeness-category-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-weight: 500;
+    }
+    .completeness-check {
+      color: var(--rh-ready-color);
+      margin-left: 6px;
+    }
+    .completeness-missing {
+      list-style: none;
+      margin: 6px 0 0;
+      padding: 0 0 0 12px;
+    }
+    .completeness-missing li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--divider-color);
+    }
+    .completeness-item-name {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .completeness-reason {
+      flex-shrink: 0;
+      color: var(--secondary-text-color);
+    }
+    .completeness-reason-expired {
+      color: var(--error-color, #c62828);
     }
     .stat-label {
       display: flex;

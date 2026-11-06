@@ -7,7 +7,6 @@ Ready Home exposes entities such as:
 | Entity (object id) | Platform | State | Useful attributes |
 |--------------------|----------|-------|-------------------|
 | `readiness` / `water_readiness` / `food_readiness` | sensor | % ready | people, duration, on-hand / target totals |
-| `essential_readiness` / `essential_water_readiness` / `essential_food_readiness` | sensor | % ready from **essential** priority items only | same targets as overall; optional/important stock excluded |
 | `category_completeness` | sensor | average % for non–food/water checklist categories | `categories` — per-category percent / complete / total / missing names |
 | `expired_items` | sensor | count | `items` — capped list of item summaries |
 | `expiring_items` | sensor | urgent + expiring count | `items`, `urgent_count`, `urgent_items` |

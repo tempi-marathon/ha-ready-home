@@ -6,7 +6,7 @@ After [installation](01-installation.md), open **Ready Home** in the Home Assist
 
 The panel shows:
 
-- Readiness cards (overall, water, food, essential) and category completeness when checklist items exist
+- Readiness cards (overall, water, food) and a category completeness card when checklist items exist. Select the completeness card to see, per category, which items are missing and why (`2 of 5` in stock, or `expired`). It always covers the whole household, whatever inventory filter is active
 - Filters for expired, expiring, and low-stock items
 - Search, sort, and filters
 - Full inventory list with edit / remove
