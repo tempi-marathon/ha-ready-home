@@ -1,6 +1,6 @@
 /** Per-category household needs, derived from the settings payload. */
 
-import type { AgeCategoryDto, SettingsDto } from "./api";
+import type { AgeCategoryDto, PetDto, SettingsDto } from "./api";
 
 export interface HouseholdRow {
   key: string;
@@ -11,11 +11,35 @@ export interface HouseholdRow {
   waterSubtotal: number;
 }
 
+export interface PetRow {
+  id: string;
+  name: string;
+  type: string;
+  foodPerDay: number;
+  waterPerDay: number;
+}
+
 export interface Household {
   rows: HouseholdRow[];
+  /** Pets from the settings payload; empty for older backends. */
+  pets: PetRow[];
   dailyCalories: number;
+  /** People and pets together, matching the water target. */
   dailyWater: number;
+  dailyPetWater: number;
+  /** Pet food in grams per day; separate from human kcal. */
+  dailyPetFood: number;
   days: number;
+}
+
+function toPetRow(p: PetDto): PetRow {
+  return {
+    id: p.id,
+    name: p.name,
+    type: p.type ?? "",
+    foodPerDay: p.food_grams_per_day,
+    waterPerDay: p.water_liters_per_day,
+  };
 }
 
 function toRow(c: AgeCategoryDto): HouseholdRow {
@@ -53,10 +77,15 @@ export function householdFromSettings(
           ];
   const rows = categories.map(toRow);
   if (rows.reduce((sum, r) => sum + r.count, 0) <= 0) return null;
+  const pets = (settings.pets ?? []).map(toPetRow);
+  const dailyPetWater = pets.reduce((sum, p) => sum + p.waterPerDay, 0);
   return {
     rows,
+    pets,
     dailyCalories: rows.reduce((sum, r) => sum + r.caloriesSubtotal, 0),
-    dailyWater: rows.reduce((sum, r) => sum + r.waterSubtotal, 0),
+    dailyWater: rows.reduce((sum, r) => sum + r.waterSubtotal, 0) + dailyPetWater,
+    dailyPetWater,
+    dailyPetFood: pets.reduce((sum, p) => sum + p.foodPerDay, 0),
     days: settings.duration_hours / 24,
   };
 }

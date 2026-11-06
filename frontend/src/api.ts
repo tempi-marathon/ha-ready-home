@@ -58,6 +58,27 @@ export interface SettingsDto {
   age_categories?: AgeCategoryDto[];
   daily_calories?: number | null;
   daily_water_liters?: number | null;
+  /** Added with pets; absent when the backend is older than the panel. */
+  pets?: PetDto[];
+  pet_food_categories?: string[];
+  daily_pet_food_grams?: number;
+  daily_pet_water_liters?: number;
+  target_breakdown?: TargetBreakdownDto;
+}
+
+export interface PetDto {
+  id: string;
+  name: string;
+  type?: string;
+  food_grams_per_day: number;
+  water_liters_per_day: number;
+}
+
+/** Per-group target subtotals over the full duration (no UI yet). */
+export interface TargetBreakdownDto {
+  water_liters: { age_categories: Record<string, number>; pets: Record<string, number> };
+  food_calories: { age_categories: Record<string, number> };
+  pet_food_grams: { pets: Record<string, number> };
 }
 
 export interface AgeCategoryDto {

@@ -26,6 +26,7 @@
         "menu_options": {
           "profile": "Profile",
           "targets": "Readiness targets",
+          "pets": "Pets",
           "lists": "Locations and categories",
           "thresholds": "Thresholds",
           "restock": "Restock"
@@ -57,18 +58,62 @@
         },
         "description": "People per age category and their daily needs. Defaults follow Voedingscentrum.nl (light activity) and can be changed. Totals are the sum over all categories."
       },
+      "pets": {
+        "title": "Pets",
+        "description": "Pets add their daily water to the household water target and their daily food to a separate pet food target (grams). Add as many as you like.",
+        "menu_options": {
+          "pet_add": "Add a pet",
+          "pet_edit": "Edit a pet",
+          "pet_remove": "Remove a pet",
+          "init": "Back"
+        }
+      },
+      "pet_add": {
+        "title": "Add a pet",
+        "description": "Enter what this pet needs per day.",
+        "data": {
+          "name": "Name",
+          "type": "Type (optional, e.g. dog)",
+          "food_grams_per_day": "Food per day (grams)",
+          "water_liters_per_day": "Water per day (liters)"
+        }
+      },
+      "pet_edit": {
+        "title": "Edit a pet",
+        "data": {
+          "pet": "Pet"
+        }
+      },
+      "pet_edit_form": {
+        "title": "Edit pet",
+        "data": {
+          "name": "Name",
+          "type": "Type (optional, e.g. dog)",
+          "food_grams_per_day": "Food per day (grams)",
+          "water_liters_per_day": "Water per day (liters)"
+        }
+      },
+      "pet_remove": {
+        "title": "Remove a pet",
+        "description": "The pet no longer counts toward the targets.",
+        "data": {
+          "pet": "Pet"
+        }
+      },
       "lists": {
         "title": "Locations and categories",
-        "description": "Categories label items. Food and water category lists decide which categories count toward readiness. A category cannot be both food and water.",
+        "description": "Categories label items. Food, water and pet food category lists decide which categories count toward readiness. A category can only be one of food, water or pet food.",
         "data": {
           "locations": "Storage locations",
           "categories": "Categories",
           "food_categories": "Food categories",
-          "water_categories": "Water categories"
+          "water_categories": "Water categories",
+          "pet_food_categories": "Pet food categories"
         },
         "data_description": {
           "food_categories": "Items in these categories count toward food readiness (calories).",
-          "water_categories": "Items in these categories count toward water readiness (liters)."
+          "water_categories": "Items in these categories count toward water readiness (liters).",
+          "pet_food_categories": "Items in these categories count toward pet food readiness (grams)."
         }
       },
       "thresholds": {
@@ -89,8 +134,11 @@
     },
     "error": {
       "invalid_name": "Enter a profile name",
-      "category_overlap": "A category cannot be both food and water",
-      "invalid_people": "Enter at least one person"
+      "category_overlap": "A category can only be food, water or pet food",
+      "invalid_people": "Enter at least one person",
+      "invalid_pet_name": "Enter a pet name",
+      "invalid_pet_amount": "Enter food and water amounts of 0 or more",
+      "unknown_pet": "That pet no longer exists"
     }
   },
   "entity": {

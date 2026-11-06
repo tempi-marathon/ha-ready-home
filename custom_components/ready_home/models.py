@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field, replace
 from datetime import UTC, date, datetime
 from enum import StrEnum
@@ -96,6 +98,15 @@ def contents_to_liters(amount: float, unit: ContentsUnit) -> float | None:
     return None
 
 
+def contents_to_grams(amount: float, unit: ContentsUnit) -> float | None:
+    """Convert a contents amount to grams, or None if not mass."""
+    if unit == ContentsUnit.GRAM:
+        return amount
+    if unit == ContentsUnit.KILOGRAM:
+        return amount * 1000.0
+    return None
+
+
 def derive_liters_per_unit(
     contents_per_unit: float | None,
     contents_unit: ContentsUnit | None,
@@ -179,6 +190,25 @@ class InventoryItem:
             return float(self.quantity) / 1000.0
         if self.liters_per_unit is not None:
             return float(self.quantity) * float(self.liters_per_unit)
+        return None
+
+    def pet_food_grams_on_hand(self) -> float | None:
+        """Grams from current stock, or None if unmeasurable.
+
+        Callers must decide whether the item counts as pet food (category mapping).
+        """
+        if self.contents_per_unit is not None and self.contents_unit is not None:
+            grams_each = contents_to_grams(
+                float(self.contents_per_unit), self.contents_unit
+            )
+            if grams_each is not None:
+                return float(self.quantity) * grams_each
+
+        # Legacy: quantity stored directly in mass units
+        if self.unit == InventoryUnit.GRAM:
+            return float(self.quantity)
+        if self.unit == InventoryUnit.KILOGRAM:
+            return float(self.quantity) * 1000.0
         return None
 
     def calories_on_hand(self) -> float | None:
@@ -293,6 +323,59 @@ class AgeCategoryTarget:
     water_liters_per_day: float
 
 
+@dataclass(frozen=True, slots=True)
+class PetTarget:
+    """One pet and its daily food (g) and water (L) needs."""
+
+    id: str
+    name: str
+    type: str
+    food_grams_per_day: float
+    water_liters_per_day: float
+
+
+def _pet_amount(raw: Any) -> float | None:
+    """A finite, non-negative number, or None when missing or invalid."""
+    if raw is None or isinstance(raw, bool):
+        return None
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(value) or value < 0:
+        return None
+    return value
+
+
+def pets_from_options(raw: Any) -> tuple[PetTarget, ...]:
+    """Read the stored pet list; a missing list means no pets.
+
+    Entries that are malformed (not a mapping, no name, missing/negative/non-numeric
+    amounts) are skipped. A pet stored without an ``id`` gets ``pet-<index>``.
+    """
+    if not isinstance(raw, (list, tuple)):
+        return ()
+    pets: list[PetTarget] = []
+    for index, entry in enumerate(raw):
+        if not isinstance(entry, Mapping):
+            continue
+        name = str(entry.get("name") or "").strip()
+        food = _pet_amount(entry.get("food_grams_per_day"))
+        water = _pet_amount(entry.get("water_liters_per_day"))
+        if not name or food is None or water is None:
+            continue
+        pets.append(
+            PetTarget(
+                id=str(entry.get("id") or "").strip() or f"pet-{index}",
+                name=name,
+                type=str(entry.get("type") or "").strip(),
+                food_grams_per_day=food,
+                water_liters_per_day=water,
+            )
+        )
+    return tuple(pets)
+
+
 def _count(raw: Any) -> int:
     try:
         return max(0, int(raw))
@@ -325,6 +408,10 @@ class ReadinessSettings:
     auto_push_restock: bool = False
     # None = legacy household: number_of_people adults at the per-person values above.
     age_categories: tuple[AgeCategoryTarget, ...] | None = None
+    # Missing in options (installs that predate pets) reads as no pets and no
+    # pet food categories, so existing behavior is unchanged.
+    pets: tuple[PetTarget, ...] = ()
+    pet_food_categories: tuple[str, ...] = ()
 
     @classmethod
     def from_options(cls, options: dict[str, Any]) -> ReadinessSettings:
@@ -380,6 +467,8 @@ class ReadinessSettings:
             todo_entity_id=todo_entity_id,
             auto_push_restock=bool(options.get("auto_push_restock", False)),
             age_categories=age_categories,
+            pets=pets_from_options(options.get("pets")),
+            pet_food_categories=tuple(options.get("pet_food_categories") or ()),
         )
 
     def is_food_category(self, category: str) -> bool:
@@ -396,12 +485,25 @@ class ReadinessSettings:
             return False
         return any(_norm_cat(c) == key for c in self.water_categories)
 
+    def is_pet_food_category(self, category: str) -> bool:
+        """True when category is mapped to pet food readiness."""
+        key = _norm_cat(category)
+        if not key:
+            return False
+        return any(_norm_cat(c) == key for c in self.pet_food_categories)
+
     def readiness_kind(self, category: str) -> str:
-        """Return food, water, or none for a category name."""
+        """Return water, food, pet_food, or none for a category name.
+
+        A category listed more than once never double counts: water wins over
+        food, and food wins over pet food.
+        """
         if self.is_water_category(category):
             return "water"
         if self.is_food_category(category):
             return "food"
+        if self.is_pet_food_category(category):
+            return "pet_food"
         return "none"
 
     def category_targets(self) -> tuple[AgeCategoryTarget, ...]:
@@ -432,13 +534,22 @@ class ReadinessSettings:
             return None
         return float(sum(c.count * c.calories_per_day for c in self.category_targets()))
 
+    def daily_pet_water_liters(self) -> float:
+        """Liters of water the pets need per day."""
+        return float(sum(p.water_liters_per_day for p in self.pets))
+
+    def daily_pet_food_grams(self) -> float:
+        """Grams of pet food the pets need per day."""
+        return float(sum(p.food_grams_per_day for p in self.pets))
+
     def daily_water_liters(self) -> float | None:
-        """Liters of water the household needs per day."""
+        """Liters of water the household (people and pets) needs per day."""
         if self.number_of_people is None:
             return None
-        return float(
+        people = float(
             sum(c.count * c.water_liters_per_day for c in self.category_targets())
         )
+        return people + self.daily_pet_water_liters()
 
     def household_attributes(self) -> dict[str, Any]:
         """Household breakdown exposed as people-sensor attributes."""
@@ -457,6 +568,39 @@ class ReadinessSettings:
         """Total food calories needed for the configured duration."""
         daily = self.daily_calories()
         return None if daily is None else daily * self.duration_hours / 24.0
+
+    def pet_food_target_grams(self) -> float | None:
+        """Total pet food grams needed for the configured duration."""
+        if self.number_of_people is None:
+            return None
+        return self.daily_pet_food_grams() * self.duration_hours / 24.0
+
+    def target_breakdown(self) -> dict[str, dict[str, dict[str, float]]]:
+        """Per-group subtotals over the full duration; they sum to the targets."""
+        if self.number_of_people is None:
+            return {
+                "water_liters": {"age_categories": {}, "pets": {}},
+                "food_calories": {"age_categories": {}},
+                "pet_food_grams": {"pets": {}},
+            }
+        days = self.duration_hours / 24.0
+        targets = self.category_targets()
+        return {
+            "water_liters": {
+                "age_categories": {
+                    c.key: c.count * c.water_liters_per_day * days for c in targets
+                },
+                "pets": {p.id: p.water_liters_per_day * days for p in self.pets},
+            },
+            "food_calories": {
+                "age_categories": {
+                    c.key: c.count * c.calories_per_day * days for c in targets
+                },
+            },
+            "pet_food_grams": {
+                "pets": {p.id: p.food_grams_per_day * days for p in self.pets},
+            },
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -488,6 +632,16 @@ class ReadinessAssessment:
     essential_supply_hours: float | None = None
     essential_unmeasurable_water_count: int = 0
     essential_unmeasurable_food_count: int = 0
+    # Pet food (grams); separate from human food (kcal)
+    pet_food_on_hand: float = 0.0
+    pet_food_target: float | None = None
+    pet_food_percent: float = 0.0
+    pet_food_supply_hours: float | None = None
+    unmeasurable_pet_food_count: int = 0
+    essential_pet_food_on_hand: float = 0.0
+    essential_pet_food_percent: float = 0.0
+    essential_pet_food_supply_hours: float | None = None
+    essential_unmeasurable_pet_food_count: int = 0
 
 
 @dataclass(frozen=True, slots=True)

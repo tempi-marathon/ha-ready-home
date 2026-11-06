@@ -3,6 +3,7 @@ import type { InventoryItemDto, SettingsDto, Snapshot } from "./api";
 import {
   filterAndSortItems,
   formatItemMeasure,
+  itemGramsOnHand,
   itemStatus,
   measurePayload,
   readinessKind,
@@ -52,6 +53,111 @@ describe("readinessKind", () => {
     expect(readinessKind("Medical", settings)).toBe("none");
     expect(readinessKind("", settings)).toBe("none");
     expect(readinessKind("Food", null)).toBe("none");
+  });
+});
+
+describe("readinessKind with pet food", () => {
+  const withPets: SettingsDto = { ...settings, pet_food_categories: ["Pet food"] };
+
+  it("maps the pet food category case-insensitively", () => {
+    expect(readinessKind("pet FOOD", withPets)).toBe("pet_food");
+    expect(readinessKind("Food", withPets)).toBe("food");
+  });
+
+  it("keeps water and food ahead of pet food when a name is listed twice", () => {
+    const both: SettingsDto = { ...settings, pet_food_categories: ["Food", "Water", "Treats"] };
+    expect(readinessKind("Food", both)).toBe("food");
+    expect(readinessKind("Water", both)).toBe("water");
+    expect(readinessKind("Treats", both)).toBe("pet_food");
+  });
+
+  it("reads a response without pet_food_categories as unmapped", () => {
+    expect(readinessKind("Pet food", settings)).toBe("none");
+  });
+});
+
+describe("pet food measures", () => {
+  it("shows grams, converting kilograms", () => {
+    const grams = item({
+      id: "g", name: "Kibble", quantity: 2, contents_per_unit: 500, contents_unit: "gram",
+    });
+    const kg = item({
+      id: "k", name: "Bag", quantity: 2, contents_per_unit: 1.5, contents_unit: "kilogram",
+    });
+    const legacy = item({ id: "l", name: "Loose", quantity: 3, unit: "kilogram" });
+    const liquid = item({
+      id: "m", name: "Milk", quantity: 1, contents_per_unit: 1, contents_unit: "liter",
+    });
+    expect(formatItemMeasure(grams, "pet_food")).toBe("1000 g");
+    expect(formatItemMeasure(kg, "pet_food")).toBe("3000 g");
+    expect(formatItemMeasure(legacy, "pet_food")).toBe("3000 g");
+    expect(formatItemMeasure(liquid, "pet_food")).toBe("");
+    expect(itemGramsOnHand(item({ id: "x", name: "?" }))).toBeNull();
+  });
+
+  it("requires gram or kilogram contents and no calories", () => {
+    expect(
+      validateMeasureFields("pet_food", {
+        contents_per_unit: "",
+        contents_unit: "",
+        calories_per_content: "",
+      }),
+    ).toEqual({
+      contents_per_unit: expect.any(String),
+      contents_unit: expect.any(String),
+    });
+    expect(
+      validateMeasureFields("pet_food", {
+        contents_per_unit: "2",
+        contents_unit: "liter",
+        calories_per_content: "",
+      }),
+    ).toEqual({ contents_unit: expect.any(String) });
+    expect(
+      validateMeasureFields("pet_food", {
+        contents_per_unit: "2",
+        contents_unit: "kilogram",
+        calories_per_content: "",
+      }),
+    ).toEqual({});
+  });
+
+  it("saves contents and clears calories, and hides the calories field", () => {
+    expect(
+      measurePayload("pet_food", {
+        contents_per_unit: "2",
+        contents_unit: "kilogram",
+        calories_per_content: "3",
+      }),
+    ).toEqual({
+      contents_per_unit: 2,
+      contents_unit: "kilogram",
+      calories_per_content: null,
+      calories_per_unit: null,
+    });
+    expect(showCaloriesField("pet_food")).toBe(false);
+  });
+
+  it("filters the list by pet food", () => {
+    const withPets: SettingsDto = { ...settings, pet_food_categories: ["Pet food"] };
+    const items = [
+      item({ id: "1", name: "Kibble", category: "Pet food" }),
+      item({ id: "2", name: "Rice", category: "Food" }),
+    ];
+    const result = filterAndSortItems(
+      items,
+      emptyBuckets,
+      withPets,
+      {
+        search: "",
+        filterStatus: "all",
+        filterLocation: "",
+        filterCategory: "",
+        filterReadiness: "pet_food",
+        sort: "name",
+      },
+    );
+    expect(result.map((i) => i.id)).toEqual(["1"]);
   });
 });
 

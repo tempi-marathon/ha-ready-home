@@ -21,7 +21,7 @@ Suggested entity ids depend on your device name, e.g. `sensor.ready_home_expired
 
 ![Home Assistant sensors](images/ha-sensors.png)
 
-Diagnostic attributes (people, duration, targets, totals) are also available on the device. The people sensor additionally has `age_categories` (people per category), `daily_calories` and `daily_water_liters`:
+Diagnostic attributes (people, duration, targets, totals) are also available on the device. The people sensor additionally has `age_categories` (people per category), `daily_calories`, `daily_water_liters` (people and pets) and `pet_count`. The readiness and food sensors (and their essential variants) also carry `pet_food_on_hand`, `pet_food_target`, `pet_food_percent` and `pet_food_supply_hours` with `pet_food_*_unit` companions (`g`, `h`):
 
 ![Diagnostics](images/ha-diagnostics.png)
 
@@ -53,7 +53,7 @@ Each entry is an **item summary** (same shape as `list_items` responses). Lists 
 | `priority` | `essential` / `important` / `optional` |
 | `expiry_date` | ISO `YYYY-MM-DD` or `null` |
 
-**Optional** (only when set / computable): `contents_per_unit`, `contents_unit`, `calories_per_content`, `calories_per_unit`, `calories_on_hand`, `liters_per_unit`, `water_liters_on_hand`.
+**Optional** (only when set / computable): `contents_per_unit`, `contents_unit`, `calories_per_content`, `calories_per_unit`, `calories_on_hand`, `liters_per_unit`, `water_liters_on_hand`, and `pet_food_grams_on_hand` (only for items in a pet food category).
 
 `expiring_items` puts urgent items first in `items`, and also exposes `urgent_items` (urgent-only) plus `urgent_count`.
 

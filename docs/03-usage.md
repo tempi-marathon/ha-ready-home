@@ -20,7 +20,7 @@ The panel shows:
 
 Use **Add item** (or **Edit** on a row). You can set quantity, desired quantity, location, category, priority, package contents (liters/calories), and expiry.
 
-Contents and calories are required for categories mapped to food or water (those count toward readiness). For other categories they are optional and do not affect readiness scores.
+Contents and calories are required for categories mapped to food, and contents for water; for pet food (grams or kilograms) contents are required and calories are not asked. These count toward readiness. For other categories they are optional and do not affect readiness scores.
 
 ![Add item](images/panel-add-item.png)
 

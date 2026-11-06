@@ -18,6 +18,7 @@ from .const import ATTR_CONFIG_ENTRY_ID, DOMAIN
 from .coordinator import ReadyHomeCoordinator, ReadyHomeData
 from .helpers import get_coordinator
 from .kit_templates import get_kit_template, list_kit_templates, template_items_dicts
+from .models import ReadinessSettings
 from .services import required_barcode
 
 _LOGGER = logging.getLogger(__name__)
@@ -58,6 +59,15 @@ def _assessment_dict(data: ReadyHomeData) -> dict[str, Any]:
         "essential_supply_hours": a.essential_supply_hours,
         "essential_unmeasurable_water_count": a.essential_unmeasurable_water_count,
         "essential_unmeasurable_food_count": a.essential_unmeasurable_food_count,
+        "pet_food_on_hand": a.pet_food_on_hand,
+        "pet_food_target": a.pet_food_target,
+        "pet_food_percent": a.pet_food_percent,
+        "pet_food_supply_hours": a.pet_food_supply_hours,
+        "unmeasurable_pet_food_count": a.unmeasurable_pet_food_count,
+        "essential_pet_food_on_hand": a.essential_pet_food_on_hand,
+        "essential_pet_food_percent": a.essential_pet_food_percent,
+        "essential_pet_food_supply_hours": a.essential_pet_food_supply_hours,
+        "essential_unmeasurable_pet_food_count": a.essential_unmeasurable_pet_food_count,
     }
 
 
@@ -65,13 +75,15 @@ def _completeness_dict(data: ReadyHomeData) -> dict[str, Any]:
     return completeness_attr_dict(data.completeness)
 
 
-def _buckets_dict(data: ReadyHomeData) -> dict[str, Any]:
+def _buckets_dict(
+    data: ReadyHomeData, settings: ReadinessSettings
+) -> dict[str, Any]:
     b = data.buckets
     return {
-        "expired": [item_summary(i) for i in b.expired],
-        "within_urgent": [item_summary(i) for i in b.within_urgent],
-        "within_expiring": [item_summary(i) for i in b.within_expiring],
-        "low_stock": [item_summary(i) for i in b.low_stock],
+        "expired": [item_summary(i, settings) for i in b.expired],
+        "within_urgent": [item_summary(i, settings) for i in b.within_urgent],
+        "within_expiring": [item_summary(i, settings) for i in b.within_expiring],
+        "low_stock": [item_summary(i, settings) for i in b.low_stock],
     }
 
 
@@ -88,7 +100,7 @@ def _snapshot(coordinator: ReadyHomeCoordinator) -> dict[str, Any]:
     return {
         "items": [item.to_dict() for item in data.items],
         "assessment": _assessment_dict(data),
-        "buckets": _buckets_dict(data),
+        "buckets": _buckets_dict(data, coordinator.settings),
         "completeness": _completeness_dict(data),
         "settings": _settings_dict(coordinator),
     }
@@ -114,7 +126,7 @@ def _snapshot_from_store(coordinator: ReadyHomeCoordinator) -> dict[str, Any]:
     return {
         "items": items,
         "assessment": _assessment_dict(data),
-        "buckets": _buckets_dict(data),
+        "buckets": _buckets_dict(data, coordinator.settings),
         "completeness": _completeness_dict(data),
         "settings": _settings_dict(coordinator),
     }
@@ -146,6 +158,20 @@ def _settings_dict(coordinator: ReadyHomeCoordinator) -> dict[str, Any]:
         ],
         "daily_calories": s.daily_calories(),
         "daily_water_liters": s.daily_water_liters(),
+        "pets": [
+            {
+                "id": p.id,
+                "name": p.name,
+                "type": p.type,
+                "food_grams_per_day": p.food_grams_per_day,
+                "water_liters_per_day": p.water_liters_per_day,
+            }
+            for p in s.pets
+        ],
+        "pet_food_categories": list(s.pet_food_categories),
+        "daily_pet_food_grams": s.daily_pet_food_grams(),
+        "daily_pet_water_liters": s.daily_pet_water_liters(),
+        "target_breakdown": s.target_breakdown(),
     }
 
 
