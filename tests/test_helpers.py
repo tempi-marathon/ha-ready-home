@@ -14,6 +14,7 @@ from custom_components.ready_home.helpers import (
     entry_id_from_call_data,
     get_coordinator,
     profile_name,
+    remove_retired_sensors,
 )
 
 
@@ -94,3 +95,25 @@ def test_get_coordinator_not_setup() -> None:
 )
 def test_entry_id_from_call_data(data: dict, expected: str | None) -> None:
     assert entry_id_from_call_data(data) == expected
+
+
+def test_remove_retired_sensors_removes_only_existing_essential_entities() -> None:
+    known = {
+        f"abc_{key}": f"sensor.{key}"
+        for key in (
+            "essential_readiness",
+            "essential_food_readiness",
+            "readiness",
+        )
+    }
+    registry = MagicMock()
+    registry.async_get_entity_id.side_effect = (
+        lambda domain, platform, uid: known.get(uid)
+    )
+    removed = remove_retired_sensors(registry, "abc")
+    assert removed == ["sensor.essential_readiness", "sensor.essential_food_readiness"]
+    assert [c.args[0] for c in registry.async_remove.call_args_list] == removed
+    registry.async_get_entity_id.assert_any_call(
+        "sensor", DOMAIN, "abc_essential_water_readiness"
+    )
+    assert remove_retired_sensors(MagicMock(async_get_entity_id=lambda *a: None), "abc") == []

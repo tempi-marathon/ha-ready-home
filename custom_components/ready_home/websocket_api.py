@@ -13,7 +13,7 @@ from homeassistant.exceptions import HomeAssistantError, Unauthorized
 from .attention import item_summary
 from .auth import async_require_admin_or_automation
 from .barcode import lookup_product
-from .completeness import completeness_attr_dict
+from .completeness import completeness_ws_dict
 from .const import ATTR_CONFIG_ENTRY_ID, DOMAIN
 from .coordinator import ReadyHomeCoordinator, ReadyHomeData
 from .helpers import get_coordinator
@@ -49,30 +49,16 @@ def _assessment_dict(data: ReadyHomeData) -> dict[str, Any]:
         "supply_hours": a.supply_hours,
         "unmeasurable_water_count": a.unmeasurable_water_count,
         "unmeasurable_food_count": a.unmeasurable_food_count,
-        "essential_water_on_hand": a.essential_water_on_hand,
-        "essential_water_percent": a.essential_water_percent,
-        "essential_food_on_hand": a.essential_food_on_hand,
-        "essential_food_percent": a.essential_food_percent,
-        "essential_overall_percent": a.essential_overall_percent,
-        "essential_water_supply_hours": a.essential_water_supply_hours,
-        "essential_food_supply_hours": a.essential_food_supply_hours,
-        "essential_supply_hours": a.essential_supply_hours,
-        "essential_unmeasurable_water_count": a.essential_unmeasurable_water_count,
-        "essential_unmeasurable_food_count": a.essential_unmeasurable_food_count,
         "pet_food_on_hand": a.pet_food_on_hand,
         "pet_food_target": a.pet_food_target,
         "pet_food_percent": a.pet_food_percent,
         "pet_food_supply_hours": a.pet_food_supply_hours,
         "unmeasurable_pet_food_count": a.unmeasurable_pet_food_count,
-        "essential_pet_food_on_hand": a.essential_pet_food_on_hand,
-        "essential_pet_food_percent": a.essential_pet_food_percent,
-        "essential_pet_food_supply_hours": a.essential_pet_food_supply_hours,
-        "essential_unmeasurable_pet_food_count": a.essential_unmeasurable_pet_food_count,
     }
 
 
 def _completeness_dict(data: ReadyHomeData) -> dict[str, Any]:
-    return completeness_attr_dict(data.completeness)
+    return completeness_ws_dict(data.completeness)
 
 
 def _buckets_dict(
