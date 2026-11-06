@@ -9,6 +9,11 @@ on:
         description: Release tag (e.g. v0.1.15)
         required: true
         type: string
+      ref:
+        description: Branch, tag or commit SHA to build from (default main)
+        required: false
+        default: main
+        type: string
 
 permissions:
   contents: write
@@ -29,7 +34,7 @@ jobs:
           set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             TAG="${{ inputs.tag }}"
-            REF="main"
+            REF="${{ inputs.ref }}"
           else
             TAG="${{ github.event.release.tag_name }}"
             REF="${{ github.event.release.target_commitish }}"
