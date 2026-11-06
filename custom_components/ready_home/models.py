@@ -384,17 +384,17 @@ class ReadinessAssessment:
     supply_hours: float | None
     unmeasurable_water_count: int = 0
     unmeasurable_food_count: int = 0
-    # Essential-priority subset (same targets; optional stock excluded)
-    essential_water_on_hand: float = 0.0
-    essential_water_percent: float = 0.0
-    essential_food_on_hand: float = 0.0
-    essential_food_percent: float = 0.0
-    essential_overall_percent: float = 0.0
-    essential_water_supply_hours: float | None = None
-    essential_food_supply_hours: float | None = None
-    essential_supply_hours: float | None = None
-    essential_unmeasurable_water_count: int = 0
-    essential_unmeasurable_food_count: int = 0
+
+
+@dataclass(frozen=True, slots=True)
+class MissingItem:
+    """One item that keeps a category below 100% (expired or under-stocked)."""
+
+    id: str
+    name: str
+    quantity: float
+    desired_quantity: float
+    expired: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -406,6 +406,7 @@ class CategoryScore:
     complete: int
     total: int
     missing: tuple[str, ...]  # item names not meeting desired / expired
+    missing_items: tuple[MissingItem, ...] = ()  # same items with reasons
 
 
 @dataclass(frozen=True, slots=True)

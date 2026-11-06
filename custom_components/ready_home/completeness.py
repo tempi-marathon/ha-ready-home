@@ -9,6 +9,7 @@ from .models import (
     CategoryCompleteness,
     CategoryScore,
     InventoryItem,
+    MissingItem,
     ReadinessSettings,
 )
 
@@ -65,6 +66,7 @@ def assess_category_completeness(
             continue
         complete = 0
         missing_names: list[str] = []
+        missing_items: list[MissingItem] = []
         for item in eligible:
             if not item.is_expired(today) and float(item.quantity) >= float(
                 item.desired_quantity
@@ -72,6 +74,15 @@ def assess_category_completeness(
                 complete += 1
             else:
                 missing_names.append(item.name)
+                missing_items.append(
+                    MissingItem(
+                        id=item.id,
+                        name=item.name,
+                        quantity=float(item.quantity),
+                        desired_quantity=float(item.desired_quantity),
+                        expired=item.is_expired(today),
+                    )
+                )
         total = len(eligible)
         percent = (complete / total) * 100.0 if total else 0.0
         scores.append(
@@ -81,6 +92,7 @@ def assess_category_completeness(
                 complete=complete,
                 total=total,
                 missing=tuple(missing_names),
+                missing_items=tuple(missing_items),
             )
         )
 
@@ -94,7 +106,7 @@ def assess_category_completeness(
 def completeness_attr_dict(
     completeness: CategoryCompleteness,
 ) -> dict[str, object]:
-    """Serialize completeness for sensor attributes / websocket."""
+    """Serialize completeness for sensor attributes (names only, capped)."""
     categories: dict[str, object] = {}
     for score in completeness.categories:
         missing_cap = list(score.missing[:ATTRIBUTE_ITEM_CAP])
@@ -112,3 +124,24 @@ def completeness_attr_dict(
         ),
         "categories": categories,
     }
+
+
+def completeness_ws_dict(
+    completeness: CategoryCompleteness,
+) -> dict[str, object]:
+    """Serialize completeness for the websocket: uncapped missing items with reasons."""
+    payload = completeness_attr_dict(completeness)
+    categories = payload["categories"]
+    assert isinstance(categories, dict)
+    for score in completeness.categories:
+        categories[score.category]["missing"] = [  # type: ignore[index]
+            {
+                "id": m.id,
+                "name": m.name,
+                "quantity": m.quantity,
+                "desired_quantity": m.desired_quantity,
+                "expired": m.expired,
+            }
+            for m in score.missing_items
+        ]
+    return payload

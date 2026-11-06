@@ -10,6 +10,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfTime, UnitOfVolume
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -19,14 +20,6 @@ from .const import (
     ATTR_CATEGORIES,
     ATTR_DURATION_HOURS,
     ATTR_DURATION_HOURS_UNIT,
-    ATTR_ESSENTIAL_FOOD_ON_HAND,
-    ATTR_ESSENTIAL_FOOD_PERCENT,
-    ATTR_ESSENTIAL_FOOD_SUPPLY_HOURS,
-    ATTR_ESSENTIAL_OVERALL_PERCENT,
-    ATTR_ESSENTIAL_SUPPLY_HOURS,
-    ATTR_ESSENTIAL_WATER_ON_HAND,
-    ATTR_ESSENTIAL_WATER_PERCENT,
-    ATTR_ESSENTIAL_WATER_SUPPLY_HOURS,
     ATTR_FOOD_ON_HAND,
     ATTR_FOOD_ON_HAND_UNIT,
     ATTR_FOOD_PERCENT,
@@ -54,7 +47,7 @@ from .const import (
     UNIT_LITERS,
 )
 from .coordinator import ReadyHomeCoordinator
-from .helpers import device_info_for_entry
+from .helpers import device_info_for_entry, remove_retired_sensors
 
 
 async def async_setup_entry(
@@ -64,14 +57,12 @@ async def async_setup_entry(
 ) -> None:
     """Set up Ready Home sensors."""
     coordinator: ReadyHomeCoordinator = hass.data[DOMAIN][entry.entry_id]
+    remove_retired_sensors(er.async_get(hass), entry.entry_id)
     async_add_entities(
         [
             ReadinessSensor(coordinator, entry),
             WaterReadinessSensor(coordinator, entry),
             FoodReadinessSensor(coordinator, entry),
-            EssentialReadinessSensor(coordinator, entry),
-            EssentialWaterReadinessSensor(coordinator, entry),
-            EssentialFoodReadinessSensor(coordinator, entry),
             CategoryCompletenessSensor(coordinator, entry),
             ExpiredItemsSensor(coordinator, entry),
             ExpiringItemsSensor(coordinator, entry),
@@ -219,114 +210,6 @@ class FoodReadinessSensor(ReadyHomeSensorBase):
             ATTR_FOOD_SUPPLY_HOURS: a.food_supply_hours,
             ATTR_FOOD_SUPPLY_HOURS_UNIT: UNIT_HOURS,
             ATTR_UNMEASURABLE_FOOD: a.unmeasurable_food_count,
-        }
-
-
-class EssentialReadinessSensor(ReadyHomeSensorBase):
-    """Overall readiness from essential-priority items only."""
-
-    _attr_translation_key = "essential_readiness"
-    _attr_native_unit_of_measurement = PERCENTAGE
-    _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_icon = "mdi:shield-star"
-
-    def __init__(self, coordinator: ReadyHomeCoordinator, entry: ConfigEntry) -> None:
-        super().__init__(coordinator, entry, "essential_readiness")
-
-    @property
-    def native_value(self) -> float | None:
-        data = self.coordinator.data
-        if data is None or data.assessment.needs_people_count:
-            return None
-        return round(data.assessment.essential_overall_percent, 1)
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        a = self.coordinator.data.assessment
-        return {
-            ATTR_ESSENTIAL_WATER_ON_HAND: a.essential_water_on_hand,
-            ATTR_WATER_ON_HAND_UNIT: UNIT_LITERS,
-            ATTR_WATER_TARGET: a.water_target,
-            ATTR_WATER_TARGET_UNIT: UNIT_LITERS,
-            ATTR_ESSENTIAL_WATER_PERCENT: a.essential_water_percent,
-            ATTR_ESSENTIAL_WATER_SUPPLY_HOURS: a.essential_water_supply_hours,
-            ATTR_WATER_SUPPLY_HOURS_UNIT: UNIT_HOURS,
-            ATTR_ESSENTIAL_FOOD_ON_HAND: a.essential_food_on_hand,
-            ATTR_FOOD_ON_HAND_UNIT: UNIT_KCAL,
-            ATTR_FOOD_TARGET: a.food_target,
-            ATTR_FOOD_TARGET_UNIT: UNIT_KCAL,
-            ATTR_ESSENTIAL_FOOD_PERCENT: a.essential_food_percent,
-            ATTR_ESSENTIAL_FOOD_SUPPLY_HOURS: a.essential_food_supply_hours,
-            ATTR_FOOD_SUPPLY_HOURS_UNIT: UNIT_HOURS,
-            ATTR_ESSENTIAL_SUPPLY_HOURS: a.essential_supply_hours,
-            ATTR_SUPPLY_HOURS_UNIT: UNIT_HOURS,
-            ATTR_ESSENTIAL_OVERALL_PERCENT: a.essential_overall_percent,
-            ATTR_UNMEASURABLE_WATER: a.essential_unmeasurable_water_count,
-            ATTR_UNMEASURABLE_FOOD: a.essential_unmeasurable_food_count,
-        }
-
-
-class EssentialWaterReadinessSensor(ReadyHomeSensorBase):
-    """Water readiness from essential-priority items only."""
-
-    _attr_translation_key = "essential_water_readiness"
-    _attr_native_unit_of_measurement = PERCENTAGE
-    _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_icon = "mdi:water-check"
-
-    def __init__(self, coordinator: ReadyHomeCoordinator, entry: ConfigEntry) -> None:
-        super().__init__(coordinator, entry, "essential_water_readiness")
-
-    @property
-    def native_value(self) -> float | None:
-        data = self.coordinator.data
-        if data is None or data.assessment.needs_people_count:
-            return None
-        return round(data.assessment.essential_water_percent, 1)
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        a = self.coordinator.data.assessment
-        return {
-            ATTR_ESSENTIAL_WATER_ON_HAND: a.essential_water_on_hand,
-            ATTR_WATER_ON_HAND_UNIT: UNIT_LITERS,
-            ATTR_WATER_TARGET: a.water_target,
-            ATTR_WATER_TARGET_UNIT: UNIT_LITERS,
-            ATTR_ESSENTIAL_WATER_SUPPLY_HOURS: a.essential_water_supply_hours,
-            ATTR_WATER_SUPPLY_HOURS_UNIT: UNIT_HOURS,
-            ATTR_UNMEASURABLE_WATER: a.essential_unmeasurable_water_count,
-        }
-
-
-class EssentialFoodReadinessSensor(ReadyHomeSensorBase):
-    """Food readiness from essential-priority items only."""
-
-    _attr_translation_key = "essential_food_readiness"
-    _attr_native_unit_of_measurement = PERCENTAGE
-    _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_icon = "mdi:food-apple-outline"
-
-    def __init__(self, coordinator: ReadyHomeCoordinator, entry: ConfigEntry) -> None:
-        super().__init__(coordinator, entry, "essential_food_readiness")
-
-    @property
-    def native_value(self) -> float | None:
-        data = self.coordinator.data
-        if data is None or data.assessment.needs_people_count:
-            return None
-        return round(data.assessment.essential_food_percent, 1)
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        a = self.coordinator.data.assessment
-        return {
-            ATTR_ESSENTIAL_FOOD_ON_HAND: a.essential_food_on_hand,
-            ATTR_FOOD_ON_HAND_UNIT: UNIT_KCAL,
-            ATTR_FOOD_TARGET: a.food_target,
-            ATTR_FOOD_TARGET_UNIT: UNIT_KCAL,
-            ATTR_ESSENTIAL_FOOD_SUPPLY_HOURS: a.essential_food_supply_hours,
-            ATTR_FOOD_SUPPLY_HOURS_UNIT: UNIT_HOURS,
-            ATTR_UNMEASURABLE_FOOD: a.essential_unmeasurable_food_count,
         }
 
 

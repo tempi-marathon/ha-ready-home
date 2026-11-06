@@ -34,11 +34,26 @@ export interface Snapshot {
     overall_percent: number | null;
     categories: Record<
       string,
-      { percent: number; complete: number; total: number; missing: string[] }
+      CategoryCompletenessDto
     >;
   };
   /** Present on subscribe/list pushes; optional for older clients. */
   settings?: SettingsDto;
+}
+
+export interface MissingItemDto {
+  id: string;
+  name: string;
+  quantity: number;
+  desired_quantity: number;
+  expired: boolean;
+}
+
+export interface CategoryCompletenessDto {
+  percent: number;
+  complete: number;
+  total: number;
+  missing: MissingItemDto[];
 }
 
 export interface SettingsDto {
