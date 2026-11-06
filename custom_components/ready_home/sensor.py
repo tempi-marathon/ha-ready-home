@@ -36,6 +36,7 @@ from .const import (
     ATTR_FOOD_TARGET_UNIT,
     ATTR_ITEMS,
     ATTR_NEEDS_PEOPLE_COUNT,
+    ATTR_PET_COUNT,
     ATTR_SUPPLY_HOURS,
     ATTR_SUPPLY_HOURS_UNIT,
     ATTR_UNMEASURABLE_FOOD,
@@ -55,6 +56,7 @@ from .const import (
 )
 from .coordinator import ReadyHomeCoordinator
 from .helpers import device_info_for_entry
+from .readiness import pet_food_attr_dict
 
 
 async def async_setup_entry(
@@ -155,6 +157,7 @@ class ReadinessSensor(ReadyHomeSensorBase):
             ATTR_UNMEASURABLE_WATER: a.unmeasurable_water_count,
             ATTR_UNMEASURABLE_FOOD: a.unmeasurable_food_count,
             ATTR_NEEDS_PEOPLE_COUNT: a.needs_people_count,
+            **pet_food_attr_dict(a),
         }
 
 
@@ -219,6 +222,7 @@ class FoodReadinessSensor(ReadyHomeSensorBase):
             ATTR_FOOD_SUPPLY_HOURS: a.food_supply_hours,
             ATTR_FOOD_SUPPLY_HOURS_UNIT: UNIT_HOURS,
             ATTR_UNMEASURABLE_FOOD: a.unmeasurable_food_count,
+            **pet_food_attr_dict(a),
         }
 
 
@@ -263,6 +267,7 @@ class EssentialReadinessSensor(ReadyHomeSensorBase):
             ATTR_ESSENTIAL_OVERALL_PERCENT: a.essential_overall_percent,
             ATTR_UNMEASURABLE_WATER: a.essential_unmeasurable_water_count,
             ATTR_UNMEASURABLE_FOOD: a.essential_unmeasurable_food_count,
+            **pet_food_attr_dict(a, essential=True),
         }
 
 
@@ -327,6 +332,7 @@ class EssentialFoodReadinessSensor(ReadyHomeSensorBase):
             ATTR_ESSENTIAL_FOOD_SUPPLY_HOURS: a.essential_food_supply_hours,
             ATTR_FOOD_SUPPLY_HOURS_UNIT: UNIT_HOURS,
             ATTR_UNMEASURABLE_FOOD: a.essential_unmeasurable_food_count,
+            **pet_food_attr_dict(a, essential=True),
         }
 
 
@@ -410,7 +416,10 @@ class ExpiringItemsSensor(_BucketSensor):
         urgent = self.coordinator.capped_item_dicts(b.within_urgent)
         # Fill remaining cap with non-urgent expiring
         remaining = max(0, ATTRIBUTE_ITEM_CAP - len(urgent))
-        expiring = [item_summary(i) for i in b.within_expiring[:remaining]]
+        expiring = [
+            item_summary(i, self.coordinator.settings)
+            for i in b.within_expiring[:remaining]
+        ]
         return {
             ATTR_ITEMS: urgent + expiring,
             "urgent_count": len(b.within_urgent),
@@ -473,7 +482,10 @@ class PeopleSensor(ReadyHomeSensorBase):
 
     @property
     def extra_state_attributes(self) -> dict:
-        return self.coordinator.settings.household_attributes()
+        return {
+            **self.coordinator.settings.household_attributes(),
+            ATTR_PET_COUNT: len(self.coordinator.settings.pets),
+        }
 
 
 class DurationSensor(ReadyHomeSensorBase):

@@ -300,12 +300,13 @@ list_items:
         text:
     readiness:
       name: Readiness
-      description: Filter by category mapping (food, water, or neither)
+      description: Filter by category mapping (food, water, pet food, or none)
       selector:
         select:
           options:
             - food
             - water
+            - pet_food
             - none
     status:
       name: Status

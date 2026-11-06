@@ -26,6 +26,7 @@
         "menu_options": {
           "profile": "Profiel",
           "targets": "Paraatheidsdoelen",
+          "pets": "Huisdieren",
           "lists": "Locaties en categorieën",
           "thresholds": "Drempels",
           "restock": "Aanvullen"
@@ -57,18 +58,62 @@
         },
         "description": "Personen per leeftijdscategorie en hun dagelijkse behoefte. Standaardwaarden volgen Voedingscentrum.nl (lichte activiteit) en zijn aanpasbaar. Totalen zijn de som over alle categorieën."
       },
+      "pets": {
+        "title": "Huisdieren",
+        "description": "Huisdieren tellen hun dagelijkse water mee in het watertarget van het huishouden en hun dagelijkse voer in een apart huisdiervoertarget (gram). Voeg er zoveel toe als je wilt.",
+        "menu_options": {
+          "pet_add": "Huisdier toevoegen",
+          "pet_edit": "Huisdier bewerken",
+          "pet_remove": "Huisdier verwijderen",
+          "init": "Terug"
+        }
+      },
+      "pet_add": {
+        "title": "Huisdier toevoegen",
+        "description": "Vul in wat dit huisdier per dag nodig heeft.",
+        "data": {
+          "name": "Naam",
+          "type": "Soort (optioneel, bijv. hond)",
+          "food_grams_per_day": "Voer per dag (gram)",
+          "water_liters_per_day": "Water per dag (liter)"
+        }
+      },
+      "pet_edit": {
+        "title": "Huisdier bewerken",
+        "data": {
+          "pet": "Huisdier"
+        }
+      },
+      "pet_edit_form": {
+        "title": "Huisdier bewerken",
+        "data": {
+          "name": "Naam",
+          "type": "Soort (optioneel, bijv. hond)",
+          "food_grams_per_day": "Voer per dag (gram)",
+          "water_liters_per_day": "Water per dag (liter)"
+        }
+      },
+      "pet_remove": {
+        "title": "Huisdier verwijderen",
+        "description": "Het huisdier telt niet meer mee voor de doelen.",
+        "data": {
+          "pet": "Huisdier"
+        }
+      },
       "lists": {
         "title": "Locaties en categorieën",
-        "description": "Categorieën labelen items. Voedsel- en watercategorieën bepalen welke categorieën meetellen voor paraatheid. Een categorie kan niet zowel voedsel als water zijn.",
+        "description": "Categorieën labelen items. Voedsel-, water- en huisdiervoercategorieën bepalen welke categorieën meetellen voor paraatheid. Een categorie kan maar één van voedsel, water of huisdiervoer zijn.",
         "data": {
           "locations": "Opslaglocaties",
           "categories": "Categorieën",
           "food_categories": "Voedselcategorieën",
-          "water_categories": "Watercategorieën"
+          "water_categories": "Watercategorieën",
+          "pet_food_categories": "Huisdiervoercategorieën"
         },
         "data_description": {
           "food_categories": "Items in deze categorieën tellen mee voor voedselparaatheid (calorieën).",
-          "water_categories": "Items in deze categorieën tellen mee voor waterparaatheid (liters)."
+          "water_categories": "Items in deze categorieën tellen mee voor waterparaatheid (liters).",
+          "pet_food_categories": "Items in deze categorieën tellen mee voor huisdiervoerparaatheid (gram)."
         }
       },
       "thresholds": {
@@ -89,8 +134,11 @@
     },
     "error": {
       "invalid_name": "Voer een profielnaam in",
-      "category_overlap": "Een categorie kan niet zowel voedsel als water zijn",
-      "invalid_people": "Voer minstens één persoon in"
+      "category_overlap": "Een categorie kan maar voedsel, water of huisdiervoer zijn",
+      "invalid_people": "Voer minstens één persoon in",
+      "invalid_pet_name": "Vul een naam in",
+      "invalid_pet_amount": "Vul voer en water in als 0 of meer",
+      "unknown_pet": "Dit huisdier bestaat niet meer"
     }
   },
   "entity": {

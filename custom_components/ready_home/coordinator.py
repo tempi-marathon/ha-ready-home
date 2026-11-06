@@ -170,7 +170,7 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
             )
             self.hass.bus.async_fire(
                 event_type,
-                {"item": event_item_summary(item), "bucket": bucket},
+                {"item": event_item_summary(item, self.settings), "bucket": bucket},
                 context=context,
             )
 
@@ -190,7 +190,7 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
             )
             self.hass.bus.async_fire(
                 cleared_type,
-                {"item": event_item_summary(item), "bucket": prev_bucket},
+                {"item": event_item_summary(item, self.settings), "bucket": prev_bucket},
                 context=context,
             )
 
@@ -200,7 +200,7 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
                 continue
             self.hass.bus.async_fire(
                 EVENT_ITEM_LOW_STOCK,
-                {"item": event_item_summary(item)},
+                {"item": event_item_summary(item, self.settings)},
                 context=context,
             )
             newly_low_stock.append(item)
@@ -217,7 +217,7 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
                 continue
             self.hass.bus.async_fire(
                 EVENT_ITEM_LOW_STOCK_CLEARED,
-                {"item": event_item_summary(item)},
+                {"item": event_item_summary(item, self.settings)},
                 context=context,
             )
 
@@ -247,4 +247,4 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
 
     def capped_item_dicts(self, items: list[InventoryItem]) -> list[dict[str, Any]]:
         """Return item summaries capped for sensor attributes."""
-        return [item_summary(i) for i in items[:ATTRIBUTE_ITEM_CAP]]
+        return [item_summary(i, self.settings) for i in items[:ATTRIBUTE_ITEM_CAP]]

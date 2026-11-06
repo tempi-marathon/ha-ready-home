@@ -15,7 +15,8 @@ Readiness, completeness, and attention (expired / expiring / low-stock) calculat
 side-effect-free modules (`readiness.py`, `completeness.py`, `attention.py`, `helpers.py`) that
 do not depend on a running Home Assistant instance. Any change to a formula MUST be reflected in
 `docs/07-readiness.md` in the same change. Water (liters) and food (calories) targets remain
-per-person, summed over age categories, over a configurable duration.
+per-person, summed over age categories, over a configurable duration; pets add their own daily
+water to the water target and a separate pet food target in grams.
 Rationale: the numbers drive safety-relevant decisions and must be explainable and testable.
 
 ### III. Test-Backed Changes
@@ -70,4 +71,4 @@ clarifications. Reviewers MUST verify compliance with these principles on every 
 deviation MUST be recorded and justified in the PR description. `README.md` and `docs/` serve as
 runtime guidance for contributors and users.
 
-**Version**: 1.0.1 | **Ratified**: 2026-11-06 | **Last Amended**: 2026-11-06
+**Version**: 1.0.2 | **Ratified**: 2026-11-06 | **Last Amended**: 2026-11-06

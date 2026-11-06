@@ -80,7 +80,7 @@ data:
   status: low_stock
 ```
 
-`status` may be `expired`, `expiring`, `low_stock`, or `ok`. You can also filter with `location`, `category`, and `readiness` (`food` / `water` / `none`). The response is `{ count, items }` where each item is the same summary shape used on sensors and events (see [5. Sensors and events](05-sensors-and-events.md)).
+`status` may be `expired`, `expiring`, `low_stock`, or `ok`. You can also filter with `location`, `category`, and `readiness` (`food` / `water` / `pet_food` / `none`). The response is `{ count, items }` where each item is the same summary shape used on sensors and events (see [5. Sensors and events](05-sensors-and-events.md)).
 
 ```yaml
 action: ready_home.list_items

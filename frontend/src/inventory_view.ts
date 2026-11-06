@@ -3,7 +3,7 @@
 import type { InventoryItemDto, SettingsDto, Snapshot } from "./api";
 
 export type InventorySort = "name" | "expiry" | "quantity";
-export type ReadinessKind = "food" | "water" | "none";
+export type ReadinessKind = "food" | "water" | "pet_food" | "none";
 
 export interface InventoryViewFilters {
   search: string;
@@ -40,10 +40,17 @@ export function readinessKind(
   ) {
     return "food";
   }
+  if (
+    (settings.pet_food_categories ?? []).some(
+      (c) => c.trim().toLowerCase() === key,
+    )
+  ) {
+    return "pet_food";
+  }
   return "none";
 }
 
-/** Contents fields are always shown; calories for food and unmapped (not water). */
+/** Contents fields are always shown; calories for food and unmapped (not water or pet food). */
 export function showCaloriesField(kind: ReadinessKind): boolean {
   return kind === "food" || kind === "none";
 }
@@ -81,6 +88,22 @@ export function itemLitersOnHand(item: InventoryItemDto): number | null {
   return null;
 }
 
+export function contentsToGrams(amount: number, unit: string): number | null {
+  if (unit === "gram") return amount;
+  if (unit === "kilogram") return amount * 1000;
+  return null;
+}
+
+export function itemGramsOnHand(item: InventoryItemDto): number | null {
+  if (item.contents_per_unit != null && item.contents_unit) {
+    const each = contentsToGrams(item.contents_per_unit, item.contents_unit);
+    if (each != null) return item.quantity * each;
+  }
+  if (item.unit === "gram") return item.quantity;
+  if (item.unit === "kilogram") return item.quantity * 1000;
+  return null;
+}
+
 export function itemCaloriesOnHand(item: InventoryItemDto): number | null {
   if (item.contents_per_unit != null && item.calories_per_content != null) {
     return item.quantity * item.contents_per_unit * item.calories_per_content;
@@ -91,7 +114,7 @@ export function itemCaloriesOnHand(item: InventoryItemDto): number | null {
   return null;
 }
 
-/** List-card measure text: food → kcal, water → L, unmapped → kcal and/or L when set. */
+/** List-card measure text: food → kcal, water → L, pet food → g, unmapped → kcal and/or L when set. */
 export function formatItemMeasure(
   item: InventoryItemDto,
   kind: ReadinessKind,
@@ -103,6 +126,10 @@ export function formatItemMeasure(
   if (kind === "water") {
     const liters = itemLitersOnHand(item);
     return liters == null ? "" : `${formatMeasureNumber(liters)} L`;
+  }
+  if (kind === "pet_food") {
+    const grams = itemGramsOnHand(item);
+    return grams == null ? "" : `${formatMeasureNumber(grams)} g`;
   }
   const parts: string[] = [];
   const kcal = itemCaloriesOnHand(item);
@@ -124,7 +151,7 @@ export function validateMeasureFields(
   const contents = parseDecimal(contentsRaw);
   const cal = parseDecimal(calRaw);
 
-  if (kind === "food" || kind === "water") {
+  if (kind === "food" || kind === "water" || kind === "pet_food") {
     if (contentsRaw === "" || Number.isNaN(contents) || contents <= 0) {
       errors.contents_per_unit = "Contents per unit is required";
     }
@@ -136,6 +163,12 @@ export function validateMeasureFields(
       unitRaw !== "milliliter"
     ) {
       errors.contents_unit = "Water contents must be liter or milliliter";
+    } else if (
+      kind === "pet_food" &&
+      unitRaw !== "gram" &&
+      unitRaw !== "kilogram"
+    ) {
+      errors.contents_unit = "Pet food contents must be gram or kilogram";
     }
   } else {
     // Unmapped: optional, but amount and unit must both be set if either is.
@@ -174,7 +207,7 @@ export function measurePayload(
   const unitRaw = fields.contents_unit.trim();
   const calRaw = fields.calories_per_content.trim();
 
-  if (kind === "water") {
+  if (kind === "water" || kind === "pet_food") {
     payload.contents_per_unit = parseDecimal(contentsRaw);
     payload.contents_unit = unitRaw;
     payload.calories_per_content = null;

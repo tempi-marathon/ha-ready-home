@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Any
 
-from .models import InventoryItem
+from .models import InventoryItem, ReadinessSettings
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,7 +85,22 @@ def build_buckets(
     )
 
 
-def item_summary(item: InventoryItem) -> dict[str, Any]:
+def _add_pet_food_grams(
+    summary: dict[str, Any],
+    item: InventoryItem,
+    settings: ReadinessSettings | None,
+) -> None:
+    """Add grams on hand for items in a pet food category (other items unchanged)."""
+    if settings is None or not settings.is_pet_food_category(item.category):
+        return
+    grams = item.pet_food_grams_on_hand()
+    if grams is not None:
+        summary["pet_food_grams_on_hand"] = grams
+
+
+def item_summary(
+    item: InventoryItem, settings: ReadinessSettings | None = None
+) -> dict[str, Any]:
     """Compact dict for sensor attributes and list responses.
 
     Always includes identity and stock fields. Measurable fields
@@ -120,10 +135,13 @@ def item_summary(item: InventoryItem) -> dict[str, Any]:
     liters = item.water_liters_on_hand()
     if liters is not None:
         summary["water_liters_on_hand"] = liters
+    _add_pet_food_grams(summary, item, settings)
     return summary
 
 
-def event_item_summary(item: InventoryItem) -> dict[str, Any]:
+def event_item_summary(
+    item: InventoryItem, settings: ReadinessSettings | None = None
+) -> dict[str, Any]:
     """Lean item dict for bus events (no notes/barcode — recorder privacy)."""
     summary: dict[str, Any] = {
         "id": item.id,
@@ -152,6 +170,7 @@ def event_item_summary(item: InventoryItem) -> dict[str, Any]:
     liters = item.water_liters_on_hand()
     if liters is not None:
         summary["water_liters_on_hand"] = liters
+    _add_pet_food_grams(summary, item, settings)
     return summary
 
 

@@ -43,9 +43,43 @@ describe("householdFromSettings", () => {
     expect(h.dailyCalories * h.days).toBe(152600);
   });
 
+  it("treats a response without pet fields as no pets", () => {
+    const h = householdFromSettings(BASE)!;
+    expect(h.pets).toEqual([]);
+    expect(h.dailyPetFood).toBe(0);
+    expect(h.dailyPetWater).toBe(0);
+    expect(h.dailyWater).toBe(6);
+  });
+
+  it("adds pet water to the daily water and keeps pet food separate", () => {
+    const h = householdFromSettings({
+      ...BASE,
+      pets: [
+        { id: "a", name: "Rex", type: "dog", food_grams_per_day: 400, water_liters_per_day: 0.5 },
+        { id: "b", name: "Tom", food_grams_per_day: 80, water_liters_per_day: 0.2 },
+      ],
+    })!;
+    expect(h.pets.map((p) => p.name)).toEqual(["Rex", "Tom"]);
+    expect(h.pets[1].type).toBe("");
+    expect(h.dailyPetFood).toBe(480);
+    expect(h.dailyPetWater).toBeCloseTo(0.7);
+    expect(h.dailyWater).toBeCloseTo(6.7);
+    expect(h.dailyCalories).toBe(4000);
+  });
+
   it("returns null without a household", () => {
     expect(householdFromSettings(null)).toBeNull();
     expect(householdFromSettings({ ...BASE, number_of_people: null })).toBeNull();
+  });
+
+  it("has en and nl labels for the pet strings", () => {
+    for (const key of ["stat.pet_food", "household.pets", "household.pet_food_period"]) {
+      const en = { language: "en", locale: { language: "en" } } as never;
+      const nl = { language: "nl", locale: { language: "nl" } } as never;
+      expect(t(en, key)).not.toBe(key);
+      expect(t(nl, key)).not.toBe(key);
+      expect(t(nl, key)).not.toBe(t(en, key));
+    }
   });
 
   it("has en and nl labels for every category", () => {

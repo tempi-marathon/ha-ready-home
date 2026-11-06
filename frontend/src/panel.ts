@@ -30,6 +30,7 @@ import {
   itemStatus,
   measurePayload,
   readinessKind,
+  type ReadinessKind,
   showCaloriesField,
   validateMeasureFields,
   contentsToLiters,
@@ -67,6 +68,9 @@ const MDI_WATER =
 /** mdi:food — food readiness. */
 const MDI_FOOD =
   "M18.06 23H19.72C20.56 23 21.25 22.35 21.35 21.53L23 5.05H18V1H16.03V5.05H11.06L11.36 7.39C13.07 7.86 14.67 8.71 15.63 9.65C17.07 11.07 18.06 12.54 18.06 14.94V23M1 22V21H16.03V22C16.03 22.54 15.58 23 15 23H2C1.45 23 1 22.54 1 22M16.03 15C16.03 7 1 7 1 15H16.03M1 17H16V19H1V17Z";
+/** mdi:paw — pet food readiness. */
+const MDI_PAW =
+  "M8.35,3C9.53,2.83 10.78,4.12 11.14,5.9C11.5,7.67 10.85,9.25 9.67,9.43C8.5,9.61 7.24,8.32 6.88,6.54C6.5,4.77 7.17,3.19 8.35,3M15.5,3C16.69,3.19 17.35,4.77 17,6.54C16.62,8.32 15.37,9.61 14.19,9.43C13,9.25 12.35,7.67 12.71,5.9C13.08,4.12 14.33,2.83 15.5,3M3,7.6C4.14,7.11 5.69,8 6.5,9.55C7.26,11.13 7,12.79 5.87,13.28C4.74,13.77 3.2,12.89 2.41,11.32C1.62,9.75 1.9,8.08 3,7.6M21,7.6C22.1,8.08 22.38,9.75 21.59,11.32C20.8,12.89 19.26,13.77 18.13,13.28C17,12.79 16.74,11.13 17.5,9.55C18.31,8 19.86,7.11 21,7.6M19.33,18.38C19.37,19.32 18.65,20.36 17.79,20.75C16,21.57 13.88,19.87 11.89,19.87C9.9,19.87 7.76,21.64 6,20.75C5,20.26 4.31,18.96 4.44,17.88C4.62,16.39 6.41,15.59 7.47,14.5C8.88,13.09 9.88,10.44 11.89,10.44C13.89,10.44 14.95,13.05 16.3,14.5C17.41,15.72 19.26,16.75 19.33,18.38Z";
 /** mdi:shield-star — essential readiness. */
 const MDI_SHIELD_STAR =
   "M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M14.94,15.54L12,13.75L9.06,15.54L9.87,12.19L7.24,9.95L10.68,9.67L12,6.5L13.32,9.67L16.76,9.95L14.13,12.19L14.94,15.54Z";
@@ -241,7 +245,7 @@ export class ReadyHomePanel extends LitElement {
     this._persistViewState();
   };
 
-  private _readinessKind(category: string): "food" | "water" | "none" {
+  private _readinessKind(category: string): ReadinessKind {
     return readinessKind(category, this._settings);
   }
 
@@ -424,6 +428,10 @@ export class ReadyHomePanel extends LitElement {
     const supply = a.supply_hours;
     const waterSupply = a.water_supply_hours;
     const foodSupply = a.food_supply_hours;
+    // Pet food only shows when pets create a pet food target (older backends omit it).
+    const petFoodTarget = a.pet_food_target;
+    const hasPetFood = petFoodTarget != null && petFoodTarget > 0;
+    const petFoodSupply = a.pet_food_supply_hours;
     const darkLogo = this.hass?.themes?.darkMode === true;
     const logoSrc = darkLogo ? BRAND_DARK_LOGO_URL : BRAND_LOGO_URL;
     const logoSrcset = darkLogo
@@ -537,6 +545,32 @@ export class ReadyHomePanel extends LitElement {
                 >${this._formatHours(foodSupply)}</span
               >
             </div>
+            ${hasPetFood
+              ? html`
+                  <div class="stat ${this._statToneClass(petFoodSupply)}">
+                    <span class="stat-label">
+                      <svg
+                        class="stat-icon"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path fill="currentColor" d=${MDI_PAW} />
+                      </svg>
+                      ${this._t("stat.pet_food")}
+                    </span>
+                    <span class="stat-value"
+                      >${this._formatAmount(a.pet_food_on_hand, "g")}</span
+                    >
+                    <span class="stat-meta"
+                      >${this._pct(a.pet_food_percent)} ·
+                      ${this._formatAmount(petFoodTarget, "g")}</span
+                    >
+                    <span class="stat-duration ${this._durationClass(petFoodSupply)}"
+                      >${this._formatHours(petFoodSupply)}</span
+                    >
+                  </div>
+                `
+              : nothing}
             <div class="stat ${this._statToneClass(essentialSupply)}">
               <span class="stat-label">
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -693,6 +727,9 @@ export class ReadyHomePanel extends LitElement {
                         >
                         <option value="food"
                           >${this._t("filter.readiness_food")}</option
+                        >
+                        <option value="pet_food"
+                          >${this._t("filter.readiness_pet_food")}</option
                         >
                         <option value="none"
                           >${this._t("filter.readiness_none")}</option
@@ -888,6 +925,27 @@ export class ReadyHomePanel extends LitElement {
                   </td>
                 </tr>`,
               )}
+              ${h.pets.length > 0
+                ? html`<tr>
+                    <th colspan="4">${this._t("household.pets")}</th>
+                  </tr>`
+                : nothing}
+              ${h.pets.map(
+                (p) => html`<tr>
+                  <td>
+                    ${p.name}${p.type ? html` (${p.type})` : nothing}
+                  </td>
+                  <td>1</td>
+                  <td>
+                    ${this._formatAmount(p.foodPerDay, "g")} ·
+                    ${this._formatAmount(p.waterPerDay, "L")}
+                  </td>
+                  <td>
+                    ${this._formatAmount(p.foodPerDay, "g")} ·
+                    ${this._formatAmount(p.waterPerDay, "L")}
+                  </td>
+                </tr>`,
+              )}
               <tr>
                 <th colspan="3">${this._t("household.total_per_day")}</th>
                 <td>
@@ -904,6 +962,14 @@ export class ReadyHomePanel extends LitElement {
                   ${this._formatAmount(h.dailyWater * h.days, "L")}
                 </td>
               </tr>
+              ${h.pets.length > 0
+                ? html`<tr>
+                    <th colspan="3">
+                      ${this._t("household.pet_food_period", { days })}
+                    </th>
+                    <td>${this._formatAmount(h.dailyPetFood * h.days, "g")}</td>
+                  </tr>`
+                : nothing}
             </tbody>
           </table>
         </div>
@@ -1028,7 +1094,7 @@ export class ReadyHomePanel extends LitElement {
     `;
   }
 
-  private _formReadiness(): "food" | "water" | "none" {
+  private _formReadiness(): ReadinessKind {
     return this._readinessKind(this._form.category || "");
   }
 
@@ -1261,7 +1327,7 @@ export class ReadyHomePanel extends LitElement {
               <label
                 >${this._fieldLabel(
                   "Contents per unit",
-                  write && (kind === "food" || kind === "water"),
+                  write && (kind === "food" || kind === "water" || kind === "pet_food"),
                 )}
                 <input
                   class=${this._fieldInvalid("contents_per_unit")
@@ -1281,7 +1347,7 @@ export class ReadyHomePanel extends LitElement {
               <label
                 >${this._fieldLabel(
                   "Contents unit",
-                  write && (kind === "food" || kind === "water"),
+                  write && (kind === "food" || kind === "water" || kind === "pet_food"),
                 )}
                 <select
                   class=${this._fieldInvalid("contents_unit") ? "invalid" : ""}
@@ -1337,7 +1403,7 @@ export class ReadyHomePanel extends LitElement {
               : nothing}
             ${kind === "none"
               ? html`<div class="field-hint">
-                  Category is not mapped to food or water — this item will not
+                  Category is not mapped to food, water or pet food — this item will not
                   count toward readiness.
                 </div>`
               : nothing}

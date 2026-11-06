@@ -4,6 +4,17 @@ from __future__ import annotations
 
 from datetime import date
 
+from .const import (
+    ATTR_PET_FOOD_ON_HAND,
+    ATTR_PET_FOOD_ON_HAND_UNIT,
+    ATTR_PET_FOOD_PERCENT,
+    ATTR_PET_FOOD_SUPPLY_HOURS,
+    ATTR_PET_FOOD_SUPPLY_HOURS_UNIT,
+    ATTR_PET_FOOD_TARGET,
+    ATTR_PET_FOOD_TARGET_UNIT,
+    UNIT_GRAMS,
+    UNIT_HOURS,
+)
 from .models import (
     InventoryItem,
     InventoryPriority,
@@ -42,13 +53,20 @@ def assess(
 
     water_target = settings.water_target_liters()
     food_target = settings.food_target_calories()
+    pet_food_target = settings.pet_food_target_grams() or 0.0
+    has_pet_food = pet_food_target > 0
 
     water_on_hand, unmeasurable_water = _aggregate_water(items, settings, today)
     food_on_hand, unmeasurable_food = _aggregate_food(items, settings, today)
+    pet_on_hand, unmeasurable_pet = _aggregate_pet_food(items, settings, today)
 
     water_percent = _percent(water_on_hand, water_target)
     food_percent = _percent(food_on_hand, food_target)
+    pet_percent = _percent(pet_on_hand, pet_food_target)
+    # Pet food only joins the overall score when pets create a pet food target.
     overall_percent = min(water_percent, food_percent)
+    if has_pet_food:
+        overall_percent = min(overall_percent, pet_percent)
 
     water_supply_hours = _supply_hours(
         water_on_hand, water_target, settings.duration_hours
@@ -56,19 +74,31 @@ def assess(
     food_supply_hours = _supply_hours(
         food_on_hand, food_target, settings.duration_hours
     )
+    pet_supply_hours = _supply_hours(
+        pet_on_hand, pet_food_target, settings.duration_hours
+    )
     supply_hours = min(water_supply_hours, food_supply_hours)
+    if has_pet_food:
+        supply_hours = min(supply_hours, pet_supply_hours)
 
     essential_items = [
         i for i in items if i.priority == InventoryPriority.ESSENTIAL
     ]
     e_water, e_un_water = _aggregate_water(essential_items, settings, today)
     e_food, e_un_food = _aggregate_food(essential_items, settings, today)
+    e_pet, e_un_pet = _aggregate_pet_food(essential_items, settings, today)
     e_water_percent = _percent(e_water, water_target)
     e_food_percent = _percent(e_food, food_target)
+    e_pet_percent = _percent(e_pet, pet_food_target)
     e_overall = min(e_water_percent, e_food_percent)
+    if has_pet_food:
+        e_overall = min(e_overall, e_pet_percent)
     e_water_hours = _supply_hours(e_water, water_target, settings.duration_hours)
     e_food_hours = _supply_hours(e_food, food_target, settings.duration_hours)
+    e_pet_hours = _supply_hours(e_pet, pet_food_target, settings.duration_hours)
     e_supply = min(e_water_hours, e_food_hours)
+    if has_pet_food:
+        e_supply = min(e_supply, e_pet_hours)
 
     return ReadinessAssessment(
         needs_people_count=False,
@@ -95,6 +125,15 @@ def assess(
         essential_supply_hours=e_supply,
         essential_unmeasurable_water_count=e_un_water,
         essential_unmeasurable_food_count=e_un_food,
+        pet_food_on_hand=pet_on_hand,
+        pet_food_target=pet_food_target,
+        pet_food_percent=pet_percent,
+        pet_food_supply_hours=pet_supply_hours,
+        unmeasurable_pet_food_count=unmeasurable_pet,
+        essential_pet_food_on_hand=e_pet,
+        essential_pet_food_percent=e_pet_percent,
+        essential_pet_food_supply_hours=e_pet_hours,
+        essential_unmeasurable_pet_food_count=e_un_pet,
     )
 
 
@@ -138,6 +177,27 @@ def _aggregate_food(
     return total, unmeasurable
 
 
+def _aggregate_pet_food(
+    items: list[InventoryItem],
+    settings: ReadinessSettings,
+    today: date,
+) -> tuple[float, int]:
+    """Grams of non-expired pet food on hand and the count of unmeasurable items."""
+    total = 0.0
+    unmeasurable = 0
+    for item in items:
+        if settings.readiness_kind(item.category) != "pet_food":
+            continue
+        if item.is_expired(today):
+            continue
+        amount = item.pet_food_grams_on_hand()
+        if amount is None:
+            unmeasurable += 1
+        else:
+            total += amount
+    return total, unmeasurable
+
+
 def _percent(on_hand: float, target: float | None) -> float:
     if target is None or target <= 0:
         return 0.0
@@ -148,3 +208,27 @@ def _supply_hours(on_hand: float, target: float | None, duration_hours: int) -> 
     if target is None or target <= 0:
         return 0.0
     return (on_hand / target) * duration_hours
+
+
+def pet_food_attr_dict(
+    assessment: ReadinessAssessment, essential: bool = False
+) -> dict[str, object]:
+    """Pet food (grams) sensor attributes, additive next to the food_* attributes."""
+    a = assessment
+    return {
+        ATTR_PET_FOOD_ON_HAND: (
+            a.essential_pet_food_on_hand if essential else a.pet_food_on_hand
+        ),
+        ATTR_PET_FOOD_ON_HAND_UNIT: UNIT_GRAMS,
+        ATTR_PET_FOOD_TARGET: a.pet_food_target,
+        ATTR_PET_FOOD_TARGET_UNIT: UNIT_GRAMS,
+        ATTR_PET_FOOD_PERCENT: (
+            a.essential_pet_food_percent if essential else a.pet_food_percent
+        ),
+        ATTR_PET_FOOD_SUPPLY_HOURS: (
+            a.essential_pet_food_supply_hours
+            if essential
+            else a.pet_food_supply_hours
+        ),
+        ATTR_PET_FOOD_SUPPLY_HOURS_UNIT: UNIT_HOURS,
+    }

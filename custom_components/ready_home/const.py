@@ -28,6 +28,8 @@ CONF_LOCATIONS: Final = "locations"
 CONF_CATEGORIES: Final = "categories"
 CONF_FOOD_CATEGORIES: Final = "food_categories"
 CONF_WATER_CATEGORIES: Final = "water_categories"
+CONF_PET_FOOD_CATEGORIES: Final = "pet_food_categories"
+CONF_PETS: Final = "pets"
 CONF_EXPIRING_DAYS: Final = "expiring_days"
 CONF_URGENT_DAYS: Final = "urgent_days"
 CONF_TODO_ENTITY_ID: Final = "todo_entity_id"
@@ -96,6 +98,7 @@ DEFAULT_LOCATIONS: Final = ["Pantry", "Garage", "Basement"]
 DEFAULT_CATEGORIES: Final = ["Food", "Water", "Medical", "Tools", "Other"]
 DEFAULT_FOOD_CATEGORIES: Final = ["Food"]
 DEFAULT_WATER_CATEGORIES: Final = ["Water"]
+DEFAULT_PET_FOOD_CATEGORIES: Final = ["Pet food"]
 
 # Events
 EVENT_ITEM_EXPIRED: Final = f"{DOMAIN}_item_expired"
@@ -131,6 +134,11 @@ ATTR_FOOD_ON_HAND: Final = "food_on_hand"
 ATTR_FOOD_TARGET: Final = "food_target"
 ATTR_FOOD_PERCENT: Final = "food_percent"
 ATTR_FOOD_SUPPLY_HOURS: Final = "food_supply_hours"
+ATTR_PET_FOOD_ON_HAND: Final = "pet_food_on_hand"
+ATTR_PET_FOOD_TARGET: Final = "pet_food_target"
+ATTR_PET_FOOD_PERCENT: Final = "pet_food_percent"
+ATTR_PET_FOOD_SUPPLY_HOURS: Final = "pet_food_supply_hours"
+ATTR_PET_COUNT: Final = "pet_count"
 ATTR_SUPPLY_HOURS: Final = "supply_hours"
 ATTR_DURATION_HOURS: Final = "duration_hours"
 ATTR_DAILY_CALORIES: Final = "daily_calories"
@@ -155,11 +163,15 @@ ATTR_WATER_SUPPLY_HOURS_UNIT: Final = "water_supply_hours_unit"
 ATTR_FOOD_ON_HAND_UNIT: Final = "food_on_hand_unit"
 ATTR_FOOD_TARGET_UNIT: Final = "food_target_unit"
 ATTR_FOOD_SUPPLY_HOURS_UNIT: Final = "food_supply_hours_unit"
+ATTR_PET_FOOD_ON_HAND_UNIT: Final = "pet_food_on_hand_unit"
+ATTR_PET_FOOD_TARGET_UNIT: Final = "pet_food_target_unit"
+ATTR_PET_FOOD_SUPPLY_HOURS_UNIT: Final = "pet_food_supply_hours_unit"
 ATTR_SUPPLY_HOURS_UNIT: Final = "supply_hours_unit"
 ATTR_DURATION_HOURS_UNIT: Final = "duration_hours_unit"
 
 UNIT_KCAL: Final = "kcal"
 UNIT_LITERS: Final = "L"
+UNIT_GRAMS: Final = "g"
 UNIT_HOURS: Final = "h"
 
 # Problem-sensor cause attributes

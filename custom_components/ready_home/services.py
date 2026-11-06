@@ -246,7 +246,7 @@ LIST_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_LOCATION): _bounded_string(_MAX_LOCATION),
         vol.Optional(ATTR_CATEGORY): _bounded_string(_MAX_CATEGORY),
-        vol.Optional(ATTR_READINESS): vol.In(["food", "water", "none"]),
+        vol.Optional(ATTR_READINESS): vol.In(["food", "water", "pet_food", "none"]),
         vol.Optional(ATTR_STATUS): vol.In(
             ["expired", "expiring", "low_stock", "ok"]
         ),
@@ -343,7 +343,8 @@ def async_register_services(hass: HomeAssistant) -> None:
             calories_per_unit=data.get(ATTR_CALORIES_PER_UNIT),
         ).with_synced_derived()
         await coordinator.store.async_add(item)
-        return {"item_id": item.id, "item": item_summary(item)}
+        summary = item_summary(item, coordinator.settings)
+        return {"item_id": item.id, "item": summary}
 
     async def handle_update(call: ServiceCall) -> dict[str, Any]:
         await async_require_admin_or_automation(hass, call.context.user_id)
@@ -377,7 +378,8 @@ def async_register_services(hass: HomeAssistant) -> None:
             raise ServiceValidationError("No fields to update")
         updated = item.with_updates(**changes)
         await coordinator.store.async_update(updated)
-        return {"item_id": updated.id, "item": item_summary(updated)}
+        summary = item_summary(updated, coordinator.settings)
+        return {"item_id": updated.id, "item": summary}
 
     async def handle_adjust(call: ServiceCall) -> dict[str, Any]:
         await async_require_admin_or_automation(hass, call.context.user_id)
@@ -391,7 +393,8 @@ def async_register_services(hass: HomeAssistant) -> None:
             raise ServiceValidationError("Quantity cannot go below zero")
         updated = item.with_updates(quantity=new_qty)
         await coordinator.store.async_update(updated)
-        return {"item_id": updated.id, "item": item_summary(updated)}
+        summary = item_summary(updated, coordinator.settings)
+        return {"item_id": updated.id, "item": summary}
 
     async def handle_remove(call: ServiceCall) -> dict[str, Any]:
         await async_require_admin_or_automation(hass, call.context.user_id)
@@ -433,7 +436,7 @@ def async_register_services(hass: HomeAssistant) -> None:
 
         return {
             "count": len(items),
-            "items": [item_summary(i) for i in items],
+            "items": [item_summary(i, settings) for i in items],
         }
 
     async def handle_lookup(call: ServiceCall) -> dict[str, Any]:
@@ -482,7 +485,7 @@ def async_register_services(hass: HomeAssistant) -> None:
             )
             await coordinator.store.async_add(item)
             existing_names.add(key)
-            added.append(item_summary(item))
+            added.append(item_summary(item, coordinator.settings))
         return {
             "template_id": template.id,
             "added": added,

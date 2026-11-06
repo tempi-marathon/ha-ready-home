@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
+import pytest
+
 # Allow importing custom_components.ready_home without installing the package
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -196,3 +198,147 @@ def _ensure_homeassistant_stubs() -> None:
 
 
 _ensure_homeassistant_stubs()
+
+
+# ---------------------------------------------------------------------------
+# Legacy baseline: options saved before the pets feature (no ``pets`` and no
+# ``pet_food_categories`` keys). Expected values below are literals captured from
+# the code as it was before pets were added; never recompute them with new code.
+# ---------------------------------------------------------------------------
+
+LEGACY_TODAY_ISO = "2026-09-04"
+
+LEGACY_OPTIONS: dict[str, Any] = {
+    "number_of_people": 3,
+    "duration_hours": 72,
+    "water_liters_per_person_per_day": 3.0,
+    "calories_per_person_per_day": 2000,
+    "locations": ["Pantry"],
+    # "Pet food" is a plain custom category here and is scored by completeness.
+    "categories": ["Food", "Water", "Medical", "Pet food"],
+    "food_categories": ["Food"],
+    "water_categories": ["Water"],
+    "expiring_days": 30,
+    "urgent_days": 7,
+}
+
+LEGACY_ASSESSMENT: dict[str, Any] = {
+    "needs_people_count": False,
+    "water_on_hand": 10.0,
+    "water_target": 27.0,
+    "water_percent": 37.03703703703704,
+    "food_on_hand": 7000.0,
+    "food_target": 18000.0,
+    "food_percent": 38.88888888888889,
+    "overall_percent": 37.03703703703704,
+    "duration_hours": 72,
+    "water_supply_hours": 26.666666666666664,
+    "food_supply_hours": 28.0,
+    "supply_hours": 26.666666666666664,
+    "unmeasurable_water_count": 0,
+    "unmeasurable_food_count": 0,
+    "essential_water_on_hand": 10.0,
+    "essential_water_percent": 37.03703703703704,
+    "essential_food_on_hand": 7000.0,
+    "essential_food_percent": 38.88888888888889,
+    "essential_overall_percent": 37.03703703703704,
+    "essential_water_supply_hours": 26.666666666666664,
+    "essential_food_supply_hours": 28.0,
+    "essential_supply_hours": 26.666666666666664,
+    "essential_unmeasurable_water_count": 0,
+    "essential_unmeasurable_food_count": 0,
+}
+
+# (category, percent, complete, total, missing) for the completeness categories
+LEGACY_COMPLETENESS: dict[str, Any] = {
+    "overall_percent": 0.0,
+    "categories": [
+        ("Medical", 0.0, 0, 1, ("Bandages",)),
+        ("Pet food", 0.0, 0, 1, ("Dog kibble",)),
+    ],
+}
+
+LEGACY_BUCKET_IDS: dict[str, list[str]] = {
+    "expired": ["f2"],
+    "within_urgent": ["f1"],
+    "within_expiring": [],
+    "low_stock": ["m1", "p1"],
+}
+
+LEGACY_EVENT_SUMMARIES: dict[str, dict[str, Any]] = {
+    "w1": {
+        "id": "w1", "name": "Water jugs", "quantity": 2, "desired_quantity": 0.0,
+        "unit": "piece", "location": "", "category": "Water", "priority": "essential",
+        "expiry_date": None, "contents_per_unit": 5, "contents_unit": "liter",
+        "water_liters_on_hand": 10.0,
+    },
+    "f1": {
+        "id": "f1", "name": "Rice", "quantity": 4, "desired_quantity": 0.0,
+        "unit": "piece", "location": "", "category": "Food", "priority": "essential",
+        "expiry_date": "2026-09-10", "contents_per_unit": 500, "contents_unit": "gram",
+        "calories_per_content": 3.5, "calories_on_hand": 7000.0,
+    },
+    "f2": {
+        "id": "f2", "name": "Old beans", "quantity": 2, "desired_quantity": 0.0,
+        "unit": "piece", "location": "", "category": "Food", "priority": "important",
+        "expiry_date": "2026-08-01", "calories_per_unit": 400, "calories_on_hand": 800.0,
+    },
+    "m1": {
+        "id": "m1", "name": "Bandages", "quantity": 1, "desired_quantity": 3,
+        "unit": "piece", "location": "", "category": "Medical", "priority": "important",
+        "expiry_date": None,
+    },
+    "p1": {
+        "id": "p1", "name": "Dog kibble", "quantity": 2, "desired_quantity": 4,
+        "unit": "piece", "location": "", "category": "Pet food", "priority": "important",
+        "expiry_date": None, "contents_per_unit": 2, "contents_unit": "kilogram",
+    },
+}
+
+
+@pytest.fixture
+def legacy_options() -> dict[str, Any]:
+    """Options of an install that predates pets (see LEGACY_* constants)."""
+    return {k: (list(v) if isinstance(v, list) else v) for k, v in LEGACY_OPTIONS.items()}
+
+
+@pytest.fixture
+def legacy_today():  # noqa: ANN201
+    from datetime import date
+
+    return date.fromisoformat(LEGACY_TODAY_ISO)
+
+
+@pytest.fixture
+def legacy_items():  # noqa: ANN201
+    from custom_components.ready_home.models import (
+        ContentsUnit,
+        InventoryItem,
+        InventoryPriority,
+        InventoryUnit,
+    )
+
+    return [
+        InventoryItem(
+            id="w1", name="Water jugs", quantity=2, unit=InventoryUnit.PIECE,
+            category="Water", contents_per_unit=5, contents_unit=ContentsUnit.LITER,
+            priority=InventoryPriority.ESSENTIAL,
+        ),
+        InventoryItem(
+            id="f1", name="Rice", quantity=4, category="Food", contents_per_unit=500,
+            contents_unit=ContentsUnit.GRAM, calories_per_content=3.5,
+            priority=InventoryPriority.ESSENTIAL, expiry_date="2026-09-10",
+        ),
+        InventoryItem(
+            id="f2", name="Old beans", quantity=2, category="Food",
+            calories_per_unit=400, expiry_date="2026-08-01",
+        ),
+        InventoryItem(
+            id="m1", name="Bandages", quantity=1, desired_quantity=3, category="Medical"
+        ),
+        InventoryItem(
+            id="p1", name="Dog kibble", quantity=2, desired_quantity=4,
+            category="Pet food", contents_per_unit=2,
+            contents_unit=ContentsUnit.KILOGRAM,
+        ),
+    ]
