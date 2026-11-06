@@ -50,7 +50,7 @@ Track household emergency supplies, measure readiness against water and calorie 
 1. Settings → **Marketplace** → search for **Ready Home**, or use the button above (custom repository if needed)
 2. Download **Ready Home** (restart if Home Assistant asks)
 3. Settings → Devices & Services → Add Integration → **Ready Home**, or use the setup button below
-4. Enter the number of people in the household
+4. Enter the number of adults in the household (add other age groups later under **Configure → Readiness targets**)
 
 [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=ready_home)
 
@@ -61,7 +61,7 @@ Track household emergency supplies, measure readiness against water and calorie 
 1. Open HACS → search for **Ready Home**, or use the button above (custom repository if needed)
 2. Download **Ready Home**, restart Home Assistant
 3. Settings → Devices & Services → Add Integration → **Ready Home**, or use the setup button above
-4. Enter the number of people in the household
+4. Enter the number of adults in the household (add other age groups later under **Configure → Readiness targets**)
 
 Full guide: [1. Installation](docs/01-installation.md) · [2. Configuration](docs/02-configuration.md) · [3. Usage](docs/03-usage.md)
 

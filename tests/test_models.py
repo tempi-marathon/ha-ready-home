@@ -151,3 +151,138 @@ def test_category_mapping_helpers() -> None:
     assert settings.is_water_category("Water")
     assert settings.readiness_kind("Medical") == "none"
     assert settings.readiness_kind("Vegetables") == "food"
+
+
+def _old_water(people: int, liters: float, hours: int) -> float:
+    return people * liters * hours / 24.0
+
+
+def _old_calories(people: int, kcal: int, hours: int) -> float:
+    return people * kcal * hours / 24.0
+
+
+MIXED = {
+    "count_adults": 2,
+    "count_children": 2,
+    "count_babies_toddlers": 1,
+    "count_seniors": 1,
+    "duration_hours": 24,
+}
+
+
+def test_mixed_household_defaults_sum() -> None:
+    s = ReadinessSettings.from_options(dict(MIXED))
+    assert s.number_of_people == 6
+    assert s.daily_calories() == 2 * 2200 + 2 * 1800 + 1000 + 1900 == 10900
+    assert s.daily_water_liters() == 18.0
+    assert s.food_target_calories() == 10900
+    assert s.water_target_liters() == 18.0
+
+
+def test_mixed_household_fourteen_day_period() -> None:
+    s = ReadinessSettings.from_options({**MIXED, "duration_hours": 14 * 24})
+    assert s.food_target_calories() == 10900 * 14
+    assert s.water_target_liters() == 18.0 * 14
+
+
+def test_legacy_options_match_old_formula() -> None:
+    for people in range(1, 11):
+        for kcal in (1500, 2000, 2500):
+            for liters in (2, 3, 4.5):
+                for hours in (24, 72, 336):
+                    s = ReadinessSettings.from_options(
+                        {
+                            "number_of_people": people,
+                            "calories_per_person_per_day": kcal,
+                            "water_liters_per_person_per_day": liters,
+                            "duration_hours": hours,
+                        }
+                    )
+                    assert s.number_of_people == people
+                    assert s.food_target_calories() == _old_calories(people, kcal, hours)
+                    assert s.water_target_liters() == _old_water(people, liters, hours)
+
+
+def test_legacy_defaults_when_values_missing() -> None:
+    s = ReadinessSettings.from_options({"number_of_people": 3})
+    assert s.food_target_calories() == _old_calories(3, 2000, 72)
+    assert s.water_target_liters() == _old_water(3, 3.0, 72)
+
+
+def test_missing_headcount_is_no_household() -> None:
+    s = ReadinessSettings.from_options({})
+    assert s.number_of_people is None
+    assert s.food_target_calories() is None
+    assert s.water_target_liters() is None
+
+
+def test_all_counts_zero_is_no_household() -> None:
+    s = ReadinessSettings.from_options(
+        {"count_adults": 0, "count_children": 0, "number_of_people": 4}
+    )
+    assert s.number_of_people is None
+    assert s.food_target_calories() is None
+
+
+def test_new_keys_win_over_legacy() -> None:
+    s = ReadinessSettings.from_options(
+        {
+            "number_of_people": 9,
+            "calories_per_person_per_day": 3000,
+            "count_adults": 1,
+            "duration_hours": 24,
+        }
+    )
+    assert s.number_of_people == 1
+    assert s.daily_calories() == 2200
+
+
+def test_invalid_stored_values_are_clamped_or_defaulted() -> None:
+    s = ReadinessSettings.from_options(
+        {
+            "count_adults": 2,
+            "count_children": -3,
+            "count_seniors": "x",
+            "calories_per_day_adults": "oops",
+            "duration_hours": 24,
+        }
+    )
+    assert s.number_of_people == 2
+    assert s.daily_calories() == 2 * 2200
+
+
+def test_override_changes_only_that_category() -> None:
+    base = ReadinessSettings.from_options(dict(MIXED))
+    s = ReadinessSettings.from_options({**MIXED, "water_liters_per_day_babies_toddlers": 4})
+    assert s.daily_water_liters() == base.daily_water_liters() + 1
+    assert s.daily_calories() == base.daily_calories()
+
+
+def test_zero_value_with_people_is_honoured() -> None:
+    s = ReadinessSettings.from_options(
+        {"count_adults": 1, "calories_per_day_adults": 0, "duration_hours": 24}
+    )
+    assert s.daily_calories() == 0
+
+
+def test_household_attributes_legacy_and_mixed() -> None:
+    legacy = ReadinessSettings.from_options({"number_of_people": 3})
+    assert legacy.number_of_people == 3  # people sensor value stays the total headcount
+    assert legacy.household_attributes() == {
+        "age_categories": {"adults": 3, "children": 0, "babies_toddlers": 0, "seniors": 0},
+        "daily_calories": 6000.0,
+        "daily_water_liters": 9.0,
+    }
+    mixed = ReadinessSettings.from_options(dict(MIXED))
+    assert mixed.number_of_people == 6
+    assert mixed.household_attributes() == {
+        "age_categories": {"adults": 2, "children": 2, "babies_toddlers": 1, "seniors": 1},
+        "daily_calories": 10900.0,
+        "daily_water_liters": 18.0,
+    }
+
+
+def test_household_attributes_without_household() -> None:
+    attrs = ReadinessSettings.from_options({}).household_attributes()
+    assert attrs["daily_calories"] is None
+    assert attrs["daily_water_liters"] is None

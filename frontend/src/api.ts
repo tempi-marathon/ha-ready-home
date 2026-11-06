@@ -54,6 +54,17 @@ export interface SettingsDto {
   urgent_days: number;
   todo_entity_id?: string | null;
   auto_push_restock?: boolean;
+  /** Added with age categories; absent when the backend is older than the panel. */
+  age_categories?: AgeCategoryDto[];
+  daily_calories?: number | null;
+  daily_water_liters?: number | null;
+}
+
+export interface AgeCategoryDto {
+  key: string;
+  count: number;
+  calories_per_day: number;
+  water_liters_per_day: number;
 }
 
 export interface KitTemplateDto {

@@ -120,3 +120,47 @@ def test_add_schema_rejects_oversized_name() -> None:
 def test_add_schema_rejects_unsafe_barcode() -> None:
     with pytest.raises(vol.Invalid):
         ADD_SCHEMA({"name": "Rice", "quantity": 1, "barcode": "../../evil"})
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "options",
+    [
+        {"number_of_people": 2},  # old-format entry, no category keys
+        {"count_adults": 2, "count_children": 1},  # new-format entry
+    ],
+)
+async def test_list_items_readiness_filter_with_old_and_new_settings(
+    options: dict, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from types import SimpleNamespace
+
+    from custom_components.ready_home.const import DOMAIN
+    from custom_components.ready_home.models import ReadinessSettings
+    from custom_components.ready_home.services import async_register_services
+
+    items = [
+        InventoryItem(name="Jug", quantity=1, category="Water"),
+        InventoryItem(name="Beans", quantity=1, category="Food"),
+        InventoryItem(name="Saw", quantity=1, category="Tools"),
+    ]
+    coordinator = SimpleNamespace(
+        settings=ReadinessSettings.from_options(options),
+        store=SimpleNamespace(items=items),
+    )
+    monkeypatch.setattr(
+        "custom_components.ready_home.services.SupportsResponse", MagicMock()
+    )
+    hass = MagicMock()
+    hass.data = {DOMAIN: {"entry": coordinator}}
+    hass.services.has_service.return_value = False
+    handlers = {}
+    hass.services.async_register = lambda _d, name, handler, **_k: handlers.update(
+        {name: handler}
+    )
+    async_register_services(hass)
+
+    result = await handlers["list_items"](MagicMock(data={"readiness": "water"}))
+    assert result["count"] == 1
+    assert result["items"][0]["name"] == "Jug"
+

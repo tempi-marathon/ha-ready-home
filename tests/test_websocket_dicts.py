@@ -165,3 +165,64 @@ def test_settings_dict() -> None:
     assert result["expiring_days"] == 21
     assert result["urgent_days"] == 5
     assert "attribute_item_cap" not in result
+
+
+LEGACY_SETTINGS_KEYS = {
+    "number_of_people": 3,
+    "duration_hours": 72,
+    "water_liters_per_person_per_day": 4.0,
+    "calories_per_person_per_day": 2500,
+    "locations": [],
+    "categories": [],
+    "food_categories": ["Food"],
+    "water_categories": ["Water"],
+    "expiring_days": 30,
+    "urgent_days": 7,
+    "todo_entity_id": None,
+    "auto_push_restock": False,
+}
+
+
+def test_settings_dict_legacy_options_keep_existing_fields() -> None:
+    settings = ReadinessSettings.from_options(
+        {
+            "number_of_people": 3,
+            "water_liters_per_person_per_day": 4.0,
+            "calories_per_person_per_day": 2500,
+        }
+    )
+    result = _settings_dict(SimpleNamespace(settings=settings))  # type: ignore[arg-type]
+    for key, value in LEGACY_SETTINGS_KEYS.items():
+        assert result[key] == value
+    adults = result["age_categories"][0]
+    assert adults == {
+        "key": "adults",
+        "count": 3,
+        "calories_per_day": 2500,
+        "water_liters_per_day": 4.0,
+    }
+    assert [c["count"] for c in result["age_categories"][1:]] == [0, 0, 0]
+    assert result["daily_calories"] == 7500
+    assert result["daily_water_liters"] == 12.0
+
+
+def test_settings_dict_mixed_household() -> None:
+    settings = ReadinessSettings.from_options(
+        {
+            "count_adults": 2,
+            "count_children": 2,
+            "count_babies_toddlers": 1,
+            "count_seniors": 1,
+        }
+    )
+    result = _settings_dict(SimpleNamespace(settings=settings))  # type: ignore[arg-type]
+    assert result["number_of_people"] == 6
+    assert [c["key"] for c in result["age_categories"]] == [
+        "adults",
+        "children",
+        "babies_toddlers",
+        "seniors",
+    ]
+    assert result["daily_calories"] == 10900
+    assert result["daily_water_liters"] == 18.0
+    assert result["calories_per_person_per_day"] == 2000  # legacy default untouched

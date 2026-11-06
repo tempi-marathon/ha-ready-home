@@ -297,3 +297,69 @@ def test_essential_excludes_optional_stock() -> None:
     assert result.essential_food_on_hand == 2000.0
     assert result.essential_food_percent == 100.0
     assert result.essential_overall_percent == 50.0
+
+
+def _legacy_assessment(options: dict):
+    items = [
+        InventoryItem(name="Water", quantity=20.0, unit=InventoryUnit.LITER, category="Water"),
+        InventoryItem(
+            name="Beans",
+            quantity=10,
+            unit=InventoryUnit.PIECE,
+            category="Food",
+            calories_per_unit=400,
+        ),
+    ]
+    return assess(items, ReadinessSettings.from_options(options))
+
+
+@pytest.mark.parametrize(
+    ("options", "water_target", "food_target"),
+    [
+        ({"number_of_people": 2}, 18.0, 12000.0),
+        (
+            {
+                "number_of_people": 3,
+                "water_liters_per_person_per_day": 4.0,
+                "calories_per_person_per_day": 2500,
+                "duration_hours": 48,
+            },
+            24.0,
+            15000.0,
+        ),
+    ],
+)
+def test_legacy_options_give_pre_change_results(
+    options: dict, water_target: float, food_target: float
+) -> None:
+    result = _legacy_assessment(options)
+    assert result.needs_people_count is False
+    assert result.water_target == water_target
+    assert result.food_target == food_target
+    assert result.water_percent == min(100.0, 20.0 / water_target * 100)
+    assert result.food_percent == min(100.0, 4000.0 / food_target * 100)
+
+
+def test_legacy_options_without_headcount_still_need_people() -> None:
+    result = _legacy_assessment({})
+    assert result.needs_people_count is True
+
+
+def test_adults_only_new_keys_equal_legacy() -> None:
+    legacy = _legacy_assessment(
+        {
+            "number_of_people": 2,
+            "calories_per_person_per_day": 2200,
+            "water_liters_per_person_per_day": 3.0,
+        }
+    )
+    new = _legacy_assessment({"count_adults": 2})
+    assert new == legacy
+
+
+def test_mixed_household_changes_targets() -> None:
+    result = _legacy_assessment(
+        {"count_adults": 1, "count_seniors": 1, "duration_hours": 24}
+    )
+    assert result.food_target == 2200 + 1900
+    assert result.water_target == 6.0

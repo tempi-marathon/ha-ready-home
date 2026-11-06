@@ -21,7 +21,7 @@ Suggested entity ids depend on your device name, e.g. `sensor.ready_home_expired
 
 ![Home Assistant sensors](images/ha-sensors.png)
 
-Diagnostic attributes (people, duration, targets, totals) are also available on the device:
+Diagnostic attributes (people, duration, targets, totals) are also available on the device. The people sensor additionally has `age_categories` (people per category), `daily_calories` and `daily_water_liters`:
 
 ![Diagnostics](images/ha-diagnostics.png)
 

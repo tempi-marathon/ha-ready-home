@@ -6,7 +6,7 @@
         "description": "Houd noodvoorraden bij en meet paraatheid. Geef dit profiel een naam (standaard Ready Home). Generieke namen verschijnen als Ready Home; andere namen worden een achtervoegsel, bijv. Ready Home (Chalet). Het profiel bepaalt ook het voorvoegsel van de entity-id.",
         "data": {
           "name": "Profielnaam",
-          "number_of_people": "Aantal personen in het huishouden"
+          "number_of_people": "Aantal volwassenen in het huishouden (kinderen, ouderen en peuters voeg je later toe in de opties)"
         }
       }
     },
@@ -41,11 +41,21 @@
       "targets": {
         "title": "Paraatheidsdoelen",
         "data": {
-          "number_of_people": "Aantal personen",
-          "duration_hours": "Duur (uren)",
-          "water_liters_per_person_per_day": "Liters water per persoon per dag",
-          "calories_per_person_per_day": "Calorieën per persoon per dag"
-        }
+          "count_adults": "Volwassenen (18–69): aantal personen",
+          "calories_per_day_adults": "Volwassenen (18–69): calorieën per persoon per dag",
+          "water_liters_per_day_adults": "Volwassenen (18–69): liters water per persoon per dag",
+          "count_children": "Kinderen (4–17): aantal personen",
+          "calories_per_day_children": "Kinderen (4–17): calorieën per persoon per dag",
+          "water_liters_per_day_children": "Kinderen (4–17): liters water per persoon per dag",
+          "count_babies_toddlers": "Baby’s en peuters (0–3): aantal personen",
+          "calories_per_day_babies_toddlers": "Baby’s en peuters (0–3): calorieën per persoon per dag",
+          "water_liters_per_day_babies_toddlers": "Baby’s en peuters (0–3): liters water per persoon per dag",
+          "count_seniors": "Ouderen (70+): aantal personen",
+          "calories_per_day_seniors": "Ouderen (70+): calorieën per persoon per dag",
+          "water_liters_per_day_seniors": "Ouderen (70+): liters water per persoon per dag",
+          "duration_hours": "Duur (uren)"
+        },
+        "description": "Personen per leeftijdscategorie en hun dagelijkse behoefte. Standaardwaarden volgen Voedingscentrum.nl (lichte activiteit) en zijn aanpasbaar. Totalen zijn de som over alle categorieën."
       },
       "lists": {
         "title": "Locaties en categorieën",
@@ -79,7 +89,8 @@
     },
     "error": {
       "invalid_name": "Voer een profielnaam in",
-      "category_overlap": "Een categorie kan niet zowel voedsel als water zijn"
+      "category_overlap": "Een categorie kan niet zowel voedsel als water zijn",
+      "invalid_people": "Voer minstens één persoon in"
     }
   },
   "entity": {

@@ -34,6 +34,7 @@ import {
   validateMeasureFields,
   contentsToLiters,
 } from "./inventory_view";
+import { householdFromSettings } from "./household";
 import { statusLabel, t } from "./localize";
 import {
   loadPanelViewState,
@@ -264,8 +265,8 @@ export class ReadyHomePanel extends LitElement {
     return itemStatus(item, this._snapshot?.buckets);
   }
 
-  private _t(key: string): string {
-    return t(this.hass, key);
+  private _t(key: string, vars?: Record<string, string | number>): string {
+    return t(this.hass, key, vars);
   }
 
   private _statusLabel(status: string): string {
@@ -567,6 +568,8 @@ export class ReadyHomePanel extends LitElement {
               : nothing}
           </div>
 
+          ${this._renderHousehold()}
+
           <div class="attention" role="group" aria-label="Attention filters">
             <button
               type="button"
@@ -851,6 +854,61 @@ export class ReadyHomePanel extends LitElement {
     return html`<span class="badge badge-${status}"
       >${this._statusLabel(status)}</span
     >`;
+  }
+
+  private _renderHousehold() {
+    const h = householdFromSettings(this._settings);
+    if (!h) return nothing;
+    const days = Math.round(h.days * 10) / 10;
+    return html`
+      <details class="household">
+        <summary>${this._t("household.title")}</summary>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>${this._t("household.category")}</th>
+                <th>${this._t("household.count")}</th>
+                <th>${this._t("household.per_person")}</th>
+                <th>${this._t("household.subtotal")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${h.rows.map(
+                (r) => html`<tr>
+                  <td>${this._t(`household.${r.key}`)}</td>
+                  <td>${r.count}</td>
+                  <td>
+                    ${this._formatAmount(r.caloriesPerPerson, "kcal")} ·
+                    ${this._formatAmount(r.waterPerPerson, "L")}
+                  </td>
+                  <td>
+                    ${this._formatAmount(r.caloriesSubtotal, "kcal")} ·
+                    ${this._formatAmount(r.waterSubtotal, "L")}
+                  </td>
+                </tr>`,
+              )}
+              <tr>
+                <th colspan="3">${this._t("household.total_per_day")}</th>
+                <td>
+                  ${this._formatAmount(h.dailyCalories, "kcal")} ·
+                  ${this._formatAmount(h.dailyWater, "L")}
+                </td>
+              </tr>
+              <tr>
+                <th colspan="3">
+                  ${this._t("household.total_period", { days })}
+                </th>
+                <td>
+                  ${this._formatAmount(h.dailyCalories * h.days, "kcal")} ·
+                  ${this._formatAmount(h.dailyWater * h.days, "L")}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+    `;
   }
 
   private _renderTable(items: InventoryItemDto[]) {
@@ -1784,6 +1842,14 @@ export class ReadyHomePanel extends LitElement {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
       margin-bottom: 16px;
+    }
+    .household {
+      margin-bottom: 16px;
+    }
+    .household summary {
+      cursor: pointer;
+      font-weight: 500;
+      margin-bottom: 8px;
     }
     .stat {
       padding: 16px;
