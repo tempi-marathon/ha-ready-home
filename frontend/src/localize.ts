@@ -20,7 +20,6 @@ const EN: Record<string, string> = {
   "action.delete": "Delete",
   "action.lookup": "Lookup",
   "action.edit": "Edit",
-  "action.apply_template": "Add missing items",
   "stat.readiness": "Readiness",
   "stat.water": "Water",
   "stat.food": "Food",
@@ -83,6 +82,11 @@ const EN: Record<string, string> = {
     "Scanning needs the Home Assistant Companion app. Enter the barcode and tap Lookup.",
   "template.skip_existing": "Existing names are skipped.",
   "template.items": "items",
+  "template.to_add": "{n} to add",
+  "template.none_missing": "Nothing missing: all items are already in your inventory.",
+  "template.select_all": "Select all",
+  "template.add_selected": "Add missing items ({n})",
+  "template.added_result": "Added {added}, skipped {skipped}.",
   "error.generic": "Something went wrong",
 };
 
@@ -102,7 +106,6 @@ const NL: Record<string, string> = {
   "action.delete": "Verwijderen",
   "action.lookup": "Opzoeken",
   "action.edit": "Bewerken",
-  "action.apply_template": "Ontbrekende items toevoegen",
   "stat.readiness": "Paraatheid",
   "stat.water": "Water",
   "stat.food": "Voedsel",
@@ -165,6 +168,11 @@ const NL: Record<string, string> = {
     "Scannen vereist de Home Assistant Companion-app. Voer de barcode in en tik op Opzoeken.",
   "template.skip_existing": "Bestaande namen worden overgeslagen.",
   "template.items": "items",
+  "template.to_add": "{n} toe te voegen",
+  "template.none_missing": "Niets ontbreekt: alle items staan al in je inventaris.",
+  "template.select_all": "Alles selecteren",
+  "template.add_selected": "Ontbrekende items toevoegen ({n})",
+  "template.added_result": "{added} toegevoegd, {skipped} overgeslagen.",
   "error.generic": "Er ging iets mis",
 };
 

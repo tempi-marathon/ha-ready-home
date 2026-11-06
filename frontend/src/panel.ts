@@ -3,6 +3,7 @@
 import { LitElement, css, html, nothing } from "lit";
 import { live } from "lit/directives/live.js";
 import { property, state } from "lit/decorators.js";
+import { missingItems, selectedItems, toggleState } from "./template_selection";
 import {
   type InventoryItemDto,
   type KitTemplateDto,
@@ -84,6 +85,8 @@ function ucfirst(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+const TEMPLATE_NOTICE_MS = 6000;
+
 export class ReadyHomePanel extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ type: Boolean }) public narrow = false;
@@ -113,6 +116,9 @@ export class ReadyHomePanel extends LitElement {
   @state() private _templateOpen = false;
   @state() private _templates: KitTemplateDto[] = [];
   @state() private _templateBusy = false;
+  @state() private _templateUnchecked: Record<string, Set<string>> = {};
+  @state() private _templateNotice = "";
+  private _templateNoticeTimer: ReturnType<typeof setTimeout> | null = null;
 
   private _unsub: (() => void) | null = null;
   private _connected = false;
@@ -132,6 +138,7 @@ export class ReadyHomePanel extends LitElement {
     this._connected = false;
     window.removeEventListener("keydown", this._onWindowKeyDown);
     this._abortScan();
+    this._setTemplateNotice("");
     this._unsub?.();
     this._unsub = null;
   }
@@ -741,6 +748,9 @@ export class ReadyHomePanel extends LitElement {
               </div>
             </div>
 
+            ${this._templateNotice
+              ? html`<div class="field-hint" role="status">${this._templateNotice}</div>`
+              : nothing}
             ${this._error
               ? html`<div class="error" role="alert">${this._error}</div>`
               : nothing}
@@ -1485,6 +1495,8 @@ export class ReadyHomePanel extends LitElement {
     this._error = "";
     try {
       this._templates = await listKitTemplates(this.hass);
+      this._templateUnchecked = {};
+      this._setTemplateNotice("");
       this._templateOpen = true;
     } catch (err) {
       this._error = formatHassError(err);
@@ -1594,17 +1606,76 @@ export class ReadyHomePanel extends LitElement {
 
   private _closeTemplates = () => {
     this._templateOpen = false;
+    this._templateUnchecked = {};
   };
 
-  private async _applyTemplate(templateId: string) {
+  private _setTemplateNotice(text: string) {
+    if (this._templateNoticeTimer) clearTimeout(this._templateNoticeTimer);
+    this._templateNoticeTimer = null;
+    this._templateNotice = text;
+    if (text) {
+      this._templateNoticeTimer = setTimeout(() => {
+        this._templateNotice = "";
+        this._templateNoticeTimer = null;
+      }, TEMPLATE_NOTICE_MS);
+    }
+  }
+
+  private _templateMissing(tpl: KitTemplateDto) {
+    return missingItems(
+      tpl.items,
+      (this._snapshot?.items ?? []).map((i) => i.name),
+    );
+  }
+
+  private _setTemplateUnchecked(templateId: string, names: Set<string>) {
+    this._templateUnchecked = { ...this._templateUnchecked, [templateId]: names };
+  }
+
+  private _toggleTemplateItem(tpl: KitTemplateDto, name: string, checked: boolean) {
+    const next = new Set(this._templateUnchecked[tpl.id] ?? []);
+    if (checked) next.delete(name);
+    else next.add(name);
+    this._setTemplateUnchecked(tpl.id, next);
+  }
+
+  private _toggleTemplateAll(tpl: KitTemplateDto) {
+    const missing = this._templateMissing(tpl);
+    const state = toggleState(missing, this._templateUnchecked[tpl.id] ?? new Set());
+    this._setTemplateUnchecked(
+      tpl.id,
+      state === "all" ? new Set(missing.map((i) => i.name)) : new Set(),
+    );
+  }
+
+  private async _applyTemplate(tpl: KitTemplateDto) {
     if (!this.hass || this._templateBusy) return;
+    const chosen = selectedItems(
+      this._templateMissing(tpl),
+      this._templateUnchecked[tpl.id] ?? new Set(),
+    );
+    if (!chosen.length) return;
     this._templateBusy = true;
     this._error = "";
     try {
-      await this.hass.callService("ready_home", "apply_kit_template", {
-        template_id: templateId,
-      });
-      this._templateOpen = false;
+      const result = (await this.hass.callService(
+        "ready_home",
+        "apply_kit_template",
+        { template_id: tpl.id, item_names: chosen.map((i) => i.name) },
+        undefined,
+        undefined,
+        true,
+      )) as { response?: { added_count?: number; skipped_count?: number } } | undefined;
+      const response = result?.response;
+      this._setTemplateNotice(
+        response
+          ? this._t("template.added_result", {
+              added: response.added_count ?? 0,
+              skipped: response.skipped_count ?? 0,
+            })
+          : "",
+      );
+      this._closeTemplates();
     } catch (err) {
       this._error = formatHassError(err);
     } finally {
@@ -1620,6 +1691,67 @@ export class ReadyHomePanel extends LitElement {
     } catch (err) {
       this._error = formatHassError(err);
     }
+  }
+
+  private _renderTemplateCard(tpl: KitTemplateDto) {
+    const missing = this._templateMissing(tpl);
+    const unchecked = this._templateUnchecked[tpl.id] ?? new Set<string>();
+    const selected = selectedItems(missing, unchecked);
+    const state = toggleState(missing, unchecked);
+    return html`
+      <div class="template-card">
+        <div class="template-card-body">
+          <strong>${tpl.name}</strong>
+          <p>${tpl.description}</p>
+          <span class="item-count"
+            >${missing.length
+              ? this._t("template.to_add", { n: missing.length })
+              : this._t("template.none_missing")}</span
+          >
+        </div>
+        ${missing.length
+          ? html`
+              <details class="template-items">
+                <summary>${this._t("template.items")}</summary>
+                <label class="template-item template-select-all">
+                  <input
+                    type="checkbox"
+                    .checked=${state === "all"}
+                    .indeterminate=${state === "partial"}
+                    @change=${() => this._toggleTemplateAll(tpl)}
+                  />
+                  ${this._t("template.select_all")}
+                </label>
+                ${missing.map(
+                  (item) => html`
+                    <label class="template-item">
+                      <input
+                        type="checkbox"
+                        .checked=${!unchecked.has(item.name)}
+                        @change=${(e: Event) =>
+                          this._toggleTemplateItem(
+                            tpl,
+                            item.name,
+                            (e.target as HTMLInputElement).checked,
+                          )}
+                      />
+                      ${item.name}
+                    </label>
+                  `,
+                )}
+              </details>
+            `
+          : nothing}
+        ${this._mdButton(
+          this._t("template.add_selected", { n: selected.length }),
+          {
+            variant: "filled",
+            disabled: this._templateBusy || selected.length === 0,
+            onClick: () => void this._applyTemplate(tpl),
+          },
+        )}
+      </div>
+    `;
   }
 
   private _renderTemplateDialog() {
@@ -1651,24 +1783,7 @@ export class ReadyHomePanel extends LitElement {
           </div>
           <p class="field-hint">${this._t("template.skip_existing")}</p>
           <div class="template-list">
-            ${this._templates.map(
-              (tpl) => html`
-                <div class="template-card">
-                  <div class="template-card-body">
-                    <strong>${tpl.name}</strong>
-                    <p>${tpl.description}</p>
-                    <span class="item-count"
-                      >${tpl.item_count} ${this._t("template.items")}</span
-                    >
-                  </div>
-                  ${this._mdButton(this._t("action.apply_template"), {
-                    variant: "filled",
-                    disabled: this._templateBusy,
-                    onClick: () => void this._applyTemplate(tpl.id),
-                  })}
-                </div>
-              `,
-            )}
+            ${this._templates.map((tpl) => this._renderTemplateCard(tpl))}
           </div>
           <div class="dialog-actions">
             ${this._mdButton(this._t("action.close"), {
@@ -2527,6 +2642,21 @@ export class ReadyHomePanel extends LitElement {
       padding: 12px;
       border: 1px solid var(--divider-color, #e0e0e0);
       border-radius: 8px;
+    }
+    .template-items summary {
+      cursor: pointer;
+      color: var(--primary-color);
+    }
+    .template-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      overflow-wrap: anywhere;
+    }
+    .template-select-all {
+      font-weight: 500;
+      border-bottom: 1px solid var(--divider-color, #e0e0e0);
     }
     .template-card-body {
       display: flex;

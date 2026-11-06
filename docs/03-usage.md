@@ -10,7 +10,7 @@ The panel shows:
 - Filters for expired, expiring, and low-stock items
 - Search, sort, and filters
 - Full inventory list with edit / remove
-- **Add from template** (admins) for first-aid / go-bag / tools checklists
+- **Add from template** (admins) for first-aid / go-bag / tools checklists. Each template shows how many items are missing and an expandable list of them with checkboxes (all checked by default, plus select all). Only checked items are added
 
 ![Desktop panel](images/panel-desktop.png)
 

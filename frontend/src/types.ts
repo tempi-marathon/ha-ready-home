@@ -41,6 +41,9 @@ export interface HomeAssistant {
     domain: string,
     service: string,
     data?: Record<string, unknown>,
+    target?: Record<string, unknown>,
+    notifyOnError?: boolean,
+    returnResponse?: boolean,
   ) => Promise<unknown>;
   connection: {
     sendMessagePromise: <T = unknown>(message: Record<string, unknown>) => Promise<T>;

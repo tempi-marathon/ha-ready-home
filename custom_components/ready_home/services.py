@@ -23,7 +23,12 @@ from .const import (
     MAX_INVENTORY_ITEMS,
 )
 from .helpers import entry_id_from_call_data, get_coordinator
-from .kit_templates import get_kit_template, list_kit_templates
+from .kit_templates import (
+    KitTemplate,
+    get_kit_template,
+    list_kit_templates,
+    select_template_items,
+)
 from .models import (
     ContentsUnit,
     InventoryItem,
@@ -41,6 +46,7 @@ SERVICE_REMOVE_ITEM = "remove_item"
 SERVICE_LIST_ITEMS = "list_items"
 SERVICE_LOOKUP_BARCODE = "lookup_barcode"
 SERVICE_APPLY_KIT_TEMPLATE = "apply_kit_template"
+ATTR_ITEM_NAMES = "item_names"
 SERVICE_PUSH_RESTOCK_LIST = "push_restock_list"
 SERVICE_EXPORT_INVENTORY = "export_inventory"
 SERVICE_IMPORT_INVENTORY = "import_inventory"
@@ -264,6 +270,7 @@ APPLY_KIT_SCHEMA = vol.Schema(
         vol.Required(ATTR_TEMPLATE_ID): vol.In(
             [t["id"] for t in list_kit_templates()]
         ),
+        vol.Optional(ATTR_ITEM_NAMES): [cv.string],
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
     }
 )
@@ -303,6 +310,48 @@ def _matches_status(
     if status == "ok":
         return severity is None and not item.is_low_stock()
     return False
+
+
+async def async_apply_kit_template(
+    coordinator: Any, template: KitTemplate, item_names: list[str] | None
+) -> dict[str, Any]:
+    """Add missing template rows (all, or only item_names) to the inventory."""
+    try:
+        rows = select_template_items(template, item_names)
+    except ValueError as err:
+        raise ServiceValidationError(str(err)) from err
+    existing_names = {
+        i.name.strip().lower() for i in coordinator.store.items
+    }
+    added: list[dict[str, Any]] = []
+    skipped: list[str] = []
+    for row in rows:
+        key = row.name.strip().lower()
+        if key in existing_names:
+            skipped.append(row.name)
+            continue
+        if len(coordinator.store.items) + len(added) >= MAX_INVENTORY_ITEMS:
+            raise ServiceValidationError(
+                f"Inventory is full (max {MAX_INVENTORY_ITEMS} items)"
+            )
+        item = InventoryItem(
+            name=row.name,
+            quantity=row.quantity,
+            desired_quantity=row.desired_quantity,
+            unit=row.unit,
+            category=row.category,
+            priority=row.priority,
+        )
+        await coordinator.store.async_add(item)
+        existing_names.add(key)
+        added.append(item_summary(item, coordinator.settings))
+    return {
+        "template_id": template.id,
+        "added": added,
+        "skipped": skipped,
+        "added_count": len(added),
+        "skipped_count": len(skipped),
+    }
 
 
 @callback
@@ -461,38 +510,9 @@ def async_register_services(hass: HomeAssistant) -> None:
             raise ServiceValidationError(
                 f"Unknown template_id: {data[ATTR_TEMPLATE_ID]}"
             )
-        existing_names = {
-            i.name.strip().lower() for i in coordinator.store.items
-        }
-        added: list[dict[str, Any]] = []
-        skipped: list[str] = []
-        for row in template.items:
-            key = row.name.strip().lower()
-            if key in existing_names:
-                skipped.append(row.name)
-                continue
-            if len(coordinator.store.items) + len(added) >= MAX_INVENTORY_ITEMS:
-                raise ServiceValidationError(
-                    f"Inventory is full (max {MAX_INVENTORY_ITEMS} items)"
-                )
-            item = InventoryItem(
-                name=row.name,
-                quantity=row.quantity,
-                desired_quantity=row.desired_quantity,
-                unit=row.unit,
-                category=row.category,
-                priority=row.priority,
-            )
-            await coordinator.store.async_add(item)
-            existing_names.add(key)
-            added.append(item_summary(item, coordinator.settings))
-        return {
-            "template_id": template.id,
-            "added": added,
-            "skipped": skipped,
-            "added_count": len(added),
-            "skipped_count": len(skipped),
-        }
+        return await async_apply_kit_template(
+            coordinator, template, data.get(ATTR_ITEM_NAMES)
+        )
 
     async def handle_push_restock(call: ServiceCall) -> dict[str, Any]:
         await async_require_admin_or_automation(hass, call.context.user_id)

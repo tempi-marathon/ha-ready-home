@@ -163,6 +163,24 @@ def get_kit_template(template_id: str) -> KitTemplate | None:
     return _BY_ID.get(template_id)
 
 
+def select_template_items(
+    template: KitTemplate, item_names: list[str] | None
+) -> tuple[KitTemplateItem, ...]:
+    """Return template rows matching item_names (None means all rows).
+
+    Names match trimmed and case-insensitively; template order is preserved.
+    Raises ValueError listing any name that is not part of the template.
+    """
+    if item_names is None:
+        return template.items
+    wanted = {n.strip().lower() for n in item_names}
+    known = {i.name.strip().lower() for i in template.items}
+    unknown = sorted(n for n in item_names if n.strip().lower() not in known)
+    if unknown:
+        raise ValueError(f"Unknown template items: {', '.join(unknown)}")
+    return tuple(i for i in template.items if i.name.strip().lower() in wanted)
+
+
 def list_kit_templates() -> list[dict[str, Any]]:
     """Serialize templates for services / websocket (no full item payloads)."""
     return [
