@@ -471,6 +471,10 @@ class PeopleSensor(ReadyHomeSensorBase):
     def native_value(self) -> int | None:
         return self.coordinator.settings.number_of_people
 
+    @property
+    def extra_state_attributes(self) -> dict:
+        return self.coordinator.settings.household_attributes()
+
 
 class DurationSensor(ReadyHomeSensorBase):
     """Planning horizon duration from readiness settings."""

@@ -33,6 +33,23 @@ CONF_URGENT_DAYS: Final = "urgent_days"
 CONF_TODO_ENTITY_ID: Final = "todo_entity_id"
 CONF_AUTO_PUSH_RESTOCK: Final = "auto_push_restock"
 
+
+
+def conf_count(category: str) -> str:
+    """Option key holding the number of people in an age category."""
+    return f"count_{category}"
+
+
+def conf_calories(category: str) -> str:
+    """Option key holding kcal per person per day for an age category."""
+    return f"calories_per_day_{category}"
+
+
+def conf_water(category: str) -> str:
+    """Option key holding water liters per person per day for an age category."""
+    return f"water_liters_per_day_{category}"
+
+
 ATTR_CONFIG_ENTRY_ID: Final = "config_entry_id"
 ATTR_CATEGORIES: Final = "categories"
 ATTR_MISSING: Final = "missing"
@@ -42,6 +59,29 @@ DEFAULT_PROFILE_NAME: Final = "Ready Home"
 DEFAULT_DURATION_HOURS: Final = 72
 DEFAULT_WATER_LITERS_PER_PERSON_PER_DAY: Final = 3.0
 DEFAULT_CALORIES_PER_PERSON_PER_DAY: Final = 2000
+# Age categories (Voedingscentrum.nl, light activity): key -> (kcal/day, water L/day)
+AGE_CATEGORY_ADULTS: Final = "adults"
+AGE_CATEGORY_CHILDREN: Final = "children"
+AGE_CATEGORY_BABIES_TODDLERS: Final = "babies_toddlers"
+AGE_CATEGORY_SENIORS: Final = "seniors"
+AGE_CATEGORIES: Final = (
+    AGE_CATEGORY_ADULTS,
+    AGE_CATEGORY_CHILDREN,
+    AGE_CATEGORY_BABIES_TODDLERS,
+    AGE_CATEGORY_SENIORS,
+)
+DEFAULT_AGE_CATEGORY_CALORIES: Final = {
+    AGE_CATEGORY_ADULTS: 2200,
+    AGE_CATEGORY_CHILDREN: 1800,
+    AGE_CATEGORY_BABIES_TODDLERS: 1000,
+    AGE_CATEGORY_SENIORS: 1900,
+}
+DEFAULT_AGE_CATEGORY_WATER_LITERS: Final = {
+    AGE_CATEGORY_ADULTS: 3.0,
+    AGE_CATEGORY_CHILDREN: 3.0,
+    AGE_CATEGORY_BABIES_TODDLERS: 3.0,
+    AGE_CATEGORY_SENIORS: 3.0,
+}
 DEFAULT_EXPIRING_DAYS: Final = 30
 DEFAULT_URGENT_DAYS: Final = 7
 # Cap item lists on expired/expiring/low-stock sensor attributes (HA state size)
@@ -93,6 +133,9 @@ ATTR_FOOD_PERCENT: Final = "food_percent"
 ATTR_FOOD_SUPPLY_HOURS: Final = "food_supply_hours"
 ATTR_SUPPLY_HOURS: Final = "supply_hours"
 ATTR_DURATION_HOURS: Final = "duration_hours"
+ATTR_DAILY_CALORIES: Final = "daily_calories"
+ATTR_DAILY_WATER_LITERS: Final = "daily_water_liters"
+ATTR_AGE_CATEGORIES: Final = "age_categories"
 ATTR_UNMEASURABLE_WATER: Final = "unmeasurable_water_count"
 ATTR_UNMEASURABLE_FOOD: Final = "unmeasurable_food_count"
 ATTR_NEEDS_PEOPLE_COUNT: Final = "needs_people_count"

@@ -152,11 +152,15 @@ def _ensure_homeassistant_stubs() -> None:
 
     class _SelectorStub:  # noqa: D101
         def __init__(self, *args: Any, **kwargs: Any) -> None:
-            pass
+            self.args = args
+            self.kwargs = kwargs
+
+        def __call__(self, value: Any) -> Any:
+            return value
 
     class _ConfigStub:  # noqa: D101
         def __init__(self, *args: Any, **kwargs: Any) -> None:
-            pass
+            self.kwargs = kwargs
 
     class _ModeStub:  # noqa: D101
         BOX = "box"

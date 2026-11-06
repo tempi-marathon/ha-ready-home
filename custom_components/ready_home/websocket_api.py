@@ -135,6 +135,17 @@ def _settings_dict(coordinator: ReadyHomeCoordinator) -> dict[str, Any]:
         "urgent_days": s.urgent_days,
         "todo_entity_id": s.todo_entity_id,
         "auto_push_restock": s.auto_push_restock,
+        "age_categories": [
+            {
+                "key": c.key,
+                "count": c.count,
+                "calories_per_day": c.calories_per_day,
+                "water_liters_per_day": c.water_liters_per_day,
+            }
+            for c in s.category_targets()
+        ],
+        "daily_calories": s.daily_calories(),
+        "daily_water_liters": s.daily_water_liters(),
     }
 
 

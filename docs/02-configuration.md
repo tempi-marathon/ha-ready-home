@@ -2,7 +2,7 @@
 
 Open the integration → **Configure**:
 
-- **Readiness targets** — people, duration hours, liters/person/day, kcal/person/day
+- **Readiness targets** — duration hours, plus the number of people, kcal/person/day and liters/person/day for each age category (adults, children, babies and toddlers, seniors). Existing setups appear as adults only, with their previous values.
 - **Locations and categories** — storage locations, category labels, and which categories count as **food** or **water** for readiness
 - **Thresholds** — expiring window (default 30 days), urgent window (7 days)
 - **Restock** — optional Home Assistant todo / shopping list entity, and whether to auto-push when an item newly becomes low stock

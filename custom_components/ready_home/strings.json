@@ -6,7 +6,7 @@
         "description": "Track emergency supplies and measure readiness. Name this profile (default Ready Home). Generic names appear as Ready Home in the UI; other names become a suffix, e.g. Ready Home (Cabin). The profile also sets the entity id prefix.",
         "data": {
           "name": "Profile name",
-          "number_of_people": "Number of people in the household"
+          "number_of_people": "Number of adults in the household (children, seniors and toddlers can be added later in options)"
         }
       }
     },
@@ -41,11 +41,21 @@
       "targets": {
         "title": "Readiness targets",
         "data": {
-          "number_of_people": "Number of people",
-          "duration_hours": "Duration (hours)",
-          "water_liters_per_person_per_day": "Water liters per person per day",
-          "calories_per_person_per_day": "Calories per person per day"
-        }
+          "count_adults": "Adults (18–69): number of people",
+          "calories_per_day_adults": "Adults (18–69): calories per person per day",
+          "water_liters_per_day_adults": "Adults (18–69): water liters per person per day",
+          "count_children": "Children (4–17): number of people",
+          "calories_per_day_children": "Children (4–17): calories per person per day",
+          "water_liters_per_day_children": "Children (4–17): water liters per person per day",
+          "count_babies_toddlers": "Babies and toddlers (0–3): number of people",
+          "calories_per_day_babies_toddlers": "Babies and toddlers (0–3): calories per person per day",
+          "water_liters_per_day_babies_toddlers": "Babies and toddlers (0–3): water liters per person per day",
+          "count_seniors": "Seniors (70+): number of people",
+          "calories_per_day_seniors": "Seniors (70+): calories per person per day",
+          "water_liters_per_day_seniors": "Seniors (70+): water liters per person per day",
+          "duration_hours": "Duration (hours)"
+        },
+        "description": "People per age category and their daily needs. Defaults follow Voedingscentrum.nl (light activity) and can be changed. Totals are the sum over all categories."
       },
       "lists": {
         "title": "Locations and categories",
@@ -79,7 +89,8 @@
     },
     "error": {
       "invalid_name": "Enter a profile name",
-      "category_overlap": "A category cannot be both food and water"
+      "category_overlap": "A category cannot be both food and water",
+      "invalid_people": "Enter at least one person"
     }
   },
   "entity": {

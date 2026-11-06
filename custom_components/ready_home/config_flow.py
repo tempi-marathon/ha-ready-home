@@ -26,6 +26,8 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
+    AGE_CATEGORIES,
+    AGE_CATEGORY_ADULTS,
     CONF_AUTO_PUSH_RESTOCK,
     CONF_CALORIES_PER_PERSON_PER_DAY,
     CONF_CATEGORIES,
@@ -39,7 +41,8 @@ from .const import (
     CONF_URGENT_DAYS,
     CONF_WATER_CATEGORIES,
     CONF_WATER_LITERS_PER_PERSON_PER_DAY,
-    DEFAULT_CALORIES_PER_PERSON_PER_DAY,
+    DEFAULT_AGE_CATEGORY_CALORIES,
+    DEFAULT_AGE_CATEGORY_WATER_LITERS,
     DEFAULT_CATEGORIES,
     DEFAULT_DURATION_HOURS,
     DEFAULT_EXPIRING_DAYS,
@@ -48,9 +51,69 @@ from .const import (
     DEFAULT_PROFILE_NAME,
     DEFAULT_URGENT_DAYS,
     DEFAULT_WATER_CATEGORIES,
-    DEFAULT_WATER_LITERS_PER_PERSON_PER_DAY,
     DOMAIN,
+    conf_calories,
+    conf_count,
+    conf_water,
 )
+from .models import ReadinessSettings
+
+
+def _targets_form_values(options: dict[str, Any]) -> dict[str, Any]:
+    """Current effective target values (legacy entries read as all adults)."""
+    settings = ReadinessSettings.from_options(options)
+    values: dict[str, Any] = {CONF_DURATION_HOURS: settings.duration_hours}
+    for target in settings.category_targets():
+        values[conf_count(target.key)] = target.count
+        values[conf_calories(target.key)] = target.calories_per_day
+        values[conf_water(target.key)] = target.water_liters_per_day
+    if not any(values[conf_count(k)] for k in AGE_CATEGORIES):
+        values[conf_count(AGE_CATEGORY_ADULTS)] = 2
+    return values
+
+
+def _apply_targets(
+    options: dict[str, Any], user_input: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Return options updated with submitted targets, or None for an empty household.
+
+    Legacy keys stay in sync: the headcount is the total and the per-person values
+    are the adult values, so older code still reads sensible numbers.
+    """
+    updated = dict(options)
+    total = 0
+    for key in AGE_CATEGORIES:
+        count = int(user_input[conf_count(key)])
+        total += count
+        updated[conf_count(key)] = count
+        updated[conf_calories(key)] = int(user_input[conf_calories(key)])
+        updated[conf_water(key)] = float(user_input[conf_water(key)])
+    if total < 1:
+        return None
+    updated[CONF_DURATION_HOURS] = int(user_input[CONF_DURATION_HOURS])
+    updated[CONF_NUMBER_OF_PEOPLE] = total
+    updated[CONF_CALORIES_PER_PERSON_PER_DAY] = updated[conf_calories(AGE_CATEGORY_ADULTS)]
+    updated[CONF_WATER_LITERS_PER_PERSON_PER_DAY] = updated[
+        conf_water(AGE_CATEGORY_ADULTS)
+    ]
+    return updated
+
+
+def _new_entry_target_options(adults: int) -> dict[str, Any]:
+    """Target options for a new profile: adults only, other categories at 0."""
+    options: dict[str, Any] = {}
+    for key in AGE_CATEGORIES:
+        options[conf_count(key)] = adults if key == AGE_CATEGORY_ADULTS else 0
+        options[conf_calories(key)] = DEFAULT_AGE_CATEGORY_CALORIES[key]
+        options[conf_water(key)] = DEFAULT_AGE_CATEGORY_WATER_LITERS[key]
+    options[CONF_NUMBER_OF_PEOPLE] = adults
+    options[CONF_CALORIES_PER_PERSON_PER_DAY] = DEFAULT_AGE_CATEGORY_CALORIES[
+        AGE_CATEGORY_ADULTS
+    ]
+    options[CONF_WATER_LITERS_PER_PERSON_PER_DAY] = DEFAULT_AGE_CATEGORY_WATER_LITERS[
+        AGE_CATEGORY_ADULTS
+    ]
+    return options
 
 
 def _merge_category_lists(
@@ -108,14 +171,8 @@ class ReadyHomeConfigFlow(ConfigFlow, domain=DOMAIN):
                     title=name,
                     data={CONF_NAME: name},
                     options={
-                        CONF_NUMBER_OF_PEOPLE: int(people),
+                        **_new_entry_target_options(int(people)),
                         CONF_DURATION_HOURS: DEFAULT_DURATION_HOURS,
-                        CONF_WATER_LITERS_PER_PERSON_PER_DAY: (
-                            DEFAULT_WATER_LITERS_PER_PERSON_PER_DAY
-                        ),
-                        CONF_CALORIES_PER_PERSON_PER_DAY: (
-                            DEFAULT_CALORIES_PER_PERSON_PER_DAY
-                        ),
                         CONF_LOCATIONS: list(DEFAULT_LOCATIONS),
                         CONF_CATEGORIES: list(DEFAULT_CATEGORIES),
                         CONF_FOOD_CATEGORIES: list(DEFAULT_FOOD_CATEGORIES),
@@ -207,65 +264,49 @@ class ReadyHomeOptionsFlow(OptionsFlow):
     ) -> ConfigFlowResult:
         """Edit readiness targets."""
         options = dict(self.config_entry.options)
+        errors: dict[str, str] = {}
 
         if user_input is not None:
-            options.update(
-                {
-                    CONF_NUMBER_OF_PEOPLE: int(user_input[CONF_NUMBER_OF_PEOPLE]),
-                    CONF_DURATION_HOURS: int(user_input[CONF_DURATION_HOURS]),
-                    CONF_WATER_LITERS_PER_PERSON_PER_DAY: float(
-                        user_input[CONF_WATER_LITERS_PER_PERSON_PER_DAY]
-                    ),
-                    CONF_CALORIES_PER_PERSON_PER_DAY: int(
-                        user_input[CONF_CALORIES_PER_PERSON_PER_DAY]
-                    ),
-                }
-            )
-            return await self._async_save_and_menu(options=options)
+            updated = _apply_targets(options, user_input)
+            if updated is not None:
+                return await self._async_save_and_menu(options=updated)
+            errors["base"] = "invalid_people"
+            current = user_input
+        else:
+            current = _targets_form_values(options)
 
-        schema = vol.Schema(
-            {
-                vol.Required(
-                    CONF_NUMBER_OF_PEOPLE,
-                    default=options.get(CONF_NUMBER_OF_PEOPLE, 2),
-                ): NumberSelector(
+        fields: dict[Any, Any] = {}
+        for key in AGE_CATEGORIES:
+            fields[vol.Required(conf_count(key), default=current[conf_count(key)])] = (
+                NumberSelector(
                     NumberSelectorConfig(
-                        min=1, max=50, mode=NumberSelectorMode.BOX, step=1
+                        min=0, max=50, mode=NumberSelectorMode.BOX, step=1
                     )
-                ),
-                vol.Required(
-                    CONF_DURATION_HOURS,
-                    default=options.get(CONF_DURATION_HOURS, DEFAULT_DURATION_HOURS),
-                ): NumberSelector(
-                    NumberSelectorConfig(
-                        min=24, max=720, mode=NumberSelectorMode.BOX, step=1
-                    )
-                ),
-                vol.Required(
-                    CONF_WATER_LITERS_PER_PERSON_PER_DAY,
-                    default=options.get(
-                        CONF_WATER_LITERS_PER_PERSON_PER_DAY,
-                        DEFAULT_WATER_LITERS_PER_PERSON_PER_DAY,
-                    ),
-                ): NumberSelector(
+                )
+            )
+            fields[
+                vol.Required(conf_calories(key), default=current[conf_calories(key)])
+            ] = NumberSelector(
+                NumberSelectorConfig(
+                    min=500, max=5000, mode=NumberSelectorMode.BOX, step=50
+                )
+            )
+            fields[vol.Required(conf_water(key), default=current[conf_water(key)])] = (
+                NumberSelector(
                     NumberSelectorConfig(
                         min=0.5, max=20, mode=NumberSelectorMode.BOX, step=0.1
                     )
-                ),
-                vol.Required(
-                    CONF_CALORIES_PER_PERSON_PER_DAY,
-                    default=options.get(
-                        CONF_CALORIES_PER_PERSON_PER_DAY,
-                        DEFAULT_CALORIES_PER_PERSON_PER_DAY,
-                    ),
-                ): NumberSelector(
-                    NumberSelectorConfig(
-                        min=500, max=5000, mode=NumberSelectorMode.BOX, step=50
-                    )
-                ),
-            }
+                )
+            )
+        fields[
+            vol.Required(CONF_DURATION_HOURS, default=current[CONF_DURATION_HOURS])
+        ] = NumberSelector(
+            NumberSelectorConfig(min=24, max=720, mode=NumberSelectorMode.BOX, step=1)
         )
-        return self.async_show_form(step_id="targets", data_schema=schema)
+        schema = vol.Schema(fields)
+        return self.async_show_form(
+            step_id="targets", data_schema=schema, errors=errors
+        )
 
     async def async_step_lists(
         self, user_input: dict[str, Any] | None = None

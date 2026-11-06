@@ -8,6 +8,19 @@ from enum import StrEnum
 from typing import Any
 from uuid import uuid4
 
+from .const import (
+    AGE_CATEGORIES,
+    AGE_CATEGORY_ADULTS,
+    ATTR_AGE_CATEGORIES,
+    ATTR_DAILY_CALORIES,
+    ATTR_DAILY_WATER_LITERS,
+    DEFAULT_AGE_CATEGORY_CALORIES,
+    DEFAULT_AGE_CATEGORY_WATER_LITERS,
+    conf_calories,
+    conf_count,
+    conf_water,
+)
+
 
 class InventoryUnit(StrEnum):
     """Stock count units (how many bottles/packs you have).
@@ -271,6 +284,30 @@ class InventoryItem:
 
 
 @dataclass(frozen=True, slots=True)
+class AgeCategoryTarget:
+    """People count and per-person daily needs for one age category."""
+
+    key: str
+    count: int
+    calories_per_day: int
+    water_liters_per_day: float
+
+
+def _count(raw: Any) -> int:
+    try:
+        return max(0, int(raw))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _number(raw: Any, default: float) -> float:
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+@dataclass(frozen=True, slots=True)
 class ReadinessSettings:
     """Household readiness targets and reference lists."""
 
@@ -286,11 +323,36 @@ class ReadinessSettings:
     urgent_days: int = 7
     todo_entity_id: str | None = None
     auto_push_restock: bool = False
+    # None = legacy household: number_of_people adults at the per-person values above.
+    age_categories: tuple[AgeCategoryTarget, ...] | None = None
 
     @classmethod
     def from_options(cls, options: dict[str, Any]) -> ReadinessSettings:
         """Build settings from a config entry options dict."""
         people = options.get("number_of_people")
+        water_per_person = float(options.get("water_liters_per_person_per_day", 3.0))
+        calories_per_person = int(options.get("calories_per_person_per_day", 2000))
+        age_categories: tuple[AgeCategoryTarget, ...] | None = None
+        if any(conf_count(k) in options for k in AGE_CATEGORIES):
+            age_categories = tuple(
+                AgeCategoryTarget(
+                    key=k,
+                    count=_count(options.get(conf_count(k))),
+                    calories_per_day=int(
+                        _number(
+                            options.get(conf_calories(k)),
+                            DEFAULT_AGE_CATEGORY_CALORIES[k],
+                        )
+                    ),
+                    water_liters_per_day=_number(
+                        options.get(conf_water(k)),
+                        DEFAULT_AGE_CATEGORY_WATER_LITERS[k],
+                    ),
+                )
+                for k in AGE_CATEGORIES
+            )
+            total = sum(c.count for c in age_categories)
+            people = total if total > 0 else None
         categories = tuple(options.get("categories") or ())
         food_categories = options.get("food_categories")
         water_categories = options.get("water_categories")
@@ -307,10 +369,8 @@ class ReadinessSettings:
         return cls(
             number_of_people=int(people) if people is not None else None,
             duration_hours=int(options.get("duration_hours", 72)),
-            water_liters_per_person_per_day=float(
-                options.get("water_liters_per_person_per_day", 3.0)
-            ),
-            calories_per_person_per_day=int(options.get("calories_per_person_per_day", 2000)),
+            water_liters_per_person_per_day=water_per_person,
+            calories_per_person_per_day=calories_per_person,
             locations=tuple(options.get("locations") or ()),
             categories=categories,
             food_categories=food_categories,
@@ -319,6 +379,7 @@ class ReadinessSettings:
             urgent_days=int(options.get("urgent_days", 7)),
             todo_entity_id=todo_entity_id,
             auto_push_restock=bool(options.get("auto_push_restock", False)),
+            age_categories=age_categories,
         )
 
     def is_food_category(self, category: str) -> bool:
@@ -343,27 +404,59 @@ class ReadinessSettings:
             return "food"
         return "none"
 
-    def water_target_liters(self) -> float | None:
-        """Total water liters needed for the configured duration."""
+    def category_targets(self) -> tuple[AgeCategoryTarget, ...]:
+        """Per-category counts and values; legacy settings read as all adults."""
+        if self.age_categories is not None:
+            return self.age_categories
+        adults = AgeCategoryTarget(
+            key=AGE_CATEGORY_ADULTS,
+            count=self.number_of_people or 0,
+            calories_per_day=self.calories_per_person_per_day,
+            water_liters_per_day=self.water_liters_per_person_per_day,
+        )
+        others = tuple(
+            AgeCategoryTarget(
+                key=k,
+                count=0,
+                calories_per_day=DEFAULT_AGE_CATEGORY_CALORIES[k],
+                water_liters_per_day=DEFAULT_AGE_CATEGORY_WATER_LITERS[k],
+            )
+            for k in AGE_CATEGORIES
+            if k != AGE_CATEGORY_ADULTS
+        )
+        return (adults, *others)
+
+    def daily_calories(self) -> float | None:
+        """Calories the household needs per day (sum of count x per-person value)."""
         if self.number_of_people is None:
             return None
-        return (
-            self.number_of_people
-            * self.water_liters_per_person_per_day
-            * self.duration_hours
-            / 24.0
+        return float(sum(c.count * c.calories_per_day for c in self.category_targets()))
+
+    def daily_water_liters(self) -> float | None:
+        """Liters of water the household needs per day."""
+        if self.number_of_people is None:
+            return None
+        return float(
+            sum(c.count * c.water_liters_per_day for c in self.category_targets())
         )
+
+    def household_attributes(self) -> dict[str, Any]:
+        """Household breakdown exposed as people-sensor attributes."""
+        return {
+            ATTR_AGE_CATEGORIES: {c.key: c.count for c in self.category_targets()},
+            ATTR_DAILY_CALORIES: self.daily_calories(),
+            ATTR_DAILY_WATER_LITERS: self.daily_water_liters(),
+        }
+
+    def water_target_liters(self) -> float | None:
+        """Total water liters needed for the configured duration."""
+        daily = self.daily_water_liters()
+        return None if daily is None else daily * self.duration_hours / 24.0
 
     def food_target_calories(self) -> float | None:
         """Total food calories needed for the configured duration."""
-        if self.number_of_people is None:
-            return None
-        return (
-            self.number_of_people
-            * self.calories_per_person_per_day
-            * self.duration_hours
-            / 24.0
-        )
+        daily = self.daily_calories()
+        return None if daily is None else daily * self.duration_hours / 24.0
 
 
 @dataclass(frozen=True, slots=True)

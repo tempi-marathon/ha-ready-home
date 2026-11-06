@@ -11,7 +11,7 @@ Ready Home is a custom **Integration**. On Home Assistant **2026.11+** it instal
 1. Settings → **Marketplace** → search for **Ready Home**, or use the button above (custom repository if needed).
 2. Download **Ready Home** (restart if Home Assistant asks).
 3. Settings → Devices & Services → Add Integration → **Ready Home**, or use the button below.
-4. Enter the number of people in the household.
+4. Enter the number of adults in the household. Add children, babies and toddlers or seniors later under **Configure → Readiness targets**.
 
 [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=ready_home)
 
@@ -26,7 +26,7 @@ After setup, a **Ready Home** item appears in the sidebar for inventory manageme
 1. Open HACS → search for **Ready Home**, or use the button above (custom repository if needed).
 2. Download **Ready Home**, restart Home Assistant.
 3. Settings → Devices & Services → Add Integration → **Ready Home**, or use the setup button in the Marketplace section above.
-4. Enter the number of people in the household.
+4. Enter the number of adults in the household. Add children, babies and toddlers or seniors later under **Configure → Readiness targets**.
 
 ## Lovelace resource cleanup
 
