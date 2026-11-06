@@ -105,6 +105,17 @@ data:
   template_id: first_aid
 ```
 
+To add only some of the missing items, pass `item_names` (names are matched case-insensitively and must belong to the template; an unknown name is rejected, an empty list adds nothing). Leave it out to add every missing item.
+
+```yaml
+action: ready_home.apply_kit_template
+data:
+  template_id: first_aid
+  item_names:
+    - Bandages
+    - Gauze
+```
+
 ## Push low-stock items to a todo list
 
 Uses the todo entity from **Configure → Restock**, or `entity_id` in the call. Skips lines that already exist on the list.

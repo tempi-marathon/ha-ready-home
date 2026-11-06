@@ -354,6 +354,12 @@ apply_kit_template:
             - first_aid
             - go_bag
             - basic_tools
+    item_names:
+      name: Item names
+      description: Only add these template items (omit to add all missing items). Names must belong to the template.
+      required: false
+      selector:
+        object:
 
 push_restock_list:
   name: Push restock list

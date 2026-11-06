@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SettingsDto } from "./api";
 import "./panel";
 import type { HomeAssistant } from "./types";
@@ -192,5 +192,163 @@ describe("pet food filter", () => {
       expect(option?.textContent?.trim()).toBe(label);
       el.remove();
     }
+  });
+});
+
+describe("template item selection dialog", () => {
+  type Panel = HTMLElement & {
+    hass: HomeAssistant;
+    updateComplete: Promise<boolean>;
+    _templateOpen: boolean;
+    _templates: unknown[];
+  };
+
+  const TEMPLATE = {
+    id: "first_aid",
+    name: "First aid",
+    description: "Basics",
+    item_count: 3,
+    items: ["Bandages", "Gauze", "Tape"].map((name) => ({
+      name,
+      category: "Medical",
+      desired_quantity: 1,
+      quantity: 0,
+      priority: "essential",
+      unit: "pieces",
+    })),
+  };
+
+  async function openDialog(
+    calls: unknown[][],
+    inventory: string[] = ["bandages"],
+  ) {
+    const el = document.createElement("ready-home-panel") as unknown as Panel;
+    const hass = hassFor("en", LEGACY_SETTINGS);
+    hass.callService = (async (...args: unknown[]) => {
+      calls.push(args);
+      return { response: { added_count: 1, skipped_count: 0 } };
+    }) as never;
+    hass.connection.subscribeMessage = (async (cb: (snap: unknown) => void) => {
+      cb({
+        ...SNAPSHOT,
+        items: inventory.map((name, i) => ({
+          id: `x${i}`,
+          name,
+          category: "Medical",
+          quantity: 1,
+        })),
+        settings: LEGACY_SETTINGS,
+      });
+      return () => undefined;
+    }) as never;
+    (hass as unknown as { user: unknown }).user = { is_admin: true };
+    el.hass = hass;
+    document.body.appendChild(el);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    el._templates = [TEMPLATE];
+    el._templateOpen = true;
+    await el.updateComplete;
+    const root = el.shadowRoot!;
+    const checks = () =>
+      Array.from(
+        root.querySelectorAll<HTMLInputElement>(".template-item input"),
+      );
+    const addButton = () =>
+      root.querySelector<HTMLButtonElement>(".template-card .md-btn-filled")!;
+    return { el, root, checks, addButton };
+  }
+
+  it("lists only missing items, collapsed, all checked by default", async () => {
+    const { el, root, checks, addButton } = await openDialog([]);
+    expect(root.querySelector(".template-card .item-count")?.textContent).toContain(
+      "2 to add",
+    );
+    expect(root.querySelector<HTMLDetailsElement>(".template-items")?.open).toBe(false);
+    // select-all + Gauze + Tape (Bandages already exists, matched case-insensitively)
+    expect(checks().map((c) => c.checked)).toEqual([true, true, true]);
+    expect(root.querySelector(".template-items")?.textContent).not.toContain("Bandages");
+    expect(addButton().textContent).toContain("(2)");
+    el.remove();
+  });
+
+  it("adds only checked items and disables the button when none are checked", async () => {
+    const calls: unknown[][] = [];
+    const { el, checks, addButton } = await openDialog(calls);
+    checks()[1].click(); // uncheck Gauze
+    await el.updateComplete;
+    expect(checks()[0].indeterminate).toBe(true);
+    checks()[0].click(); // partial -> all
+    await el.updateComplete;
+    expect(checks().map((c) => c.checked)).toEqual([true, true, true]);
+    checks()[0].click(); // all -> none
+    await el.updateComplete;
+    expect(addButton().disabled).toBe(true);
+    checks()[2].click(); // check Tape only
+    await el.updateComplete;
+    addButton().click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(calls[0].slice(0, 3)).toEqual([
+      "ready_home",
+      "apply_kit_template",
+      { template_id: "first_aid", item_names: ["Tape"] },
+    ]);
+    el.remove();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("shows the added/skipped notice after adding and clears it again", async () => {
+    const { el, root, addButton } = await openDialog([]);
+    vi.useFakeTimers();
+    addButton().click();
+    await vi.advanceTimersByTimeAsync(0);
+    await el.updateComplete;
+    expect(root.querySelector("[role=status]")?.textContent).toContain("Added 1, skipped 0.");
+    await vi.advanceTimersByTimeAsync(6000);
+    await el.updateComplete;
+    expect(root.querySelector("[role=status]")).toBeNull();
+    el.remove();
+  });
+
+  it("keeps selections when the list is collapsed and re-expanded", async () => {
+    const { el, root, checks } = await openDialog([]);
+    const details = root.querySelector<HTMLDetailsElement>(".template-items")!;
+    details.open = true;
+    checks()[1].click(); // uncheck Gauze
+    await el.updateComplete;
+    details.open = false;
+    await el.updateComplete;
+    details.open = true;
+    await el.updateComplete;
+    expect(checks().map((c) => c.checked)).toEqual([false, false, true]);
+    expect(root.querySelector<HTMLDetailsElement>(".template-items")?.open).toBe(true);
+    el.remove();
+  });
+
+  it("resets selections and collapses when the dialog is closed and reopened", async () => {
+    const { el, root, checks } = await openDialog([]);
+    root.querySelector<HTMLDetailsElement>(".template-items")!.open = true;
+    checks()[1].click(); // uncheck Gauze
+    await el.updateComplete;
+    expect(checks().map((c) => c.checked)).toEqual([false, false, true]);
+    (el as unknown as { _closeTemplates: () => void })._closeTemplates();
+    await el.updateComplete;
+    (el as unknown as { _templateOpen: boolean })._templateOpen = true;
+    await el.updateComplete;
+    expect(checks().map((c) => c.checked)).toEqual([true, true, true]);
+    expect(root.querySelector<HTMLDetailsElement>(".template-items")?.open).toBe(false);
+    el.remove();
+  });
+
+  it("shows nothing-missing and disables adding when every item exists", async () => {
+    const { el, root, addButton } = await openDialog([], ["Bandages", "gauze", " TAPE "]);
+    expect(root.querySelector(".template-card .item-count")?.textContent).toContain(
+      "Nothing missing",
+    );
+    expect(root.querySelector(".template-items")).toBeNull();
+    expect(addButton().disabled).toBe(true);
+    el.remove();
   });
 });
