@@ -7,6 +7,7 @@ from datetime import date, datetime
 from typing import Any
 
 from homeassistant.core import CALLBACK_TYPE, Context, HomeAssistant, callback
+from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -32,6 +33,10 @@ from .readiness import assess
 from .store import InventoryStore
 
 _LOGGER = logging.getLogger(__name__)
+
+# Home Assistant's default refresh cooldown is 10 s, which holds back every edit after
+# the first. A short trailing cooldown coalesces bursts and still updates within 1 s.
+REFRESH_COOLDOWN = 0.25
 
 
 class ReadyHomeData:
@@ -62,7 +67,14 @@ class ReadyHomeCoordinator(DataUpdateCoordinator[ReadyHomeData]):
         store: InventoryStore,
         settings: ReadinessSettings,
     ) -> None:
-        super().__init__(hass, _LOGGER, name=DOMAIN)
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=DOMAIN,
+            request_refresh_debouncer=Debouncer(
+                hass, _LOGGER, cooldown=REFRESH_COOLDOWN, immediate=False
+            ),
+        )
         self.store = store
         self.settings = settings
         self.entry_id: str | None = None

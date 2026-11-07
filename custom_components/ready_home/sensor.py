@@ -49,7 +49,7 @@ from .const import (
 )
 from .coordinator import ReadyHomeCoordinator
 from .helpers import device_info_for_entry, remove_retired_sensors
-from .readiness import pet_food_attr_dict
+from .readiness import pet_food_attr_dict, pet_food_readiness_state
 
 
 async def async_setup_entry(
@@ -65,6 +65,7 @@ async def async_setup_entry(
             ReadinessSensor(coordinator, entry),
             WaterReadinessSensor(coordinator, entry),
             FoodReadinessSensor(coordinator, entry),
+            PetFoodReadinessSensor(coordinator, entry),
             CategoryCompletenessSensor(coordinator, entry),
             ExpiredItemsSensor(coordinator, entry),
             ExpiringItemsSensor(coordinator, entry),
@@ -215,6 +216,29 @@ class FoodReadinessSensor(ReadyHomeSensorBase):
             ATTR_UNMEASURABLE_FOOD: a.unmeasurable_food_count,
             **pet_food_attr_dict(a),
         }
+
+
+class PetFoodReadinessSensor(ReadyHomeSensorBase):
+    """Pet food readiness percentage (grams); unknown when there is no pet food target."""
+
+    _attr_translation_key = "pet_food_readiness"
+    _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:paw"
+
+    def __init__(self, coordinator: ReadyHomeCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "pet_food_readiness")
+
+    @property
+    def native_value(self) -> float | None:
+        data = self.coordinator.data
+        if data is None:
+            return None
+        return pet_food_readiness_state(data.assessment)
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        return pet_food_attr_dict(self.coordinator.data.assessment)
 
 
 class CategoryCompletenessSensor(ReadyHomeSensorBase):

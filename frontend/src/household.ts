@@ -89,3 +89,65 @@ export function householdFromSettings(
     days: settings.duration_hours / 24,
   };
 }
+
+export interface FoodRow {
+  key: string;
+  count: number;
+  caloriesPerPerson: number;
+  caloriesSubtotal: number;
+}
+
+export interface FoodBreakdown {
+  rows: FoodRow[];
+  /** kcal per day for all people. */
+  dailyTotal: number;
+  /** kcal over the planning duration. */
+  periodTotal: number;
+  days: number;
+}
+
+export interface PetFoodRow {
+  id: string;
+  name: string;
+  type: string;
+  foodPerDay: number;
+}
+
+export interface PetFoodBreakdown {
+  rows: PetFoodRow[];
+  /** Grams per day for all pets. */
+  dailyTotal: number;
+  /** Grams over the planning duration. */
+  periodTotal: number;
+  days: number;
+}
+
+/** The human food (kcal) part of the household: people per age category. */
+export function foodBreakdown(h: Household): FoodBreakdown {
+  return {
+    rows: h.rows.map((r) => ({
+      key: r.key,
+      count: r.count,
+      caloriesPerPerson: r.caloriesPerPerson,
+      caloriesSubtotal: r.caloriesSubtotal,
+    })),
+    dailyTotal: h.dailyCalories,
+    periodTotal: h.dailyCalories * h.days,
+    days: h.days,
+  };
+}
+
+/** The pet food (grams) part of the household: one row per pet. */
+export function petFoodBreakdown(h: Household): PetFoodBreakdown {
+  return {
+    rows: h.pets.map((p) => ({
+      id: p.id,
+      name: p.name,
+      type: p.type,
+      foodPerDay: p.foodPerDay,
+    })),
+    dailyTotal: h.dailyPetFood,
+    periodTotal: h.dailyPetFood * h.days,
+    days: h.days,
+  };
+}

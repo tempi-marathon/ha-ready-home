@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import date
 from typing import Any
 
 import voluptuous as vol
@@ -18,7 +19,8 @@ from .const import ATTR_CONFIG_ENTRY_ID, DOMAIN
 from .coordinator import ReadyHomeCoordinator, ReadyHomeData
 from .helpers import get_coordinator
 from .kit_templates import get_kit_template, list_kit_templates, template_items_dicts
-from .models import ReadinessSettings
+from .models import ReadinessAssessment, ReadinessSettings
+from .readiness import assess
 from .services import required_barcode
 
 _LOGGER = logging.getLogger(__name__)
@@ -33,7 +35,10 @@ def _coordinator(hass: HomeAssistant, msg: dict[str, Any]) -> ReadyHomeCoordinat
 
 
 def _assessment_dict(data: ReadyHomeData) -> dict[str, Any]:
-    a = data.assessment
+    return _assessment_to_dict(data.assessment)
+
+
+def _assessment_to_dict(a: ReadinessAssessment) -> dict[str, Any]:
     return {
         "needs_people_count": a.needs_people_count,
         "water_on_hand": a.water_on_hand,
@@ -93,14 +98,15 @@ def _snapshot(coordinator: ReadyHomeCoordinator) -> dict[str, Any]:
 
 
 def _snapshot_from_store(coordinator: ReadyHomeCoordinator) -> dict[str, Any]:
-    """Items from the store (already committed); assessment/buckets from last refresh.
+    """Items and assessment from the store (already committed); buckets from last refresh.
 
-    Used to push the panel list immediately after a mutation, without waiting for
-    the coordinator recompute and entity writes. Buckets catch up on the next
-    full coordinator push.
+    Used to push the panel list and stats immediately after a mutation, without
+    waiting for the coordinator recompute and entity writes. Completeness and buckets
+    catch up on the next coordinator push (within the refresh cooldown).
     """
     data = coordinator.data
-    items = [item.to_dict() for item in coordinator.store.items]
+    store_items = coordinator.store.items
+    items = [item.to_dict() for item in store_items]
     if data is None:
         return {
             "items": items,
@@ -109,9 +115,10 @@ def _snapshot_from_store(coordinator: ReadyHomeCoordinator) -> dict[str, Any]:
             "completeness": {},
             "settings": _settings_dict(coordinator),
         }
+    assessment = assess(store_items, coordinator.settings, date.today())
     return {
         "items": items,
-        "assessment": _assessment_dict(data),
+        "assessment": _assessment_to_dict(assessment),
         "buckets": _buckets_dict(data, coordinator.settings),
         "completeness": _completeness_dict(data),
         "settings": _settings_dict(coordinator),

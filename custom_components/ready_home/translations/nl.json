@@ -152,6 +152,9 @@
       "food_readiness": {
         "name": "Voedselparaatheid"
       },
+      "pet_food_readiness": {
+        "name": "Huisdiervoerparaatheid"
+      },
       "category_completeness": {
         "name": "Categoriecompleetheid"
       },

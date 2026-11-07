@@ -133,3 +133,36 @@ async def test_bucket_helpers_match_coordinator_windows() -> None:
     buckets = build_buckets(items, today=today, urgent_days=7, expiring_days=30)
     assert len(buckets.within_expiring) == 1
     assert len(buckets.within_urgent) == 0
+
+
+def test_refresh_requests_use_a_short_trailing_debounce(
+    coordinator: ReadyHomeCoordinator,
+) -> None:
+    """Regression: the default 10 s refresh cooldown delayed stats after rapid edits.
+
+    Home Assistant's default debouncer runs the first request at once and then holds
+    every later request until the 10 s cooldown ends. A short trailing cooldown
+    coalesces bursts of edits and still refreshes well within a second.
+    """
+    debouncer = coordinator._debounced_refresh
+    assert debouncer is not None
+    assert debouncer.immediate is False
+    assert 0 < debouncer.cooldown <= 0.5
+
+
+@pytest.mark.asyncio
+async def test_refresh_after_rapid_edits_reflects_the_final_items(
+    coordinator: ReadyHomeCoordinator,
+) -> None:
+    """Several edits in a row: the next refresh publishes data for the last state."""
+    await coordinator.store.async_load()
+    item = InventoryItem(name="Beans", quantity=1, desired_quantity=5)
+    await coordinator.store.async_add(item)
+    await coordinator.store.async_update(item.with_updates(quantity=2))
+    await coordinator.store.async_update(item.with_updates(quantity=5))
+    await coordinator.store.async_update(item.with_updates(quantity=3))
+
+    data = await coordinator._async_update_data()
+
+    assert [i.quantity for i in data.items] == [3]
+    assert [i.name for i in data.buckets.low_stock] == ["Beans"]

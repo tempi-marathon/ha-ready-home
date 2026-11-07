@@ -152,6 +152,9 @@
       "food_readiness": {
         "name": "Food readiness"
       },
+      "pet_food_readiness": {
+        "name": "Pet food readiness"
+      },
       "category_completeness": {
         "name": "Category completeness"
       },

@@ -8,6 +8,7 @@ Ready Home exposes entities such as:
 |--------------------|----------|-------|-------------------|
 | `readiness` / `water_readiness` / `food_readiness` | sensor | % ready | people, duration, on-hand / target totals |
 | `category_completeness` | sensor | average % for non–food/water checklist categories | `categories` — per-category percent / complete / total / missing names |
+| `pet_food_readiness` | sensor | % of the pet food target on hand; unknown when there is no pet food target (no pets, or no pet with food above 0 g/day), 0 when there is a target and no stock | `pet_food_on_hand`, `pet_food_target`, `pet_food_percent`, `pet_food_supply_hours` with `*_unit` companions (`g`, `h`) |
 | `expired_items` | sensor | count | `items` — capped list of item summaries |
 | `expiring_items` | sensor | urgent + expiring count | `items`, `urgent_count`, `urgent_items` |
 | `low_stock_items` | sensor | count | `items` |
@@ -20,7 +21,7 @@ Suggested entity ids depend on your device name, e.g. `sensor.ready_home_expired
 
 ![Home Assistant sensors](images/ha-sensors.png)
 
-Diagnostic attributes (people, duration, targets, totals) are also available on the device. The people sensor additionally has `age_categories` (people per category), `daily_calories`, `daily_water_liters` (people and pets) and `pet_count`. The readiness and food sensors also carry `pet_food_on_hand`, `pet_food_target`, `pet_food_percent` and `pet_food_supply_hours` with `pet_food_*_unit` companions (`g`, `h`):
+Diagnostic attributes (people, duration, targets, totals) are also available on the device. The people sensor additionally has `age_categories` (people per category), `daily_calories`, `daily_water_liters` (people and pets) and `pet_count`. The readiness, food and pet food readiness sensors carry `pet_food_on_hand`, `pet_food_target`, `pet_food_percent` and `pet_food_supply_hours` with `pet_food_*_unit` companions (`g`, `h`):
 
 ![Diagnostics](images/ha-diagnostics.png)
 
