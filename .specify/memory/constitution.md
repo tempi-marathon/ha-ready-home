@@ -60,6 +60,11 @@ Rationale: users build automations and dashboards on top of these contracts.
 - Each PR MUST state which principles it touches, pass the checks in Principle III, and update
   documentation and translations for any user-visible change.
 - Dependency updates (e.g., Dependabot) MUST pass the full test and build suite before merge.
+- Every PR MUST carry exactly one category label that places it in the release notes:
+  `enhancement` (Features), `bug` (Fixes), `accessibility` (Accessibility), or `documentation`
+  (Documentation). PRs that only change tooling (CI, release tooling, Spec Kit scaffolding)
+  MUST be labelled `internal` and are excluded from the notes; Dependabot PRs keep
+  `dependencies`. `.github/release.yml` is the source of truth for the label-to-section mapping.
 
 ## Governance
 
@@ -71,4 +76,4 @@ clarifications. Reviewers MUST verify compliance with these principles on every 
 deviation MUST be recorded and justified in the PR description. `README.md` and `docs/` serve as
 runtime guidance for contributors and users.
 
-**Version**: 1.0.2 | **Ratified**: 2026-11-06 | **Last Amended**: 2026-11-06
+**Version**: 1.1.0 | **Ratified**: 2026-11-06 | **Last Amended**: 2026-11-07
