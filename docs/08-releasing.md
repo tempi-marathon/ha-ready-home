@@ -74,4 +74,4 @@ gh workflow run release.yaml -f tag=v0.3.0 -f ref=$SHA -f dry_run=false
 ```
 
 Never publish `v0.3.0` by hand and attach the zip afterwards. Because the committed versions
-already equal `0.3.0`, the stable zip is byte-for-byte what is committed.
+already equal `0.3.0`, the stable zip's `manifest.json` is exactly the committed file.
