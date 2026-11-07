@@ -49,3 +49,44 @@ def test_every_sensor_has_a_name_in_every_translation_file(filename: str) -> Non
     sensors = json.loads((COMPONENT / filename).read_text())["entity"]["sensor"]
     missing = sorted(key for key in _sensor_keys() if not sensors.get(key, {}).get("name"))
     assert missing == []
+
+
+CATEGORIES = ("adults", "children", "babies_toddlers", "seniors")
+
+
+def _option_steps(filename: str) -> dict:
+    return json.loads((COMPONENT / filename).read_text())["options"]["step"]
+
+
+@pytest.mark.parametrize("filename", TRANSLATION_FILES)
+def test_targets_menu_and_steps_are_translated(filename: str) -> None:
+    steps = _option_steps(filename)
+    menu = steps["targets"]["menu_options"]
+    expected = [f"targets_{c}" for c in CATEGORIES] + ["targets_duration", "init"]
+    assert list(menu) == expected
+    assert all(menu.values())
+    for category in CATEGORIES:
+        step = steps[f"targets_{category}"]
+        assert step["title"]
+        assert set(step["data"]) == {
+            f"count_{category}",
+            f"calories_per_day_{category}",
+            f"water_liters_per_day_{category}",
+        }
+    assert set(steps["targets_duration"]["data"]) == {"duration_hours"}
+
+
+@pytest.mark.parametrize("filename", TRANSLATION_FILES)
+def test_targets_menu_description_uses_summary_placeholders(filename: str) -> None:
+    description = _option_steps(filename)["targets"]["description"]
+    for placeholder in (*CATEGORIES, "hours"):
+        assert "{" + placeholder + "}" in description
+
+
+def test_targets_steps_have_the_same_keys_in_every_file() -> None:
+    def shape(filename: str) -> dict:
+        steps = _option_steps(filename)
+        return {k: sorted(v) for k, v in steps.items() if k.startswith("targets")}
+
+    shapes = [shape(f) for f in TRANSLATION_FILES]
+    assert shapes[0] == shapes[1] == shapes[2]

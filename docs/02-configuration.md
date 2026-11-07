@@ -2,7 +2,7 @@
 
 Open the integration → **Configure**:
 
-- **Readiness targets** — duration hours, plus the number of people, kcal/person/day and liters/person/day for each age category (adults, children, babies and toddlers, seniors). Existing setups appear as adults only, with their previous values.
+- **Readiness targets** — a submenu with one entry per age category (adults 18–69, children 4–17, babies and toddlers 0–3, seniors 70+), a **Duration** entry, and **Back**. Each category form holds the number of people, kcal/person/day and liters/person/day (defaults follow Voedingscentrum.nl, light activity); Duration holds the readiness duration in hours. Saving returns to the submenu, whose description summarises the current people per category and the duration. At least one person is required across all categories. Existing setups appear as adults only, with their previous values.
 - **Pets** — add, edit or remove any number of pets (name, food in grams per day, water in liters per day, optional type). Pet water is added to the water target; pet food is a separate target in grams. Existing setups have no pets.
 - **Locations and categories** — storage locations, category labels, and which categories count as **food**, **water** or **pet food** (default `Pet food`) for readiness
 - **Thresholds** — expiring window (default 30 days), urgent window (7 days)

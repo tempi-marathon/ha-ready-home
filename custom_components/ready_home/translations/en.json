@@ -41,22 +41,53 @@
       },
       "targets": {
         "title": "Readiness targets",
+        "description": "People per age category and their daily needs. Defaults follow Voedingscentrum.nl (light activity) and can be changed. Totals are the sum over all categories.\n\nAdults {adults}, Children {children}, Babies and toddlers {babies_toddlers}, Seniors {seniors} · {hours} h",
+        "menu_options": {
+          "targets_adults": "Adults (18–69)",
+          "targets_children": "Children (4–17)",
+          "targets_babies_toddlers": "Babies and toddlers (0–3)",
+          "targets_seniors": "Seniors (70+)",
+          "targets_duration": "Duration",
+          "init": "Back"
+        }
+      },
+      "targets_adults": {
+        "title": "Adults (18–69)",
         "data": {
-          "count_adults": "Adults (18–69): number of people",
-          "calories_per_day_adults": "Adults (18–69): calories per person per day",
-          "water_liters_per_day_adults": "Adults (18–69): water liters per person per day",
-          "count_children": "Children (4–17): number of people",
-          "calories_per_day_children": "Children (4–17): calories per person per day",
-          "water_liters_per_day_children": "Children (4–17): water liters per person per day",
-          "count_babies_toddlers": "Babies and toddlers (0–3): number of people",
-          "calories_per_day_babies_toddlers": "Babies and toddlers (0–3): calories per person per day",
-          "water_liters_per_day_babies_toddlers": "Babies and toddlers (0–3): water liters per person per day",
-          "count_seniors": "Seniors (70+): number of people",
-          "calories_per_day_seniors": "Seniors (70+): calories per person per day",
-          "water_liters_per_day_seniors": "Seniors (70+): water liters per person per day",
+          "count_adults": "Number of people",
+          "calories_per_day_adults": "Calories per person per day",
+          "water_liters_per_day_adults": "Water liters per person per day"
+        }
+      },
+      "targets_children": {
+        "title": "Children (4–17)",
+        "data": {
+          "count_children": "Number of people",
+          "calories_per_day_children": "Calories per person per day",
+          "water_liters_per_day_children": "Water liters per person per day"
+        }
+      },
+      "targets_babies_toddlers": {
+        "title": "Babies and toddlers (0–3)",
+        "data": {
+          "count_babies_toddlers": "Number of people",
+          "calories_per_day_babies_toddlers": "Calories per person per day",
+          "water_liters_per_day_babies_toddlers": "Water liters per person per day"
+        }
+      },
+      "targets_seniors": {
+        "title": "Seniors (70+)",
+        "data": {
+          "count_seniors": "Number of people",
+          "calories_per_day_seniors": "Calories per person per day",
+          "water_liters_per_day_seniors": "Water liters per person per day"
+        }
+      },
+      "targets_duration": {
+        "title": "Duration",
+        "data": {
           "duration_hours": "Duration (hours)"
-        },
-        "description": "People per age category and their daily needs. Defaults follow Voedingscentrum.nl (light activity) and can be changed. Totals are the sum over all categories."
+        }
       },
       "pets": {
         "title": "Pets",

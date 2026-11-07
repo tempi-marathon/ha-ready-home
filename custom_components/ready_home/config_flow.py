@@ -82,30 +82,52 @@ def _targets_form_values(options: dict[str, Any]) -> dict[str, Any]:
     return values
 
 
-def _apply_targets(
-    options: dict[str, Any], user_input: dict[str, Any]
+def _targets_summary_placeholders(options: dict[str, Any]) -> dict[str, str]:
+    """Numbers for the targets menu summary line (wording lives in the translations)."""
+    values = _targets_form_values(options)
+    placeholders = {key: str(values[conf_count(key)]) for key in AGE_CATEGORIES}
+    placeholders["hours"] = str(values[CONF_DURATION_HOURS])
+    return placeholders
+
+
+def _apply_category(
+    options: dict[str, Any], key: str, user_input: dict[str, Any]
 ) -> dict[str, Any] | None:
-    """Return options updated with submitted targets, or None for an empty household.
+    """Return options with one age category updated, or None for an empty household.
 
     Legacy keys stay in sync: the headcount is the total and the per-person values
     are the adult values, so older code still reads sensible numbers.
     """
     updated = dict(options)
-    total = 0
-    for key in AGE_CATEGORIES:
-        count = int(user_input[conf_count(key)])
-        total += count
-        updated[conf_count(key)] = count
-        updated[conf_calories(key)] = int(user_input[conf_calories(key)])
-        updated[conf_water(key)] = float(user_input[conf_water(key)])
+    updated[conf_count(key)] = int(user_input[conf_count(key)])
+    updated[conf_calories(key)] = int(user_input[conf_calories(key)])
+    updated[conf_water(key)] = float(user_input[conf_water(key)])
+    # Categories never saved yet read as their effective (legacy/default) values.
+    current = _targets_form_values(options)
+    total = sum(
+        updated.get(conf_count(k), current[conf_count(k)]) for k in AGE_CATEGORIES
+    )
     if total < 1:
         return None
-    updated[CONF_DURATION_HOURS] = int(user_input[CONF_DURATION_HOURS])
+    for k in AGE_CATEGORIES:
+        if k == key:
+            continue
+        for conf in (conf_count, conf_calories, conf_water):
+            updated.setdefault(conf(k), current[conf(k)])
     updated[CONF_NUMBER_OF_PEOPLE] = total
     updated[CONF_CALORIES_PER_PERSON_PER_DAY] = updated[conf_calories(AGE_CATEGORY_ADULTS)]
     updated[CONF_WATER_LITERS_PER_PERSON_PER_DAY] = updated[
         conf_water(AGE_CATEGORY_ADULTS)
     ]
+    return updated
+
+
+def _apply_duration(
+    options: dict[str, Any], user_input: dict[str, Any]
+) -> dict[str, Any]:
+    """Return options with the readiness duration updated."""
+    updated = dict(options)
+    updated[CONF_DURATION_HOURS] = int(user_input[CONF_DURATION_HOURS])
     return updated
 
 
@@ -395,51 +417,115 @@ class ReadyHomeOptionsFlow(OptionsFlow):
     async def async_step_targets(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Edit readiness targets."""
+        """Targets menu: one entry per age category, the duration, and back."""
+        return self.async_show_menu(
+            step_id="targets",
+            menu_options=[
+                *(f"targets_{key}" for key in AGE_CATEGORIES),
+                "targets_duration",
+                "init",
+            ],
+            description_placeholders=_targets_summary_placeholders(
+                dict(self.config_entry.options)
+            ),
+        )
+
+    async def _async_targets_category_step(
+        self, key: str, user_input: dict[str, Any] | None
+    ) -> ConfigFlowResult:
+        """Edit the people and daily needs of one age category."""
         options = dict(self.config_entry.options)
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            updated = _apply_targets(options, user_input)
+            updated = _apply_category(options, key, user_input)
             if updated is not None:
-                return await self._async_save_and_menu(options=updated)
+                self.hass.config_entries.async_update_entry(
+                    self.config_entry, options=updated
+                )
+                return await self.async_step_targets()
             errors["base"] = "invalid_people"
             current = user_input
         else:
             current = _targets_form_values(options)
 
-        fields: dict[Any, Any] = {}
-        for key in AGE_CATEGORIES:
-            fields[vol.Required(conf_count(key), default=current[conf_count(key)])] = (
-                NumberSelector(
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    conf_count(key), default=current[conf_count(key)]
+                ): NumberSelector(
                     NumberSelectorConfig(
                         min=0, max=50, mode=NumberSelectorMode.BOX, step=1
                     )
-                )
-            )
-            fields[
-                vol.Required(conf_calories(key), default=current[conf_calories(key)])
-            ] = NumberSelector(
-                NumberSelectorConfig(
-                    min=500, max=5000, mode=NumberSelectorMode.BOX, step=50
-                )
-            )
-            fields[vol.Required(conf_water(key), default=current[conf_water(key)])] = (
-                NumberSelector(
+                ),
+                vol.Required(
+                    conf_calories(key), default=current[conf_calories(key)]
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=500, max=5000, mode=NumberSelectorMode.BOX, step=50
+                    )
+                ),
+                vol.Required(
+                    conf_water(key), default=current[conf_water(key)]
+                ): NumberSelector(
                     NumberSelectorConfig(
                         min=0.5, max=20, mode=NumberSelectorMode.BOX, step=0.1
                     )
-                )
-            )
-        fields[
-            vol.Required(CONF_DURATION_HOURS, default=current[CONF_DURATION_HOURS])
-        ] = NumberSelector(
-            NumberSelectorConfig(min=24, max=720, mode=NumberSelectorMode.BOX, step=1)
+                ),
+            }
         )
-        schema = vol.Schema(fields)
         return self.async_show_form(
-            step_id="targets", data_schema=schema, errors=errors
+            step_id=f"targets_{key}", data_schema=schema, errors=errors
         )
+
+    async def async_step_targets_adults(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Edit the adults category."""
+        return await self._async_targets_category_step("adults", user_input)
+
+    async def async_step_targets_children(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Edit the children category."""
+        return await self._async_targets_category_step("children", user_input)
+
+    async def async_step_targets_babies_toddlers(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Edit the babies and toddlers category."""
+        return await self._async_targets_category_step("babies_toddlers", user_input)
+
+    async def async_step_targets_seniors(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Edit the seniors category."""
+        return await self._async_targets_category_step("seniors", user_input)
+
+    async def async_step_targets_duration(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Edit the readiness duration."""
+        options = dict(self.config_entry.options)
+        if user_input is not None:
+            self.hass.config_entries.async_update_entry(
+                self.config_entry, options=_apply_duration(options, user_input)
+            )
+            return await self.async_step_targets()
+
+        current = _targets_form_values(options)
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_DURATION_HOURS, default=current[CONF_DURATION_HOURS]
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=24, max=720, mode=NumberSelectorMode.BOX, step=1
+                    )
+                )
+            }
+        )
+        return self.async_show_form(step_id="targets_duration", data_schema=schema)
 
     async def async_step_pets(
         self, user_input: dict[str, Any] | None = None

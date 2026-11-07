@@ -5,11 +5,13 @@ from __future__ import annotations
 import pytest
 
 from custom_components.ready_home.config_flow import (
-    _apply_targets,
+    _apply_category,
+    _apply_duration,
     _merge_category_lists,
     _new_entry_target_options,
     _overlap_error,
     _targets_form_values,
+    _targets_summary_placeholders,
 )
 
 
@@ -85,8 +87,21 @@ def test_unset_household_prefills_two_adults() -> None:
     assert _targets_form_values({})["count_adults"] == 2
 
 
-def test_apply_targets_writes_new_keys_and_syncs_legacy() -> None:
-    updated = _apply_targets(
+def _apply_form(options: dict, form: dict) -> dict | None:
+    """Apply every category of a full form in turn (as the nested menu does)."""
+    for key in ("adults", "children", "babies_toddlers", "seniors"):
+        options = _apply_category(
+            options,
+            key,
+            {k: v for k, v in form.items() if k.endswith(f"_{key}")},
+        )
+        if options is None:
+            return None
+    return options
+
+
+def test_apply_category_writes_keys_and_syncs_legacy() -> None:
+    updated = _apply_form(
         {"locations": ["Pantry"], "number_of_people": 1},
         _form(
             count_adults=2,
@@ -105,14 +120,64 @@ def test_apply_targets_writes_new_keys_and_syncs_legacy() -> None:
     assert updated["water_liters_per_person_per_day"] == 3.0
 
 
-def test_apply_targets_rejects_empty_household() -> None:
-    assert _apply_targets({}, _form()) is None
+def test_apply_category_changes_only_that_category() -> None:
+    base = _apply_form({}, _form(count_adults=2))
+    assert base is not None
+    updated = _apply_category(
+        base,
+        "children",
+        {
+            "count_children": 3,
+            "calories_per_day_children": 1700,
+            "water_liters_per_day_children": 2.5,
+        },
+    )
+    assert updated is not None
+    changed = {k for k in updated if updated[k] != base.get(k)}
+    assert changed == {
+        "count_children",
+        "calories_per_day_children",
+        "water_liters_per_day_children",
+        "number_of_people",
+    }
+    assert updated["number_of_people"] == 5
 
 
-def test_apply_targets_roundtrip_totals() -> None:
+def test_apply_category_rejects_empty_household() -> None:
+    assert _apply_form({}, _form()) is None
+    only_adults = _apply_form({}, _form(count_adults=2))
+    assert only_adults is not None
+    zero_adults = {
+        "count_adults": 0,
+        "calories_per_day_adults": 2200,
+        "water_liters_per_day_adults": 3.0,
+    }
+    assert _apply_category(only_adults, "adults", zero_adults) is None
+
+
+def test_apply_category_allows_moving_people_to_another_category() -> None:
+    base = _apply_form({}, _form(count_adults=2))
+    assert base is not None
+    moved = _apply_category(
+        base,
+        "seniors",
+        {"count_seniors": 2, "calories_per_day_seniors": 1900, "water_liters_per_day_seniors": 3.0},
+    )
+    assert moved is not None
+    zero_adults = {
+        "count_adults": 0,
+        "calories_per_day_adults": 2200,
+        "water_liters_per_day_adults": 3.0,
+    }
+    updated = _apply_category(moved, "adults", zero_adults)
+    assert updated is not None
+    assert updated["number_of_people"] == 2
+
+
+def test_apply_category_roundtrip_totals() -> None:
     from custom_components.ready_home.models import ReadinessSettings
 
-    updated = _apply_targets(
+    updated = _apply_form(
         {},
         _form(count_adults=2, count_children=2, count_babies_toddlers=1, count_seniors=1),
     )
@@ -132,11 +197,43 @@ def test_legacy_save_without_changes_keeps_totals() -> None:
         "duration_hours": 72,
     }
     before = ReadinessSettings.from_options(legacy)
-    updated = _apply_targets(legacy, _targets_form_values(legacy))
+    values = _targets_form_values(legacy)
+    updated = _apply_category(
+        legacy,
+        "children",
+        {k: v for k, v in values.items() if k.endswith("_children")},
+    )
     assert updated is not None
     after = ReadinessSettings.from_options(updated)
     assert after.food_target_calories() == before.food_target_calories()
     assert after.water_target_liters() == before.water_target_liters()
+    assert updated["number_of_people"] == 3
+
+
+def test_apply_duration_changes_only_duration() -> None:
+    options = {"count_adults": 2, "duration_hours": 72}
+    assert _apply_duration(options, {"duration_hours": 96.0}) == {
+        "count_adults": 2,
+        "duration_hours": 96,
+    }
+
+
+def test_targets_summary_placeholders() -> None:
+    options = _apply_form({"duration_hours": 72}, _form(count_adults=2, count_children=2))
+    assert options is not None
+    assert _targets_summary_placeholders(options) == {
+        "adults": "2",
+        "children": "2",
+        "babies_toddlers": "0",
+        "seniors": "0",
+        "hours": "72",
+    }
+
+
+def test_targets_summary_placeholders_legacy_fallback() -> None:
+    assert _targets_summary_placeholders(
+        {"number_of_people": 3, "duration_hours": 48}
+    ) == {"adults": "3", "children": "0", "babies_toddlers": "0", "seniors": "0", "hours": "48"}
 
 
 def test_new_entry_options_are_adults_only() -> None:
@@ -149,34 +246,118 @@ def test_new_entry_options_are_adults_only() -> None:
     assert s.daily_calories() == 3 * 2200
 
 
-@pytest.mark.asyncio
-async def test_targets_form_bounds_and_empty_household_error() -> None:
+def _make_flow(options: dict):
     from types import SimpleNamespace
 
     from custom_components.ready_home.config_flow import ReadyHomeOptionsFlow
 
-    class _Flow(ReadyHomeOptionsFlow):
+    class Flow(ReadyHomeOptionsFlow):
         def async_show_form(self, **kwargs):  # type: ignore[override]
-            return kwargs
+            return {"type": "form", **kwargs}
 
-    flow = _Flow()
-    flow.config_entry = SimpleNamespace(options={"number_of_people": 2})  # type: ignore[attr-defined]
+        def async_show_menu(self, **kwargs):  # type: ignore[override]
+            return {"type": "menu", **kwargs}
 
-    form = await flow.async_step_targets()
-    assert form["errors"] == {}
-    bounds = {
+    flow = Flow()
+    saved: list[dict] = []
+
+    def _update(entry, options):
+        entry.options = options
+        saved.append(options)
+
+    entry = SimpleNamespace(options=options)
+    flow.config_entry = entry  # type: ignore[attr-defined]
+    flow.hass = SimpleNamespace(  # type: ignore[attr-defined]
+        config_entries=SimpleNamespace(async_update_entry=_update)
+    )
+    return flow, saved
+
+
+def _bounds(form: dict) -> dict:
+    return {
         str(key): selector.args[0].kwargs
         for key, selector in form["data_schema"].schema.items()
     }
-    for category in ("adults", "children", "babies_toddlers", "seniors"):
-        count = bounds[f"count_{category}"]
-        assert (count["min"], count["max"], count["step"]) == (0, 50, 1)
-        kcal = bounds[f"calories_per_day_{category}"]
-        assert (kcal["min"], kcal["max"]) == (500, 5000)
-        water = bounds[f"water_liters_per_day_{category}"]
-        assert (water["min"], water["max"]) == (0.5, 20)
-    assert bounds["duration_hours"]["min"] == 24
 
-    # Submitting an empty household re-shows the form with invalid_people.
-    again = await flow.async_step_targets(_form())
+
+@pytest.mark.asyncio
+async def test_targets_menu_lists_categories_duration_and_back() -> None:
+    flow, _ = _make_flow({"number_of_people": 2, "duration_hours": 72})
+    menu = await flow.async_step_targets()
+    assert menu["type"] == "menu"
+    assert menu["step_id"] == "targets"
+    assert menu["menu_options"] == [
+        "targets_adults",
+        "targets_children",
+        "targets_babies_toddlers",
+        "targets_seniors",
+        "targets_duration",
+        "init",
+    ]
+    assert menu["description_placeholders"] == {
+        "adults": "2",
+        "children": "0",
+        "babies_toddlers": "0",
+        "seniors": "0",
+        "hours": "72",
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("category", ["adults", "children", "babies_toddlers", "seniors"])
+async def test_category_form_fields_and_bounds(category: str) -> None:
+    flow, _ = _make_flow({"number_of_people": 2})
+    form = await getattr(flow, f"async_step_targets_{category}")()
+    assert form["errors"] == {}
+    assert form["step_id"] == f"targets_{category}"
+    bounds = _bounds(form)
+    assert set(bounds) == {
+        f"count_{category}",
+        f"calories_per_day_{category}",
+        f"water_liters_per_day_{category}",
+    }
+    count = bounds[f"count_{category}"]
+    assert (count["min"], count["max"], count["step"]) == (0, 50, 1)
+    kcal = bounds[f"calories_per_day_{category}"]
+    assert (kcal["min"], kcal["max"], kcal["step"]) == (500, 5000, 50)
+    water = bounds[f"water_liters_per_day_{category}"]
+    assert (water["min"], water["max"], water["step"]) == (0.5, 20, 0.1)
+
+
+@pytest.mark.asyncio
+async def test_category_submit_saves_and_returns_to_menu() -> None:
+    flow, saved = _make_flow({"number_of_people": 2, "duration_hours": 72})
+    result = await flow.async_step_targets_children(
+        {"count_children": 2, "calories_per_day_children": 1800, "water_liters_per_day_children": 3}
+    )
+    assert result["type"] == "menu"
+    assert result["step_id"] == "targets"
+    assert saved[-1]["count_children"] == 2
+    assert saved[-1]["number_of_people"] == 4
+    assert result["description_placeholders"]["children"] == "2"
+
+
+@pytest.mark.asyncio
+async def test_category_submit_empty_household_shows_error_and_keeps_values() -> None:
+    flow, saved = _make_flow({"number_of_people": 2})
+    again = await flow.async_step_targets_adults(
+        {"count_adults": 0, "calories_per_day_adults": 2200, "water_liters_per_day_adults": 3}
+    )
+    assert again["type"] == "form"
     assert again["errors"] == {"base": "invalid_people"}
+    assert saved == []
+
+
+@pytest.mark.asyncio
+async def test_duration_form_and_save() -> None:
+    flow, saved = _make_flow({"number_of_people": 2, "duration_hours": 48})
+    form = await flow.async_step_targets_duration()
+    bounds = _bounds(form)
+    assert set(bounds) == {"duration_hours"}
+    assert (bounds["duration_hours"]["min"], bounds["duration_hours"]["max"]) == (24, 720)
+    assert next(iter(form["data_schema"].schema)).default() == 48
+
+    result = await flow.async_step_targets_duration({"duration_hours": 96})
+    assert result["type"] == "menu"
+    assert saved[-1]["duration_hours"] == 96
+    assert result["description_placeholders"]["hours"] == "96"

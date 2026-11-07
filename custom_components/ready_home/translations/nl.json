@@ -41,22 +41,53 @@
       },
       "targets": {
         "title": "Paraatheidsdoelen",
+        "description": "Personen per leeftijdscategorie en hun dagelijkse behoefte. Standaardwaarden volgen Voedingscentrum.nl (lichte activiteit) en zijn aanpasbaar. Totalen zijn de som over alle categorieën.\n\nVolwassenen {adults}, Kinderen {children}, Baby’s en peuters {babies_toddlers}, Ouderen {seniors} · {hours} u",
+        "menu_options": {
+          "targets_adults": "Volwassenen (18–69)",
+          "targets_children": "Kinderen (4–17)",
+          "targets_babies_toddlers": "Baby’s en peuters (0–3)",
+          "targets_seniors": "Ouderen (70+)",
+          "targets_duration": "Duur",
+          "init": "Terug"
+        }
+      },
+      "targets_adults": {
+        "title": "Volwassenen (18–69)",
         "data": {
-          "count_adults": "Volwassenen (18–69): aantal personen",
-          "calories_per_day_adults": "Volwassenen (18–69): calorieën per persoon per dag",
-          "water_liters_per_day_adults": "Volwassenen (18–69): liters water per persoon per dag",
-          "count_children": "Kinderen (4–17): aantal personen",
-          "calories_per_day_children": "Kinderen (4–17): calorieën per persoon per dag",
-          "water_liters_per_day_children": "Kinderen (4–17): liters water per persoon per dag",
-          "count_babies_toddlers": "Baby’s en peuters (0–3): aantal personen",
-          "calories_per_day_babies_toddlers": "Baby’s en peuters (0–3): calorieën per persoon per dag",
-          "water_liters_per_day_babies_toddlers": "Baby’s en peuters (0–3): liters water per persoon per dag",
-          "count_seniors": "Ouderen (70+): aantal personen",
-          "calories_per_day_seniors": "Ouderen (70+): calorieën per persoon per dag",
-          "water_liters_per_day_seniors": "Ouderen (70+): liters water per persoon per dag",
+          "count_adults": "Aantal personen",
+          "calories_per_day_adults": "Calorieën per persoon per dag",
+          "water_liters_per_day_adults": "Liters water per persoon per dag"
+        }
+      },
+      "targets_children": {
+        "title": "Kinderen (4–17)",
+        "data": {
+          "count_children": "Aantal personen",
+          "calories_per_day_children": "Calorieën per persoon per dag",
+          "water_liters_per_day_children": "Liters water per persoon per dag"
+        }
+      },
+      "targets_babies_toddlers": {
+        "title": "Baby’s en peuters (0–3)",
+        "data": {
+          "count_babies_toddlers": "Aantal personen",
+          "calories_per_day_babies_toddlers": "Calorieën per persoon per dag",
+          "water_liters_per_day_babies_toddlers": "Liters water per persoon per dag"
+        }
+      },
+      "targets_seniors": {
+        "title": "Ouderen (70+)",
+        "data": {
+          "count_seniors": "Aantal personen",
+          "calories_per_day_seniors": "Calorieën per persoon per dag",
+          "water_liters_per_day_seniors": "Liters water per persoon per dag"
+        }
+      },
+      "targets_duration": {
+        "title": "Duur",
+        "data": {
           "duration_hours": "Duur (uren)"
-        },
-        "description": "Personen per leeftijdscategorie en hun dagelijkse behoefte. Standaardwaarden volgen Voedingscentrum.nl (lichte activiteit) en zijn aanpasbaar. Totalen zijn de som over alle categorieën."
+        }
       },
       "pets": {
         "title": "Huisdieren",
