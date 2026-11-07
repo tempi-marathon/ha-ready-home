@@ -226,8 +226,16 @@ jobs:
         if: ${{ !inputs.dry_run }}
         run: |
           set -euo pipefail
-          gh release verify "$TAG"
-          gh release verify-asset "$TAG" ready_home.zip
+          # GitHub creates the attestation shortly after publishing, so retry for a while.
+          for ATTEMPT in 1 2 3 4 5 6 7 8 9 10 11 12; do
+            if gh release verify "$TAG" && gh release verify-asset "$TAG" ready_home.zip; then
+              exit 0
+            fi
+            echo "Attestation not ready (attempt ${ATTEMPT}/12); retrying in 10s"
+            sleep 10
+          done
+          echo "::error::Release ${TAG} is published but could not be verified; check it with gh release verify ${TAG}"
+          exit 1
 
       # Only a still-draft release is removed, so a failed run can be retried. A
       # published release is immutable and a failure after publishing needs a new tag.
