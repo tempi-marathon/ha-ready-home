@@ -1,102 +1,242 @@
 name: Release
 
+# Releases are immutable: once published, a release cannot gain assets and its tag
+# name is reserved forever. This workflow therefore does everything checkable first,
+# then creates a draft, attaches the zip and publishes, in that order.
+#
+#   gh workflow run release.yaml -f tag=v0.3.0-beta.2 -f ref=<sha> -f dry_run=false
+#
+# See docs/08-releasing.md.
+
 on:
-  release:
-    types: [created, published]
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag (e.g. v0.1.15)
+        description: "Release tag: vX.Y.Z, vX.Y.Z-beta.N or vX.Y.Z-rc.N"
         required: true
         type: string
       ref:
-        description: Branch, tag or commit SHA to build from (default main)
+        description: Branch, tag or commit SHA to ship (resolved to a full SHA and printed)
         required: false
         default: main
+        type: string
+      dry_run:
+        description: Build and verify only; upload the zip as an artifact, create no release
+        required: false
+        default: true
+        type: boolean
+      notes_from:
+        description: Previous tag for release notes (default derived from the tag)
+        required: false
         type: string
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
-  group: release-${{ github.event.release.tag_name || inputs.tag }}
+  group: release-${{ inputs.tag }}
   cancel-in-progress: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ inputs.tag }}
+      REF: ${{ inputs.ref }}
+      NOTES_FROM: ${{ inputs.notes_from }}
     steps:
-      - name: Resolve tag and checkout ref
-        id: meta
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ inputs.tag }}"
-            REF="${{ inputs.ref }}"
-          else
-            TAG="${{ github.event.release.tag_name }}"
-            REF="${{ github.event.release.target_commitish }}"
-            if [ -z "$REF" ]; then
-              REF="main"
-            fi
-          fi
-          VERSION="${TAG#v}"
-          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "ref=${REF}" >> "$GITHUB_OUTPUT"
-          echo "Resolved tag=${TAG} version=${VERSION} ref=${REF}"
-
-      - name: Checkout
+      # Release tooling comes from the commit this workflow was dispatched on, so the
+      # scripts always match this file. The code being shipped is checked out separately.
+      - name: Checkout release tooling
         uses: actions/checkout@v7
         with:
-          ref: ${{ steps.meta.outputs.ref }}
+          path: tooling
+          fetch-depth: 0
+
+      - name: Validate tag
+        id: tag
+        run: |
+          set -euo pipefail
+          python3 -I tooling/scripts/release/validate_tag.py "$TAG" | tee -a "$GITHUB_OUTPUT"
+
+      - name: Check tag is free
+        run: |
+          set -euo pipefail
+          if [ -n "$(git -C tooling ls-remote --tags origin "refs/tags/${TAG}")" ]; then
+            echo "::error::Git tag ${TAG} already exists; tag names are never reused"
+            exit 1
+          fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::A release named ${TAG} already exists"
+            exit 1
+          fi
+          echo "${TAG} is free"
+
+      - name: Resolve ref to SHA
+        id: sha
+        run: |
+          set -euo pipefail
+          case "$REF" in
+            -*|"") echo "::error::Invalid ref"; exit 1 ;;
+          esac
+          if ! SHA=$(git -C tooling rev-parse --verify --quiet "${REF}^{commit}" \
+                     || git -C tooling rev-parse --verify --quiet "origin/${REF}^{commit}"); then
+            echo "::error::Cannot resolve ref ${REF} to a commit"
+            exit 1
+          fi
+          echo "Shipping ${REF} as commit ${SHA}"
+          echo "sha=${SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Require green CI for SHA
+        env:
+          SHA: ${{ steps.sha.outputs.sha }}
+        run: |
+          set -euo pipefail
+          for WF in Test Validate; do
+            OK=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$WF" --commit "$SHA" \
+                   --status completed --json conclusion \
+                   --jq '[.[] | select(.conclusion == "success")] | length')
+            if [ "$OK" -lt 1 ]; then
+              echo "::error::No successful ${WF} run for ${SHA}; wait for it to finish or fix it, then retry"
+              exit 1
+            fi
+            echo "${WF}: ok"
+          done
+
+      - name: Preflight release verification tooling
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          # Publishing is irreversible, so prove the verify commands work with this
+          # token (against the current Latest release) before anything permanent happens.
+          gh release verify --repo "$GITHUB_REPOSITORY" >/dev/null
+          gh release verify-asset --help >/dev/null
+
+      - name: Checkout code to ship
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.sha.outputs.sha }}
+          path: src
+          persist-credentials: false
 
       - name: Stamp manifest version
         env:
-          VERSION: ${{ steps.meta.outputs.version }}
+          VERSION: ${{ steps.tag.outputs.version }}
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          path = Path("custom_components/ready_home/manifest.json")
-          data = json.loads(path.read_text(encoding="utf-8"))
-          data["version"] = os.environ["VERSION"]
-          path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-          print(f"Stamped version={data['version']}")
-          PY
+          python3 -I tooling/scripts/release/stamp_manifest.py \
+            src/custom_components/ready_home/manifest.json "$VERSION"
 
       - name: Build ready_home.zip
         run: |
           set -euo pipefail
           rm -f ready_home.zip
           (
-            cd custom_components/ready_home
-            zip -r ../../ready_home.zip . -x "*__pycache__*" -x "*.pyc"
+            cd src/custom_components/ready_home
+            zip -r ../../../ready_home.zip . -x "*__pycache__*" -x "*.pyc"
           )
           unzip -l ready_home.zip | head -n 40
 
-      - name: Upload release asset
+      - name: Verify package
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.meta.outputs.tag }}
+          VERSION: ${{ steps.tag.outputs.version }}
+          SHA: ${{ steps.sha.outputs.sha }}
         run: |
           set -euo pipefail
-          gh release upload "$TAG" ready_home.zip --clobber
+          unzip -p ready_home.zip manifest.json > zip-manifest.json \
+            || { echo "::error::manifest.json missing from zip root"; exit 1; }
+          git -C src show "${SHA}:custom_components/ready_home/manifest.json" > source-manifest.json
+          python3 -I - <<'PY'
+          import json
+          import os
 
-      # Publish only from workflow_dispatch. Publishing fires release:published,
-      # which re-runs this workflow to attach/replace the zip if needed — that
-      # follow-up must not publish again (would be a no-op loop).
-      - name: Publish release
-        if: github.event_name == 'workflow_dispatch'
+          with open("zip-manifest.json", encoding="utf-8") as f:
+              found = json.load(f).get("version")
+          want = os.environ["VERSION"]
+          if found != want:
+              raise SystemExit(f"::error::zip manifest version {found!r} != tag version {want!r}")
+          print(f"manifest version {found} matches tag")
+          PY
+          CHANGED=$(diff source-manifest.json zip-manifest.json | grep -c '^>' || true)
+          if [ "$CHANGED" -gt 1 ]; then
+            echo "::error::zip manifest differs from source in ${CHANGED} lines; only version may change"
+            diff source-manifest.json zip-manifest.json || true
+            exit 1
+          fi
+          echo "zip manifest differs from source in ${CHANGED} line(s)"
+
+      - name: Upload dry-run artifact
+        if: ${{ inputs.dry_run }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ready_home-${{ inputs.tag }}
+          path: ready_home.zip
+          if-no-files-found: error
+
+      - name: Derive notes start tag
+        id: notes
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          if [ -n "$NOTES_FROM" ]; then
+            START="$NOTES_FROM"
+          else
+            START=$(git -C tooling tag --list 'v*' \
+                    | python3 -I tooling/scripts/release/notes_start.py "$TAG")
+          fi
+          echo "Release notes start from: ${START:-<beginning of history>}"
+          echo "start=${START}" >> "$GITHUB_OUTPUT"
+
+      - name: Create draft release
+        if: ${{ !inputs.dry_run }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.meta.outputs.tag }}
+          SHA: ${{ steps.sha.outputs.sha }}
+          KIND: ${{ steps.tag.outputs.kind }}
+          START: ${{ steps.notes.outputs.start }}
+        run: |
+          set -euo pipefail
+          ARGS=(--draft --target "$SHA" --title "$TAG" --generate-notes)
+          if [ "$KIND" = "prerelease" ]; then
+            ARGS+=(--prerelease --latest=false)
+          else
+            ARGS+=(--latest)
+          fi
+          if [ -n "$START" ]; then
+            ARGS+=(--notes-start-tag "$START")
+          fi
+          gh release create "$TAG" "${ARGS[@]}"
+
+      - name: Upload release asset
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" ready_home.zip
+
+      - name: Publish release
+        if: ${{ !inputs.dry_run }}
         run: |
           set -euo pipefail
           gh release edit "$TAG" --draft=false
           echo "Published ${TAG}"
+
+      - name: Verify release
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          gh release verify "$TAG"
+          gh release verify-asset "$TAG" ready_home.zip
+
+      # Only a still-draft release is removed, so a failed run can be retried. A
+      # published release is immutable and a failure after publishing needs a new tag.
+      - name: Remove leftover draft
+        if: ${{ failure() && !inputs.dry_run }}
+        run: |
+          set -uo pipefail
+          IS_DRAFT=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null || true)
+          if [ "$IS_DRAFT" = "true" ]; then
+            gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes
+            echo "Removed draft ${TAG}"
+          fi

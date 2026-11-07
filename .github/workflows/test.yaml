@@ -32,7 +32,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
       - name: Ruff
-        run: ruff check custom_components tests
+        run: ruff check custom_components scripts tests
       - name: Pytest
         run: pytest tests/ -v
 
