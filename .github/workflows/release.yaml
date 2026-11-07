@@ -122,6 +122,13 @@ jobs:
           path: src
           persist-credentials: false
 
+      - name: Check committed versions
+        env:
+          BASE: ${{ steps.tag.outputs.base }}
+        run: |
+          set -euo pipefail
+          python3 -I tooling/scripts/release/check_versions.py src "$BASE"
+
       - name: Stamp manifest version
         env:
           VERSION: ${{ steps.tag.outputs.version }}
