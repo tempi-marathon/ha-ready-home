@@ -7,3 +7,5 @@
 5. [Sensors and events](05-sensors-and-events.md)
 6. [Automations](06-automations.md)
 7. [Readiness math](07-readiness.md)
+
+Maintainers: [Releasing](08-releasing.md)
