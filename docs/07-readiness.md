@@ -26,6 +26,20 @@ The settings websocket response also returns `target_breakdown`: water per age c
 
 Expired stock is excluded. Items whose category is mapped to food or water but lack calories or liters are counted as unmeasurable and left out of totals. Configure food/water category lists under **Locations and categories** in [2. Configuration](02-configuration.md).
 
+## Readiness or completeness?
+
+Both are percentages in the panel and in Home Assistant, but they answer different questions.
+
+| | Readiness | Completeness |
+|---|-----------|--------------|
+| Question | How long could we manage on our water, food and pet food? | Do we have everything on our checklist? |
+| Covers | Water, food and pet food, compared with a target from your people, pets and number of days | Items with a desired quantity in all other categories (first aid, tools, go-bag, and so on) |
+| Counts as good | Enough liters, calories and grams for the chosen duration | Each checklist item in stock at its desired quantity and not expired |
+| Overall figure | The lowest of the water, food and (when there are pets) pet food percentages | The average of the category percentages |
+| Sensors | `readiness`, `water_readiness`, `food_readiness`, `pet_food_readiness` | `category_completeness` |
+
+Example: you have 100% of your water and food target, but your first aid category has 4 of 5 items. Readiness is 100%, and completeness is 80% for first aid. A high readiness does not mean the checklist is done, and a complete checklist does not mean you have enough water and food.
+
 ## Category completeness
 
 For categories **not** mapped to food or water, items with `desired_quantity > 0` form a checklist. An item is complete when not expired and `quantity >= desired_quantity`. `category_completeness` is the average of those category percents (or unavailable when no checklist items exist). Kit templates (`apply_kit_template`) seed such checklist items; they are not separate kit entities.

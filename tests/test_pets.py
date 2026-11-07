@@ -41,7 +41,11 @@ from custom_components.ready_home.models import (
     contents_to_grams,
     pets_from_options,
 )
-from custom_components.ready_home.readiness import assess, pet_food_attr_dict
+from custom_components.ready_home.readiness import (
+    assess,
+    pet_food_attr_dict,
+    pet_food_readiness_state,
+)
 from custom_components.ready_home.websocket_api import (
     _assessment_dict,
     _settings_dict,
@@ -278,6 +282,37 @@ def test_pet_food_attr_dict() -> None:
     assert attrs["pet_food_target"] == pytest.approx(1200.0)
     assert attrs["pet_food_supply_hours_unit"] == "h"
     assert attrs["pet_food_percent"] == pytest.approx(50.0)
+
+
+def test_pet_food_readiness_state_is_percent_of_target() -> None:
+    result = assess([_kibble(600, priority=InventoryPriority.ESSENTIAL)], _pet_settings(), TODAY)
+    assert pet_food_readiness_state(result) == 50.0
+
+
+def test_pet_food_readiness_state_rounds_to_one_decimal() -> None:
+    result = assess([_kibble(401)], _pet_settings(), TODAY)
+    assert pet_food_readiness_state(result) == round(401 / 1200 * 100, 1)
+
+
+def test_pet_food_readiness_state_is_zero_with_target_and_no_stock() -> None:
+    result = assess([], _pet_settings(), TODAY)
+    assert result.pet_food_target > 0
+    assert pet_food_readiness_state(result) == 0.0
+
+
+def test_pet_food_readiness_state_has_no_value_without_pets() -> None:
+    result = assess([_kibble(600)], _pet_settings(pets=()), TODAY)
+    assert pet_food_readiness_state(result) is None
+
+
+def test_pet_food_readiness_state_has_no_value_for_pet_with_zero_food() -> None:
+    result = assess([_kibble(600)], _pet_settings(pets=(_pet("a", 0, 0.5),)), TODAY)
+    assert pet_food_readiness_state(result) is None
+
+
+def test_pet_food_readiness_state_caps_at_100() -> None:
+    result = assess([_kibble(5000)], _pet_settings(), TODAY)
+    assert pet_food_readiness_state(result) == 100.0
 
 
 # ---------------------------------------------------------------- category mapping

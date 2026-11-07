@@ -6,11 +6,17 @@ After [installation](01-installation.md), open **Ready Home** in the Home Assist
 
 The panel shows:
 
-- Readiness cards (overall, water, food, pet food) and a category completeness card when checklist items exist. Select the completeness card to see, per category, which items are missing and why (`2 of 5` in stock, or `expired`). It always covers the whole household, whatever inventory filter is active
+- Readiness cards (overall, water, food, pet food) and a category completeness card when checklist items exist. Not sure how readiness and completeness differ? See [Readiness or completeness?](07-readiness.md#readiness-or-completeness). Select a card for more:
+  - **Readiness** explains what it measures
+  - **Food** shows the household's food needs: people per age category, calories per person and per day, and the total for your chosen duration
+  - **Pet food** shows each pet's daily food in grams and the total for your chosen duration
+  - **Completeness** explains what it measures, then lists per category which items are missing and why (`2 of 5` in stock, or `expired`). It always covers the whole household, whatever inventory filter is active
 - Filters for expired, expiring, and low-stock items
 - Search, sort, and filters
 - Full inventory list with edit / remove
 - **Add from template** (admins) for first-aid / go-bag / tools checklists. Each template shows how many items are missing and an expandable list of them with checkboxes (all checked by default, plus select all). Only checked items are added
+
+On a phone, the header shows **Add item** and a **⋮** (More actions) button. **Scan**, **Add from template** and **Push restock list** (when a restock list is set up) are in that menu. On wider screens they are separate buttons.
 
 ![Desktop panel](images/panel-desktop.png)
 

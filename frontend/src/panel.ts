@@ -36,7 +36,12 @@ import {
   validateMeasureFields,
   contentsToLiters,
 } from "./inventory_view";
-import { householdFromSettings } from "./household";
+import { type HeaderAction, headerActions } from "./header_actions";
+import {
+  foodBreakdown,
+  householdFromSettings,
+  petFoodBreakdown,
+} from "./household";
 import { statusLabel, t } from "./localize";
 import {
   loadPanelViewState,
@@ -58,6 +63,9 @@ const BRAND_DARK_LOGO_2X_URL = `${BRAND_BASE}/dark_logo@2x.png`;
 const MDI_MENU =
   "M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z";
 /** mdi:close — dismiss dialog. */
+/** mdi:dots-vertical — overflow menu trigger. */
+const MDI_DOTS_VERTICAL =
+  "M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z";
 const MDI_CLOSE =
   "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z";
 /** mdi:shield-check — overall readiness. */
@@ -113,6 +121,9 @@ export class ReadyHomePanel extends LitElement {
   @state() private _scanning = false;
   @state() private _pendingRemoveIds: string[] = [];
   @state() private _completenessOpen = false;
+  @state() private _moreOpen = false;
+  @state() private _readinessOpen = false;
+  @state() private _householdModal: "food" | "pet_food" | null = null;
   @state() private _templateOpen = false;
   @state() private _templates: KitTemplateDto[] = [];
   @state() private _templateBusy = false;
@@ -137,6 +148,7 @@ export class ReadyHomePanel extends LitElement {
     super.disconnectedCallback();
     this._connected = false;
     window.removeEventListener("keydown", this._onWindowKeyDown);
+    document.removeEventListener("click", this._onDocumentClick);
     this._abortScan();
     this._setTemplateNotice("");
     this._unsub?.();
@@ -397,6 +409,139 @@ export class ReadyHomePanel extends LitElement {
     return sortedOptionList(options, current);
   }
 
+  private _runHeaderAction(action: HeaderAction) {
+    switch (action) {
+      case "scan":
+        void this._scanFromPanel();
+        break;
+      case "add_from_template":
+        void this._openTemplates();
+        break;
+      case "push_restock":
+        void this._pushRestock();
+        break;
+      case "add_item":
+        this._openAdd();
+        break;
+    }
+  }
+
+  private _headerActionLabel(action: HeaderAction): string {
+    return this._t(`action.${action}`);
+  }
+
+  private _renderHeaderActions() {
+    const { buttons, menu } = headerActions({
+      canWrite: this._canWrite(),
+      narrow: this.narrow,
+      hasRestockList: Boolean(this._settings?.todo_entity_id),
+    });
+    return html`
+      ${buttons.map((action) =>
+        this._mdButton(this._headerActionLabel(action), {
+          variant: action === "add_item" ? "filled" : "outlined",
+          disabled: action === "scan" && this._scanning,
+          onClick: () => this._runHeaderAction(action),
+        }),
+      )}
+      ${menu.length ? this._renderMoreMenu(menu) : nothing}
+    `;
+  }
+
+  private _renderMoreMenu(menu: HeaderAction[]) {
+    return html`
+      <div class="more">
+        <button
+          type="button"
+          class="icon-btn more-btn"
+          aria-label=${this._t("action.more")}
+          aria-haspopup="menu"
+          aria-expanded=${this._moreOpen ? "true" : "false"}
+          @click=${this._toggleMore}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d=${MDI_DOTS_VERTICAL} />
+          </svg>
+        </button>
+        ${this._moreOpen
+          ? html`
+              <div
+                class="more-menu"
+                role="menu"
+                @keydown=${this._onMoreKeyDown}
+              >
+                ${menu.map(
+                  (action) => html`
+                    <button
+                      type="button"
+                      class="more-item"
+                      role="menuitem"
+                      ?disabled=${action === "scan" && this._scanning}
+                      @click=${() => {
+                        this._closeMore();
+                        this._runHeaderAction(action);
+                      }}
+                    >
+                      ${this._headerActionLabel(action)}
+                    </button>
+                  `,
+                )}
+              </div>
+            `
+          : nothing}
+      </div>
+    `;
+  }
+
+  private _toggleMore = () => {
+    if (this._moreOpen) {
+      this._closeMore();
+      return;
+    }
+    this._moreOpen = true;
+    document.addEventListener("click", this._onDocumentClick);
+    void this.updateComplete.then(() => this._moreItems()[0]?.focus());
+  };
+
+  private _closeMore(opts: { refocus?: boolean } = { refocus: true }) {
+    if (!this._moreOpen) return;
+    this._moreOpen = false;
+    document.removeEventListener("click", this._onDocumentClick);
+    if (opts.refocus !== false) {
+      void this.updateComplete.then(() =>
+        this.shadowRoot
+          ?.querySelector<HTMLButtonElement>(".more-btn")
+          ?.focus(),
+      );
+    }
+  }
+
+  private _onDocumentClick = (e: Event) => {
+    const wrap = this.shadowRoot?.querySelector(".more");
+    if (wrap && e.composedPath().includes(wrap)) return;
+    this._closeMore({ refocus: false });
+  };
+
+  private _moreItems(): HTMLButtonElement[] {
+    return Array.from(
+      this.shadowRoot?.querySelectorAll<HTMLButtonElement>(
+        '.more-menu [role="menuitem"]:not([disabled])',
+      ) ?? [],
+    );
+  }
+
+  private _onMoreKeyDown = (e: KeyboardEvent) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    const items = this._moreItems();
+    if (!items.length) return;
+    e.preventDefault();
+    const current = items.indexOf(
+      this.shadowRoot?.activeElement as HTMLButtonElement,
+    );
+    const step = e.key === "ArrowDown" ? 1 : -1;
+    items[(current + step + items.length) % items.length].focus();
+  };
+
   private _mdButton(
     label: string,
     opts: {
@@ -470,37 +615,20 @@ export class ReadyHomePanel extends LitElement {
                 />
               </h1>
             </div>
-            <div class="header-actions">
-              ${this._canWrite()
-                ? html`
-                    ${this._mdButton(this._t("action.scan"), {
-                      variant: "outlined",
-                      disabled: this._scanning,
-                      onClick: () => void this._scanFromPanel(),
-                    })}
-                    ${this._mdButton(this._t("action.add_from_template"), {
-                      variant: "outlined",
-                      onClick: () => void this._openTemplates(),
-                    })}
-                    ${this._settings?.todo_entity_id
-                      ? this._mdButton(this._t("action.push_restock"), {
-                          variant: "outlined",
-                          onClick: () => void this._pushRestock(),
-                        })
-                      : nothing}
-                    ${this._mdButton(this._t("action.add_item"), {
-                      variant: "filled",
-                      onClick: this._openAdd,
-                    })}
-                  `
-                : nothing}
-            </div>
+            <div class="header-actions">${this._renderHeaderActions()}</div>
           </div>
         </header>
 
         <div class="content">
           <div class="stats">
-            <div class="stat ${this._statToneClass(supply)}">
+            <button
+              type="button"
+              class="stat stat-button ${this._statToneClass(supply)}"
+              data-stat="readiness"
+              aria-haspopup="dialog"
+              aria-label=${this._t("readiness.open")}
+              @click=${this._openReadiness}
+            >
               <span class="stat-label">
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="currentColor" d=${MDI_SHIELD_CHECK} />
@@ -511,7 +639,7 @@ export class ReadyHomePanel extends LitElement {
               <span class="stat-duration ${this._durationClass(supply)}"
                 >${this._formatHours(supply)}</span
               >
-            </div>
+            </button>
             <div class="stat ${this._statToneClass(waterSupply)}">
               <span class="stat-label">
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -530,7 +658,14 @@ export class ReadyHomePanel extends LitElement {
                 >${this._formatHours(waterSupply)}</span
               >
             </div>
-            <div class="stat ${this._statToneClass(foodSupply)}">
+            <button
+              type="button"
+              class="stat stat-button ${this._statToneClass(foodSupply)}"
+              data-stat="food"
+              aria-haspopup="dialog"
+              aria-label=${this._t("household.open_food")}
+              @click=${() => this._openHousehold("food")}
+            >
               <span class="stat-label">
                 <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="currentColor" d=${MDI_FOOD} />
@@ -547,10 +682,17 @@ export class ReadyHomePanel extends LitElement {
               <span class="stat-duration ${this._durationClass(foodSupply)}"
                 >${this._formatHours(foodSupply)}</span
               >
-            </div>
+            </button>
             ${hasPetFood
               ? html`
-                  <div class="stat ${this._statToneClass(petFoodSupply)}">
+                  <button
+                    type="button"
+                    class="stat stat-button ${this._statToneClass(petFoodSupply)}"
+                    data-stat="pet_food"
+                    aria-haspopup="dialog"
+                    aria-label=${this._t("household.open_pet_food")}
+                    @click=${() => this._openHousehold("pet_food")}
+                  >
                     <span class="stat-label">
                       <svg
                         class="stat-icon"
@@ -571,7 +713,7 @@ export class ReadyHomePanel extends LitElement {
                     <span class="stat-duration ${this._durationClass(petFoodSupply)}"
                       >${this._formatHours(petFoodSupply)}</span
                     >
-                  </div>
+                  </button>
                 `
               : nothing}
             ${completeness != null
@@ -579,6 +721,7 @@ export class ReadyHomePanel extends LitElement {
                   <button
                     type="button"
                     class="stat stat-button"
+                    data-stat="completeness"
                     aria-haspopup="dialog"
                     aria-label=${this._t("completeness.open")}
                     @click=${this._openCompleteness}
@@ -598,8 +741,6 @@ export class ReadyHomePanel extends LitElement {
                 `
               : nothing}
           </div>
-
-          ${this._renderHousehold()}
 
           <div class="attention" role="group" aria-label="Attention filters">
             <button
@@ -764,6 +905,10 @@ export class ReadyHomePanel extends LitElement {
 
       ${this._dialogOpen ? this._renderDialog() : nothing}
       ${this._completenessOpen ? this._renderCompletenessDialog() : nothing}
+      ${this._readinessOpen ? this._renderReadinessDialog() : nothing}
+      ${this._householdModal
+        ? this._renderHouseholdDialog(this._householdModal)
+        : nothing}
       ${this._templateOpen ? this._renderTemplateDialog() : nothing}
     `;
   }
@@ -894,87 +1039,129 @@ export class ReadyHomePanel extends LitElement {
     >`;
   }
 
-  private _renderHousehold() {
+  private _openHousehold(which: "food" | "pet_food") {
+    this._householdModal = which;
+  }
+
+  private _closeHousehold = () => {
+    const which = this._householdModal;
+    if (!which) return;
+    this._householdModal = null;
+    void this.updateComplete.then(() =>
+      this.shadowRoot
+        ?.querySelector<HTMLElement>(`[data-stat="${which}"]`)
+        ?.focus(),
+    );
+  };
+
+  private _renderHouseholdDialog(which: "food" | "pet_food") {
     const h = householdFromSettings(this._settings);
-    if (!h) return nothing;
-    const days = Math.round(h.days * 10) / 10;
+    const title = this._t(
+      which === "food" ? "household.food_title" : "household.pet_food_title",
+    );
     return html`
-      <details class="household">
-        <summary>${this._t("household.title")}</summary>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>${this._t("household.category")}</th>
-                <th>${this._t("household.count")}</th>
-                <th>${this._t("household.per_person")}</th>
-                <th>${this._t("household.subtotal")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${h.rows.map(
-                (r) => html`<tr>
-                  <td>${this._t(`household.${r.key}`)}</td>
-                  <td>${r.count}</td>
-                  <td>
-                    ${this._formatAmount(r.caloriesPerPerson, "kcal")} ·
-                    ${this._formatAmount(r.waterPerPerson, "L")}
-                  </td>
-                  <td>
-                    ${this._formatAmount(r.caloriesSubtotal, "kcal")} ·
-                    ${this._formatAmount(r.waterSubtotal, "L")}
-                  </td>
-                </tr>`,
-              )}
-              ${h.pets.length > 0
-                ? html`<tr>
-                    <th colspan="4">${this._t("household.pets")}</th>
-                  </tr>`
-                : nothing}
-              ${h.pets.map(
-                (p) => html`<tr>
-                  <td>
-                    ${p.name}${p.type ? html` (${p.type})` : nothing}
-                  </td>
-                  <td>1</td>
-                  <td>
-                    ${this._formatAmount(p.foodPerDay, "g")} ·
-                    ${this._formatAmount(p.waterPerDay, "L")}
-                  </td>
-                  <td>
-                    ${this._formatAmount(p.foodPerDay, "g")} ·
-                    ${this._formatAmount(p.waterPerDay, "L")}
-                  </td>
-                </tr>`,
-              )}
-              <tr>
-                <th colspan="3">${this._t("household.total_per_day")}</th>
-                <td>
-                  ${this._formatAmount(h.dailyCalories, "kcal")} ·
-                  ${this._formatAmount(h.dailyWater, "L")}
-                </td>
-              </tr>
-              <tr>
-                <th colspan="3">
-                  ${this._t("household.total_period", { days })}
-                </th>
-                <td>
-                  ${this._formatAmount(h.dailyCalories * h.days, "kcal")} ·
-                  ${this._formatAmount(h.dailyWater * h.days, "L")}
-                </td>
-              </tr>
-              ${h.pets.length > 0
-                ? html`<tr>
-                    <th colspan="3">
-                      ${this._t("household.pet_food_period", { days })}
-                    </th>
-                    <td>${this._formatAmount(h.dailyPetFood * h.days, "g")}</td>
-                  </tr>`
-                : nothing}
-            </tbody>
-          </table>
+      <div
+        class="dialog-backdrop"
+        @click=${(e: Event) => {
+          if (e.target === e.currentTarget) this._closeHousehold();
+        }}
+      >
+        <div
+          class="dialog household-dialog ${this.narrow ? "dialog-narrow" : ""}"
+          role="dialog"
+          aria-modal="true"
+          aria-label=${title}
+        >
+          <div class="dialog-header">
+            <h2>${title}</h2>
+            <button
+              type="button"
+              class="icon-btn dialog-close"
+              aria-label=${this._t("action.close")}
+              @click=${this._closeHousehold}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d=${MDI_CLOSE} />
+              </svg>
+            </button>
+          </div>
+          ${!h
+            ? html`<p class="field-hint">${this._t("household.not_configured")}</p>`
+            : which === "food"
+              ? this._renderFoodTable(h)
+              : this._renderPetFoodTable(h)}
         </div>
-      </details>
+      </div>
+    `;
+  }
+
+  private _renderFoodTable(h: NonNullable<ReturnType<typeof householdFromSettings>>) {
+    const f = foodBreakdown(h);
+    const days = Math.round(f.days * 10) / 10;
+    return html`
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>${this._t("household.category")}</th>
+              <th>${this._t("household.count")}</th>
+              <th>${this._t("household.per_person")}</th>
+              <th>${this._t("household.subtotal")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${f.rows.map(
+              (r) => html`<tr>
+                <td>${this._t(`household.${r.key}`)}</td>
+                <td>${r.count}</td>
+                <td>${this._formatAmount(r.caloriesPerPerson, "kcal")}</td>
+                <td>${this._formatAmount(r.caloriesSubtotal, "kcal")}</td>
+              </tr>`,
+            )}
+            <tr>
+              <th colspan="3">${this._t("household.total_per_day")}</th>
+              <td>${this._formatAmount(f.dailyTotal, "kcal")}</td>
+            </tr>
+            <tr>
+              <th colspan="3">${this._t("household.total_period", { days })}</th>
+              <td>${this._formatAmount(f.periodTotal, "kcal")}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  private _renderPetFoodTable(h: NonNullable<ReturnType<typeof householdFromSettings>>) {
+    const p = petFoodBreakdown(h);
+    const days = Math.round(p.days * 10) / 10;
+    return html`
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>${this._t("household.pet")}</th>
+              <th>${this._t("household.food_per_day")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${p.rows.map(
+              (r) => html`<tr>
+                <td>${r.name}${r.type ? html` (${r.type})` : nothing}</td>
+                <td>${this._formatAmount(r.foodPerDay, "g")}</td>
+              </tr>`,
+            )}
+            <tr>
+              <th>${this._t("household.total_per_day")}</th>
+              <td>${this._formatAmount(p.dailyTotal, "g")}</td>
+            </tr>
+            <tr>
+              <th>${this._t("household.pet_food_period", { days })}</th>
+              <td>${this._formatAmount(p.periodTotal, "g")}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     `;
   }
 
@@ -1505,6 +1692,54 @@ export class ReadyHomePanel extends LitElement {
     }
   };
 
+  private _openReadiness = () => {
+    this._readinessOpen = true;
+  };
+
+  private _closeReadiness = () => {
+    this._readinessOpen = false;
+    void this.updateComplete.then(() =>
+      this.shadowRoot
+        ?.querySelector<HTMLElement>('[data-stat="readiness"]')
+        ?.focus(),
+    );
+  };
+
+  private _renderReadinessDialog() {
+    const title = this._t("readiness.title");
+    return html`
+      <div
+        class="dialog-backdrop"
+        @click=${(e: Event) => {
+          if (e.target === e.currentTarget) this._closeReadiness();
+        }}
+      >
+        <div
+          class="dialog explain-dialog ${this.narrow ? "dialog-narrow" : ""}"
+          role="dialog"
+          aria-modal="true"
+          aria-label=${title}
+        >
+          <div class="dialog-header">
+            <h2>${title}</h2>
+            <button
+              type="button"
+              class="icon-btn dialog-close"
+              aria-label=${this._t("action.close")}
+              @click=${this._closeReadiness}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d=${MDI_CLOSE} />
+              </svg>
+            </button>
+          </div>
+          <p>${this._t("readiness.explain")}</p>
+          <p class="field-hint">${this._t("readiness.example")}</p>
+        </div>
+      </div>
+    `;
+  }
+
   private _openCompleteness = () => {
     this._completenessOpen = true;
   };
@@ -1512,7 +1747,9 @@ export class ReadyHomePanel extends LitElement {
   private _closeCompleteness = () => {
     this._completenessOpen = false;
     void this.updateComplete.then(() =>
-      this.shadowRoot?.querySelector<HTMLElement>(".stat-button")?.focus(),
+      this.shadowRoot
+        ?.querySelector<HTMLElement>('[data-stat="completeness"]')
+        ?.focus(),
     );
   };
 
@@ -1548,6 +1785,8 @@ export class ReadyHomePanel extends LitElement {
               </svg>
             </button>
           </div>
+          <p>${this._t("completeness.explain")}</p>
+          <p class="field-hint">${this._t("completeness.example")}</p>
           <div class="completeness-overall">
             ${this._t("completeness.overall")}:
             <strong>${this._pct(overall)}</strong>
@@ -1859,6 +2098,21 @@ export class ReadyHomePanel extends LitElement {
 
   private _onWindowKeyDown = (e: KeyboardEvent) => {
     if (e.key !== "Escape") return;
+    if (this._moreOpen) {
+      e.preventDefault();
+      this._closeMore();
+      return;
+    }
+    if (this._readinessOpen) {
+      e.preventDefault();
+      this._closeReadiness();
+      return;
+    }
+    if (this._householdModal) {
+      e.preventDefault();
+      this._closeHousehold();
+      return;
+    }
     if (this._completenessOpen) {
       e.preventDefault();
       this._closeCompleteness();
@@ -2103,6 +2357,42 @@ export class ReadyHomePanel extends LitElement {
       width: 24px;
       height: 24px;
     }
+    .more {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .more-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      min-width: 12rem;
+      padding: 4px;
+      border: 1px solid var(--divider-color, #e0e0e0);
+      border-radius: 12px;
+      background: var(--card-background-color, #fff);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+    .more-item {
+      padding: 10px 12px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--primary-text-color);
+      text-align: left;
+      cursor: pointer;
+    }
+    .more-item:hover,
+    .more-item:focus-visible {
+      background: rgba(var(--rgb-primary-text-color, 0, 0, 0), 0.06);
+      outline: none;
+    }
+    .more-item[disabled] {
+      opacity: 0.5;
+      cursor: default;
+    }
     .content {
       max-width: 1100px;
       margin: 0 auto;
@@ -2119,14 +2409,6 @@ export class ReadyHomePanel extends LitElement {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
       margin-bottom: 16px;
-    }
-    .household {
-      margin-bottom: 16px;
-    }
-    .household summary {
-      cursor: pointer;
-      font-weight: 500;
-      margin-bottom: 8px;
     }
     .stat {
       padding: 16px;
@@ -2647,15 +2929,33 @@ export class ReadyHomePanel extends LitElement {
       cursor: pointer;
       color: var(--primary-color);
     }
-    .template-item {
-      display: flex;
+    /* ".dialog label" stacks fields in a column; template rows must stay one line. */
+    .dialog .template-item {
+      flex-direction: row;
       align-items: center;
-      gap: 8px;
-      padding: 6px 0;
+      gap: 10px;
+      padding: 4px 0;
+      font-size: 1rem;
+      line-height: 1.3;
+      text-align: left;
       overflow-wrap: anywhere;
+      cursor: pointer;
     }
-    .template-select-all {
+    .template-item input[type="checkbox"] {
+      flex: 0 0 auto;
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      padding: 0;
+      accent-color: var(--primary-color);
+    }
+    .template-items summary {
+      padding: 2px 0;
+    }
+    .dialog .template-select-all {
       font-weight: 500;
+      padding-bottom: 6px;
+      margin-bottom: 2px;
       border-bottom: 1px solid var(--divider-color, #e0e0e0);
     }
     .template-card-body {
@@ -2684,9 +2984,18 @@ export class ReadyHomePanel extends LitElement {
       min-width: 0;
     }
     @media (max-width: 720px) {
+      .header-row {
+        flex-wrap: nowrap;
+        gap: 8px;
+      }
+      .header-actions {
+        gap: 4px;
+      }
       .brand-logo {
         height: 36px;
         max-width: min(200px, 42vw);
+        min-width: 0;
+        object-fit: contain;
       }
       .stats {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2745,6 +3054,15 @@ export class ReadyHomePanel extends LitElement {
       .row2,
       .row3 {
         grid-template-columns: 1fr;
+      }
+    }
+    /* Smallest phones: keep menu icon, logo, Add item and the more button on one row. */
+    @media (max-width: 400px) {
+      .brand-logo {
+        max-width: 28vw;
+      }
+      .header-actions .md-btn {
+        padding: 0 12px;
       }
     }
   `;

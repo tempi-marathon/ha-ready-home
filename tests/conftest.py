@@ -34,6 +34,9 @@ def _ensure_homeassistant_stubs() -> None:
         "homeassistant.helpers.update_coordinator": types.ModuleType(
             "homeassistant.helpers.update_coordinator"
         ),
+        "homeassistant.helpers.debounce": types.ModuleType(
+            "homeassistant.helpers.debounce"
+        ),
         "homeassistant.helpers.aiohttp_client": types.ModuleType(
             "homeassistant.helpers.aiohttp_client"
         ),
@@ -100,12 +103,40 @@ def _ensure_homeassistant_stubs() -> None:
     ws.event_message = lambda sid, data: {"id": sid, "event": data}
     ws.ActiveConnection = MagicMock
 
+    class Debouncer:  # noqa: D101
+        def __init__(
+            self,
+            hass: Any,
+            logger: Any,
+            *,
+            cooldown: float,
+            immediate: bool,
+            function: Any = None,
+        ) -> None:
+            self.hass = hass
+            self.logger = logger
+            self.cooldown = cooldown
+            self.immediate = immediate
+            self.function = function
+
+        def __class_getitem__(cls, _item: Any) -> type:
+            return cls
+
+    modules["homeassistant.helpers.debounce"].Debouncer = Debouncer
+
     class DataUpdateCoordinator:  # noqa: D101
-        def __init__(self, hass: Any, logger: Any, name: str = "") -> None:
+        def __init__(
+            self,
+            hass: Any,
+            logger: Any,
+            name: str = "",
+            request_refresh_debouncer: Any = None,
+        ) -> None:
             self.hass = hass
             self.logger = logger
             self.name = name
             self.data = None
+            self._debounced_refresh = request_refresh_debouncer
 
         def __class_getitem__(cls, _item: Any) -> type:
             return cls

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -9,12 +10,14 @@ from custom_components.ready_home.attention import AttentionBuckets
 from custom_components.ready_home.coordinator import ReadyHomeData
 from custom_components.ready_home.models import (
     CategoryCompleteness,
+    ContentsUnit,
     InventoryItem,
     InventoryPriority,
     InventoryUnit,
     ReadinessAssessment,
     ReadinessSettings,
 )
+from custom_components.ready_home.readiness import assess
 from custom_components.ready_home.websocket_api import (
     _assessment_dict,
     _settings_dict,
@@ -118,7 +121,7 @@ def test_snapshot_populated() -> None:
 
 
 def test_snapshot_from_store_uses_store_items() -> None:
-    """Store items are fresh; assessment/buckets come from last coordinator data."""
+    """Store items are fresh; buckets come from the last coordinator data."""
     store_item = InventoryItem(name="New", quantity=1)
     stale_item = InventoryItem(name="Old", quantity=1)
     settings = ReadinessSettings()
@@ -139,8 +142,81 @@ def test_snapshot_from_store_uses_store_items() -> None:
     snap = _snapshot_from_store(coordinator)
     assert len(snap["items"]) == 1
     assert snap["items"][0]["name"] == "New"
-    assert snap["assessment"]["overall_percent"] == 50.0
     assert snap["settings"]["duration_hours"] == settings.duration_hours
+
+
+def test_snapshot_from_store_recomputes_assessment_from_store_items() -> None:
+    """Regression: stats lagged because the fast push reused the previous assessment."""
+    settings = ReadinessSettings(
+        number_of_people=1,
+        duration_hours=24,
+        water_categories=("Water",),
+        food_categories=("Food",),
+    )
+    water = InventoryItem(
+        name="Water",
+        quantity=2,
+        category="Water",
+        contents_per_unit=1.5,
+        contents_unit=ContentsUnit.LITER,
+    )
+    stale = _assessment(water_on_hand=0.0, water_percent=0.0)
+    data = ReadyHomeData(
+        items=[],
+        settings=settings,
+        assessment=stale,
+        buckets=AttentionBuckets([], [], [], []),
+        completeness=CategoryCompleteness(overall_percent=None, categories=()),
+    )
+    store = MagicMock()
+    store.items = [water]
+    coordinator = MagicMock()
+    coordinator.data = data
+    coordinator.store = store
+    coordinator.settings = settings
+
+    snap = _snapshot_from_store(coordinator)
+    expected = assess([water], settings, date.today())
+    assert expected.water_on_hand == 3.0
+    assert snap["assessment"]["water_on_hand"] == 3.0
+    assert snap["assessment"]["water_percent"] == expected.water_percent
+
+
+def test_snapshot_from_store_follows_each_of_several_rapid_edits() -> None:
+    """Each fast push reflects the store at that moment, never an earlier edit."""
+    settings = ReadinessSettings(
+        number_of_people=1,
+        duration_hours=24,
+        water_categories=("Water",),
+    )
+    stale = _assessment(water_on_hand=0.0, water_percent=0.0)
+    data = ReadyHomeData(
+        items=[],
+        settings=settings,
+        assessment=stale,
+        buckets=AttentionBuckets([], [], [], []),
+        completeness=CategoryCompleteness(overall_percent=None, categories=()),
+    )
+    store = MagicMock()
+    coordinator = MagicMock()
+    coordinator.data = data
+    coordinator.store = store
+    coordinator.settings = settings
+
+    seen = []
+    for quantity in (1, 4, 2):
+        store.items = [
+            InventoryItem(
+                name="Water",
+                quantity=quantity,
+                category="Water",
+                contents_per_unit=1.0,
+                contents_unit=ContentsUnit.LITER,
+            )
+        ]
+        seen.append(_snapshot_from_store(coordinator)["assessment"]["water_on_hand"])
+
+    assert seen == [1.0, 4.0, 2.0]
 
 
 def test_settings_dict() -> None:

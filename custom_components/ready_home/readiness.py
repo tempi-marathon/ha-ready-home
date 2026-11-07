@@ -189,3 +189,11 @@ def pet_food_attr_dict(
         ATTR_PET_FOOD_SUPPLY_HOURS: a.pet_food_supply_hours,
         ATTR_PET_FOOD_SUPPLY_HOURS_UNIT: UNIT_HOURS,
     }
+
+
+def pet_food_readiness_state(assessment: ReadinessAssessment) -> float | None:
+    """Pet food readiness percent, or None when there is no pet food target."""
+    target = assessment.pet_food_target
+    if target is None or target <= 0:
+        return None
+    return round(assessment.pet_food_percent, 1)

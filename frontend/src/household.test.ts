@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SettingsDto } from "./api";
-import { householdFromSettings } from "./household";
+import { foodBreakdown, householdFromSettings, petFoodBreakdown } from "./household";
 import { t } from "./localize";
 
 const BASE: SettingsDto = {
@@ -89,5 +89,90 @@ describe("householdFromSettings", () => {
       expect(t(en, `household.${key}`)).not.toBe(`household.${key}`);
       expect(t(nl, `household.${key}`)).not.toBe(t(en, `household.${key}`));
     }
+  });
+});
+
+describe("foodBreakdown", () => {
+  it("lists adults only for a legacy response", () => {
+    const f = foodBreakdown(householdFromSettings(BASE)!);
+    expect(f.rows).toEqual([
+      { key: "adults", count: 2, caloriesPerPerson: 2000, caloriesSubtotal: 4000 },
+    ]);
+    expect(f.dailyTotal).toBe(4000);
+    expect(f.days).toBe(3);
+    expect(f.periodTotal).toBe(12000);
+  });
+
+  it("lists every age category with its subtotal for a mixed household", () => {
+    const f = foodBreakdown(
+      householdFromSettings({
+        ...BASE,
+        duration_hours: 336,
+        age_categories: [
+          { key: "adults", count: 2, calories_per_day: 2200, water_liters_per_day: 3 },
+          { key: "children", count: 2, calories_per_day: 1800, water_liters_per_day: 3 },
+          { key: "babies_toddlers", count: 1, calories_per_day: 1000, water_liters_per_day: 3 },
+          { key: "seniors", count: 1, calories_per_day: 1900, water_liters_per_day: 3 },
+        ],
+      })!,
+    );
+    expect(f.rows.map((r) => [r.key, r.caloriesSubtotal])).toEqual([
+      ["adults", 4400],
+      ["children", 3600],
+      ["babies_toddlers", 1000],
+      ["seniors", 1900],
+    ]);
+    expect(f.dailyTotal).toBe(10900);
+    expect(f.periodTotal).toBe(152600);
+  });
+
+  it("leaves water and pet food out of the food breakdown", () => {
+    const f = foodBreakdown(
+      householdFromSettings({
+        ...BASE,
+        pets: [{ id: "a", name: "Rex", food_grams_per_day: 400, water_liters_per_day: 0.5 }],
+      })!,
+    );
+    expect(f.dailyTotal).toBe(4000);
+    expect(JSON.stringify(f)).not.toContain("Rex");
+  });
+});
+
+describe("petFoodBreakdown", () => {
+  it("is empty without pets", () => {
+    const p = petFoodBreakdown(householdFromSettings(BASE)!);
+    expect(p.rows).toEqual([]);
+    expect(p.dailyTotal).toBe(0);
+    expect(p.periodTotal).toBe(0);
+  });
+
+  it("lists each pet with its food per day and totals over the duration", () => {
+    const p = petFoodBreakdown(
+      householdFromSettings({
+        ...BASE,
+        pets: [
+          { id: "a", name: "Rex", type: "dog", food_grams_per_day: 400, water_liters_per_day: 0.5 },
+          { id: "b", name: "Tom", food_grams_per_day: 80, water_liters_per_day: 0.2 },
+        ],
+      })!,
+    );
+    expect(p.rows).toEqual([
+      { id: "a", name: "Rex", type: "dog", foodPerDay: 400 },
+      { id: "b", name: "Tom", type: "", foodPerDay: 80 },
+    ]);
+    expect(p.dailyTotal).toBe(480);
+    expect(p.days).toBe(3);
+    expect(p.periodTotal).toBe(1440);
+  });
+
+  it("keeps pets with no food in the list", () => {
+    const p = petFoodBreakdown(
+      householdFromSettings({
+        ...BASE,
+        pets: [{ id: "a", name: "Fish", food_grams_per_day: 0, water_liters_per_day: 0 }],
+      })!,
+    );
+    expect(p.rows).toHaveLength(1);
+    expect(p.dailyTotal).toBe(0);
   });
 });
