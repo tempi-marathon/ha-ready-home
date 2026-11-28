@@ -1,6 +1,6 @@
 # Ready Home for Home Assistant
 
-[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.12%2B-41BDF5?style=for-the-badge&logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.8%2B-41BDF5?style=for-the-badge&logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
 [![HACS / Marketplace](https://img.shields.io/badge/HACS-Marketplace-41BDF5?style=for-the-badge&logo=homeassistantcommunitystore&logoColor=white)](https://www.hacs.xyz/docs/marketplace/)
 [![GitHub Release](https://img.shields.io/github/v/release/tempi-marathon/ha-ready-home?style=for-the-badge&include_prereleases&logo=github&logoColor=white)](https://github.com/tempi-marathon/ha-ready-home/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)

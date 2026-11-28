@@ -38,6 +38,12 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    env:
+      # Private UI library on GitHub Packages; see .npmrc
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

@@ -3,6 +3,9 @@
 import { LitElement, css, html, nothing } from "lit";
 import { live } from "lit/directives/live.js";
 import { property, state } from "lit/decorators.js";
+import { configureLibrary } from "@tempi-marathon/ha-panel-ui/helpers/i18n-runtime.js";
+import { applyTheme } from "@tempi-marathon/ha-panel-ui/tokens/theme-sync.js";
+import { installTokens } from "@tempi-marathon/ha-panel-ui/tokens/tokens.js";
 import { missingItems, selectedItems, toggleState } from "./template_selection";
 import {
   type InventoryItemDto,
@@ -95,6 +98,15 @@ function ucfirst(value: string): string {
 
 const TEMPLATE_NOTICE_MS = 6000;
 
+let tokensInstalled = false;
+
+/** Adopt the shared design tokens into the document once for the whole page. */
+function installTokensOnce(): void {
+  if (tokensInstalled) return;
+  tokensInstalled = true;
+  installTokens(document);
+}
+
 export class ReadyHomePanel extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({ type: Boolean }) public narrow = false;
@@ -139,6 +151,7 @@ export class ReadyHomePanel extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
     this._connected = true;
+    installTokensOnce();
     this._restoreViewState();
     window.addEventListener("keydown", this._onWindowKeyDown);
     void this._connect();
@@ -153,6 +166,14 @@ export class ReadyHomePanel extends LitElement {
     this._setTemplateNotice("");
     this._unsub?.();
     this._unsub = null;
+  }
+
+  protected willUpdate(changed: Map<string, unknown>): void {
+    if (changed.has("hass") && this.hass) {
+      // Mirror Home Assistant's dark mode and language onto the shared UI library.
+      applyTheme(this, this.hass.themes);
+      configureLibrary({ language: this.hass.language });
+    }
   }
 
   protected updated(changed: Map<string, unknown>): void {
