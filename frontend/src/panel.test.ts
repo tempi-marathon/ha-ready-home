@@ -86,6 +86,24 @@ const press = (el: Element | null | undefined) =>
 
 const clean = (s: string | undefined | null) => (s ?? "").replace(/\s+/g, " ");
 
+/** Text of a modal: its heading (an attribute of the library element) plus its content. */
+const modalText = (m: Element | null | undefined) =>
+  clean(`${m?.getAttribute("heading") ?? ""} ${m?.textContent ?? ""}`);
+
+/** Close a modal the way the user would: button, backdrop click or Escape. */
+const closeModal = (
+  m: Element | null | undefined,
+  reason: "button" | "backdrop" | "escape",
+) =>
+  m?.dispatchEvent(
+    new CustomEvent("hpu-close", {
+      detail: { reason },
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    }),
+  );
+
 /** Text shown by the stat cards: their label, value, meta and detail. */
 const statsText = (root: ParentNode | null | undefined) =>
   clean(
@@ -107,9 +125,7 @@ async function renderPanel(
   const stats = statsText(el.shadowRoot);
   press(el.shadowRoot?.querySelector(`[data-stat="${open}"]`));
   await el.updateComplete;
-  const household = clean(
-    el.shadowRoot?.querySelector(".household-dialog")?.textContent,
-  );
+  const household = modalText(el.shadowRoot?.querySelector(".household-dialog"));
   el.remove();
   return { household, stats };
 }
@@ -447,14 +463,14 @@ describe("completeness dialog", () => {
   it("opens from the tile and lists missing items with reasons", async () => {
     const el = await mountWithCompleteness("en");
     const root = el.shadowRoot!;
-    expect(root.querySelector('[role="dialog"]')).toBeNull();
+    expect(root.querySelector('hpu-modal')).toBeNull();
     expect(statsText(root)).not.toContain("Essential");
 
     press(root.querySelector('[data-stat="completeness"]'));
     await el.updateComplete;
 
-    const dialog = root.querySelector('[role="dialog"]')!;
-    const text = (dialog.textContent ?? "").replace(/\s+/g, " ");
+    const dialog = root.querySelector('hpu-modal')!;
+    const text = modalText(dialog);
     expect(text).toContain("Medical");
     expect(text).toContain("1/3");
     expect(text).toContain("Plasters");
@@ -465,9 +481,9 @@ describe("completeness dialog", () => {
     expect(text).toContain("2/2");
     expect(root.querySelectorAll(".completeness-missing li")).toHaveLength(2);
 
-    press(root.querySelector(".dialog-close"));
+    closeModal(root.querySelector("hpu-modal"), "button");
     await el.updateComplete;
-    expect(root.querySelector('[role="dialog"]')).toBeNull();
+    expect(root.querySelector('hpu-modal')).toBeNull();
     el.remove();
   });
 
@@ -476,13 +492,13 @@ describe("completeness dialog", () => {
     const root = el.shadowRoot!;
     press(root.querySelector('[data-stat="completeness"]'));
     await el.updateComplete;
-    const text = root.querySelector('[role="dialog"]')?.textContent ?? "";
+    const text = modalText(root.querySelector('hpu-modal'));
     expect(text).toContain("verlopen");
     expect(text).toContain("2 van 5");
 
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    closeModal(root.querySelector("hpu-modal"), "escape");
     await el.updateComplete;
-    expect(root.querySelector('[role="dialog"]')).toBeNull();
+    expect(root.querySelector('hpu-modal')).toBeNull();
     el.remove();
   });
 
@@ -501,8 +517,8 @@ describe("completeness dialog", () => {
       const root = el.shadowRoot!;
       press(root.querySelector('[data-stat="completeness"]'));
       await el.updateComplete;
-      const dialog = root.querySelector('[role="dialog"]')!;
-      expect(dialog.textContent).toContain(message);
+      const dialog = root.querySelector('hpu-modal')!;
+      expect(modalText(dialog)).toContain(message);
       expect(dialog.querySelector(".completeness-missing")).toBeNull();
       expect(
         dialog.querySelector(".completeness-check")?.getAttribute("aria-label"),
@@ -517,7 +533,7 @@ describe("completeness dialog", () => {
     press(root.querySelector('[data-stat="completeness"]'));
     await el.updateComplete;
     expect(root.querySelectorAll(".completeness-check")).toHaveLength(1);
-    expect(root.querySelector('[role="dialog"]')?.textContent).not.toContain(
+    expect(modalText(root.querySelector('hpu-modal'))).not.toContain(
       "Everything is complete.",
     );
     el.remove();
@@ -707,8 +723,9 @@ describe("household modals", () => {
     const el = await mountPanel("en", PET_SETTINGS, PET_ASSESSMENT);
     press(card(el, "food"));
     await el.updateComplete;
-    const text = clean(modal(el)?.textContent);
-    expect(modal(el)?.getAttribute("role")).toBe("dialog");
+    const text = modalText(modal(el));
+    expect(modal(el)?.tagName).toBe("HPU-MODAL");
+    expect(modal(el)?.hasAttribute("open")).toBe(true);
     expect(text).toContain("Food needs");
     expect(text).toContain("Adults (18–69)");
     expect(text).toContain("2000 kcal");
@@ -724,7 +741,7 @@ describe("household modals", () => {
     const el = await mountPanel("en", PET_SETTINGS, PET_ASSESSMENT);
     press(card(el, "pet_food"));
     await el.updateComplete;
-    const text = clean(modal(el)?.textContent);
+    const text = modalText(modal(el));
     expect(text).toContain("Pet food needs");
     expect(text).toContain("Rex (dog)");
     expect(text).toContain("400 g");
@@ -736,15 +753,9 @@ describe("household modals", () => {
 
   it("closes with the close button, an outside click and Escape, returning focus to the card", async () => {
     const el = await mountPanel("en", PET_SETTINGS, PET_ASSESSMENT);
-    const closers: Array<() => void> = [
-      () =>
-        el.shadowRoot
-          ?.querySelector<HTMLElement>(".household-dialog .dialog-close")
-          ?.shadowRoot?.querySelector<HTMLElement>("button")
-          ?.click(),
-      () => el.shadowRoot?.querySelector<HTMLElement>(".dialog-backdrop")?.click(),
-      () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })),
-    ];
+    const closers: Array<() => void> = (
+      ["button", "backdrop", "escape"] as const
+    ).map((reason) => () => closeModal(modal(el), reason));
     for (const close of closers) {
       press(card(el, "food"));
       await el.updateComplete;
@@ -765,7 +776,7 @@ describe("household modals", () => {
     });
     press(card(el, "food"));
     await el.updateComplete;
-    expect(clean(modal(el)?.textContent)).toContain("No household is set up yet.");
+    expect(modalText(modal(el))).toContain("No household is set up yet.");
     el.remove();
   });
 
@@ -773,14 +784,14 @@ describe("household modals", () => {
     const el = await mountPanel("nl", PET_SETTINGS, PET_ASSESSMENT);
     press(card(el, "food"));
     await el.updateComplete;
-    expect(clean(modal(el)?.textContent)).toContain("Voedselbehoefte");
+    expect(modalText(modal(el))).toContain("Voedselbehoefte");
     el.remove();
   });
 });
 
 describe("readiness and completeness explanations", () => {
   const text = (el: HTMLElement, selector: string) =>
-    clean(el.shadowRoot?.querySelector(selector)?.textContent);
+    modalText(el.shadowRoot?.querySelector(selector));
 
   it("opens a Readiness explanation from the Readiness card", async () => {
     const el = await mountWithCompleteness("en");
@@ -802,7 +813,7 @@ describe("readiness and completeness explanations", () => {
       el.shadowRoot?.querySelector<HTMLElement>('[data-stat="readiness"]');
     press(card());
     await el.updateComplete;
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    closeModal(el.shadowRoot?.querySelector(".explain-dialog"), "escape");
     await el.updateComplete;
     await el.updateComplete;
     expect(el.shadowRoot?.querySelector(".explain-dialog")).toBeNull();

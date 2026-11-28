@@ -114,12 +114,12 @@ describe("inventory table", () => {
 
   it("opens the item when a row is clicked", async () => {
     const el = await mount([RICE], true);
-    expect(el.shadowRoot!.querySelector('[role="dialog"]')).toBeNull();
+    expect(el.shadowRoot!.querySelector("hpu-modal")).toBeNull();
     table(el).dispatchEvent(
       new CustomEvent("hpu-row-click", { detail: { row: RICE }, bubbles: true }),
     );
     await el.updateComplete;
-    expect(el.shadowRoot!.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(el.shadowRoot!.querySelector("hpu-modal")).not.toBeNull();
     el.remove();
   });
 

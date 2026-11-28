@@ -24,3 +24,16 @@ HTMLElement.prototype.focus = function focus(options?: FocusOptions) {
   if (inner) inner.focus(options);
   else nativeFocus.call(this, options);
 };
+
+// jsdom has no native <dialog> methods: model showModal/close with the `open` attribute.
+const dialog = (globalThis as { HTMLDialogElement?: { prototype: HTMLDialogElement } })
+  .HTMLDialogElement?.prototype;
+if (dialog) {
+  dialog.showModal ??= function showModal(this: HTMLDialogElement) {
+    this.setAttribute("open", "");
+  };
+  dialog.close ??= function close(this: HTMLDialogElement) {
+    this.removeAttribute("open");
+    this.dispatchEvent(new Event("close"));
+  };
+}
