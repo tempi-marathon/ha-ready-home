@@ -308,3 +308,22 @@ export function filterAndSortItems(
   });
   return result;
 }
+
+/** Deduplicate options (case-insensitive) and sort by localeCompare. */
+export function sortedOptionList(
+  options: string[],
+  current = "",
+): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const value of [...options, current]) {
+    const v = value?.trim();
+    if (!v) continue;
+    const key = v.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(v);
+  }
+  out.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  return out;
+}

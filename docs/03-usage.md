@@ -11,8 +11,7 @@ The panel shows:
   - **Food** shows the household's food needs: people per age category, calories per person and per day, and the total for your chosen duration
   - **Pet food** shows each pet's daily food in grams and the total for your chosen duration
   - **Completeness** explains what it measures, then lists per category which items are missing and why (`2 of 5` in stock, or `expired`). It always covers the whole household, whatever inventory filter is active
-- Filters for expired, expiring, and low-stock items
-- Search, sort, and filters
+- Search, sort, and filters: type in the search field, or open **Filters** to pick a status (expired, expiring, low stock, each with a count), location, category or readiness, then press **Apply**. Escape or a click outside discards the choices. The filter button shows how many filters are active.
 - Full inventory list with edit / remove
 - **Add from template** (admins) for first-aid / go-bag / tools checklists. Each template shows how many items are missing and an expandable list of them with checkboxes (all checked by default, plus select all). Only checked items are added
 

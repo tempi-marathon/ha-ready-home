@@ -229,14 +229,15 @@ describe("pet food filter", () => {
       document.body.appendChild(el);
       await new Promise((resolve) => setTimeout(resolve, 0));
       await el.updateComplete;
-      const find = () => el.shadowRoot?.querySelector('option[value="pet_food"]');
-      if (!find()) {
-        // The open state is persisted between renders, so only open when closed.
-        press(el.shadowRoot?.querySelector(".filters-btn"));
-        await el.updateComplete;
-      }
-      const option = find();
-      expect(option?.textContent?.trim()).toBe(label);
+      const bar = el.shadowRoot?.querySelector("hpu-filter-bar") as
+        | (HTMLElement & {
+            filters: { key: string; options: { value: string; label: string }[] }[];
+          })
+        | null;
+      const option = bar?.filters
+        .find((f) => f.key === "readiness")
+        ?.options.find((o) => o.value === "pet_food");
+      expect(option?.label).toBe(label);
       el.remove();
     }
   });
