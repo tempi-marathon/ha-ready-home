@@ -8,6 +8,7 @@ import {
   measurePayload,
   readinessKind,
   showCaloriesField,
+  sortedOptionList,
   validateMeasureFields,
 } from "./inventory_view";
 
@@ -491,5 +492,22 @@ describe("filterAndSortItems", () => {
         sort: "expiry",
       }).map((i) => i.id),
     ).toEqual(["2", "1", "3"]);
+  });
+});
+
+describe("sortedOptionList", () => {
+  it("sorts alphabetically and dedupes", () => {
+    expect(sortedOptionList(["Zebra", "apple", "Banana", "apple"])).toEqual([
+      "apple",
+      "Banana",
+      "Zebra",
+    ]);
+  });
+
+  it("appends current when missing then sorts", () => {
+    expect(sortedOptionList(["Pantry"], "Garage")).toEqual([
+      "Garage",
+      "Pantry",
+    ]);
   });
 });

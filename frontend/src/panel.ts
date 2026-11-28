@@ -5,11 +5,16 @@ import { property, state } from "lit/decorators.js";
 import "@tempi-marathon/ha-panel-ui/components/badge/badge.js";
 import "@tempi-marathon/ha-panel-ui/components/button/button.js";
 import "@tempi-marathon/ha-panel-ui/components/checkbox/checkbox.js";
+import "@tempi-marathon/ha-panel-ui/components/filter-bar/filter-bar.js";
 import "@tempi-marathon/ha-panel-ui/components/grid/grid.js";
 import "@tempi-marathon/ha-panel-ui/components/icon-button/icon-button.js";
 import "@tempi-marathon/ha-panel-ui/components/input/input.js";
 import "@tempi-marathon/ha-panel-ui/components/select/select.js";
 import "@tempi-marathon/ha-panel-ui/components/stat-card/stat-card.js";
+import type {
+  FilterBarValue,
+  FilterDef,
+} from "@tempi-marathon/ha-panel-ui/components/filter-bar/filter-bar.js";
 import { configureLibrary } from "@tempi-marathon/ha-panel-ui/helpers/i18n-runtime.js";
 import { applyTheme } from "@tempi-marathon/ha-panel-ui/tokens/theme-sync.js";
 import { installTokens } from "@tempi-marathon/ha-panel-ui/tokens/tokens.js";
@@ -45,6 +50,7 @@ import {
   showCaloriesField,
   validateMeasureFields,
   contentsToLiters,
+  sortedOptionList,
 } from "./inventory_view";
 import { type HeaderAction, headerActions } from "./header_actions";
 import {
@@ -53,12 +59,7 @@ import {
   petFoodBreakdown,
 } from "./household";
 import { statusLabel, t } from "./localize";
-import {
-  loadPanelViewState,
-  savePanelViewState,
-  sortedOptionList,
-  type PanelSort,
-} from "./panel_view_state";
+import { panelViewState, SORTS, type PanelSort } from "./view_state";
 import { readinessTone } from "./readiness_tone";
 import type { HomeAssistant } from "./types";
 
@@ -128,7 +129,6 @@ export class ReadyHomePanel extends LitElement {
   @state() private _filterLocation = "";
   @state() private _filterCategory = "";
   @state() private _filterReadiness = "";
-  @state() private _filtersOpen = false;
   @state() private _sort: PanelSort = "name";
   @state() private _dialogOpen = false;
   @state() private _editing: InventoryItemDto | null = null;
@@ -212,36 +212,31 @@ export class ReadyHomePanel extends LitElement {
     return this.hass?.user?.is_admin === true;
   }
 
+  private _viewKey(): string {
+    return this._entryId() ?? "default";
+  }
+
   private _restoreViewState() {
-    const saved = loadPanelViewState(
-      typeof localStorage !== "undefined" ? localStorage : null,
-      this._entryId(),
-    );
+    const saved = panelViewState.load(this._viewKey());
     this._search = saved.search;
     this._filterStatus = saved.filterStatus;
     this._filterLocation = saved.filterLocation;
     this._filterCategory = saved.filterCategory;
     this._filterReadiness = saved.filterReadiness;
-    this._filtersOpen = saved.filtersOpen;
     this._sort = saved.sort;
     this._viewHydrated = true;
   }
 
   private _persistViewState() {
     if (!this._viewHydrated) return;
-    savePanelViewState(
-      typeof localStorage !== "undefined" ? localStorage : null,
-      {
-        search: this._search,
-        filterStatus: this._filterStatus,
-        filterLocation: this._filterLocation,
-        filterCategory: this._filterCategory,
-        filterReadiness: this._filterReadiness,
-        filtersOpen: this._filtersOpen,
-        sort: this._sort,
-      },
-      this._entryId(),
-    );
+    panelViewState.save(this._viewKey(), {
+      search: this._search,
+      filterStatus: this._filterStatus,
+      filterLocation: this._filterLocation,
+      filterCategory: this._filterCategory,
+      filterReadiness: this._filterReadiness,
+      sort: this._sort,
+    });
   }
 
   private _applySnapshot(snap: Snapshot) {
@@ -275,21 +270,6 @@ export class ReadyHomePanel extends LitElement {
     };
   }
 
-  private get _activeFilterCount(): number {
-    let n = 0;
-    if (this._filterLocation) n += 1;
-    if (this._filterCategory) n += 1;
-    if (this._filterReadiness) n += 1;
-    return n;
-  }
-
-  private _resetFilters = () => {
-    this._filterLocation = "";
-    this._filterCategory = "";
-    this._filterReadiness = "";
-    this._persistViewState();
-  };
-
   private _readinessKind(category: string): ReadinessKind {
     return readinessKind(category, this._settings);
   }
@@ -322,10 +302,72 @@ export class ReadyHomePanel extends LitElement {
     return statusLabel(this.hass, status);
   }
 
-  private _setStatusFilter(status: string) {
-    this._filterStatus = this._filterStatus === status ? "all" : status;
-    this._persistViewState();
+  /** Filter definitions for the filter bar (status chips, then one list per field). */
+  private _filterDefs(): FilterDef[] {
+    const counts = this._bucketCounts;
+    const locations = sortedOptionList(this._settings?.locations ?? []);
+    const categories = sortedOptionList(this._settings?.categories ?? []);
+    const toOptions = (values: string[]) =>
+      values.map((v) => ({ value: v, label: v }));
+    return [
+      {
+        key: "status",
+        label: this._t("filter.status_label"),
+        options: [
+          { value: "expired", label: this._t("status.expired"), count: counts.expired },
+          { value: "expiring", label: this._t("status.expiring"), count: counts.expiring },
+          { value: "low_stock", label: this._t("status.low"), count: counts.low_stock },
+        ],
+      },
+      {
+        key: "location",
+        label: this._t("field.location"),
+        type: "select",
+        options: toOptions(locations),
+      },
+      {
+        key: "category",
+        label: this._t("field.category"),
+        type: "select",
+        options: toOptions(categories),
+      },
+      {
+        key: "readiness",
+        label: this._t("filter.readiness_label"),
+        options: [
+          { value: "water", label: this._t("filter.readiness_water") },
+          { value: "food", label: this._t("filter.readiness_food") },
+          { value: "pet_food", label: this._t("filter.readiness_pet_food") },
+          { value: "none", label: this._t("filter.readiness_none") },
+        ],
+      },
+    ];
   }
+
+  private get _filterValue(): FilterBarValue {
+    const filters: Record<string, string> = {};
+    if (this._filterStatus && this._filterStatus !== "all") {
+      filters.status = this._filterStatus;
+    }
+    if (this._filterLocation) filters.location = this._filterLocation;
+    if (this._filterCategory) filters.category = this._filterCategory;
+    if (this._filterReadiness) filters.readiness = this._filterReadiness;
+    return { search: this._search, filters };
+  }
+
+  private _onFilterChange = (e: CustomEvent<{ value: FilterBarValue }>) => {
+    const { search, filters } = e.detail.value;
+    const one = (key: string): string => {
+      const v = filters[key];
+      return (Array.isArray(v) ? v[0] : v) ?? "";
+    };
+    this._search = search;
+    this._filterStatus = one("status") || "all";
+    this._filterLocation = one("location");
+    this._filterCategory = one("category");
+    this._filterReadiness = one("readiness");
+    this._persistViewState();
+  };
 
   private _pct(value: number | null | undefined): string {
     if (value == null || Number.isNaN(Number(value))) return "—";
@@ -594,13 +636,10 @@ export class ReadyHomePanel extends LitElement {
   protected render() {
     const items = this._items;
     const a = this._assessment;
-    const locations = sortedOptionList(this._settings?.locations ?? []);
-    const categories = sortedOptionList(this._settings?.categories ?? []);
     const overall = a.overall_percent;
     const water = a.water_percent;
     const food = a.food_percent;
     const completeness = this._completenessPercent();
-    const counts = this._bucketCounts;
     const supply = a.supply_hours;
     const waterSupply = a.water_supply_hours;
     const foodSupply = a.food_supply_hours;
@@ -714,145 +753,32 @@ export class ReadyHomePanel extends LitElement {
               : nothing}
           </hpu-grid>
 
-          <div class="attention" role="group" aria-label="Attention filters">
-            <button
-              type="button"
-              class="chip ${this._filterStatus === "expired" ? "active" : ""}"
-              @click=${() => this._setStatusFilter("expired")}
-            >
-              ${this._t("status.expired")}
-              <span class="chip-count">${counts.expired}</span>
-            </button>
-            <button
-              type="button"
-              class="chip ${this._filterStatus === "expiring" ? "active" : ""}"
-              @click=${() => this._setStatusFilter("expiring")}
-            >
-              ${this._t("status.expiring")}
-              <span class="chip-count">${counts.expiring}</span>
-            </button>
-            <button
-              type="button"
-              class="chip ${this._filterStatus === "low_stock" ? "active" : ""}"
-              @click=${() => this._setStatusFilter("low_stock")}
-            >
-              ${this._t("status.low")}
-              <span class="chip-count">${counts.low_stock}</span>
-            </button>
-          </div>
-
           <section class="inventory">
             <div class="toolbar">
               <div class="toolbar-row">
-                <input
-                  class="search"
-                  type="search"
-                  placeholder=${this._t("filter.search_placeholder")}
-                  .value=${this._search}
-                  @input=${(e: Event) => {
-                    this._search = (e.target as HTMLInputElement).value;
-                    this._persistViewState();
-                  }}
-                />
-                <select
+                <hpu-filter-bar
+                  class="filter-bar"
+                  .filters=${this._filterDefs()}
+                  .value=${this._filterValue}
+                  search-label=${this._t("filter.search_placeholder")}
+                  search-placeholder=${this._t("filter.search_placeholder")}
+                  @hpu-filter-change=${this._onFilterChange}
+                ></hpu-filter-bar>
+                <hpu-select
                   class="sort"
+                  hide-label
+                  label=${this._t("filter.sort")}
+                  .options=${SORTS.map((value) => ({
+                    value,
+                    label: `${this._t("filter.sort")}: ${value}`,
+                  }))}
                   .value=${this._sort}
-                  @change=${(e: Event) => {
-                    this._sort = (e.target as HTMLSelectElement)
-                      .value as PanelSort;
+                  @hpu-change=${(e: CustomEvent<{ value: string }>) => {
+                    this._sort = e.detail.value as PanelSort;
                     this._persistViewState();
                   }}
-                >
-                  <option value="name">${this._t("filter.sort")}: name</option>
-                  <option value="expiry">${this._t("filter.sort")}: expiry</option>
-                  <option value="quantity"
-                    >${this._t("filter.sort")}: quantity</option
-                  >
-                </select>
-                <hpu-button
-                  class="filters-btn"
-                  variant=${this._filtersOpen || this._activeFilterCount
-                    ? "tonal"
-                    : "outlined"}
-                  @hpu-click=${() => {
-                    this._filtersOpen = !this._filtersOpen;
-                    this._persistViewState();
-                  }}
-                >
-                  Filters${this._activeFilterCount
-                    ? html` (${this._activeFilterCount})`
-                    : nothing}
-                </hpu-button>
+                ></hpu-select>
               </div>
-              ${this._filtersOpen
-                ? html`
-                    <div class="filters">
-                      <select
-                        .value=${this._filterLocation}
-                        @change=${(e: Event) => {
-                          this._filterLocation = (
-                            e.target as HTMLSelectElement
-                          ).value;
-                          this._persistViewState();
-                        }}
-                      >
-                        <option value=""
-                          >${this._t("filter.all_location")}</option
-                        >
-                        ${locations.map(
-                          (l) => html`<option value=${l}>${l}</option>`,
-                        )}
-                      </select>
-                      <select
-                        .value=${this._filterCategory}
-                        @change=${(e: Event) => {
-                          this._filterCategory = (
-                            e.target as HTMLSelectElement
-                          ).value;
-                          this._persistViewState();
-                        }}
-                      >
-                        <option value=""
-                          >${this._t("filter.all_category")}</option
-                        >
-                        ${categories.map(
-                          (c) => html`<option value=${c}>${c}</option>`,
-                        )}
-                      </select>
-                      <select
-                        .value=${this._filterReadiness}
-                        @change=${(e: Event) => {
-                          this._filterReadiness = (
-                            e.target as HTMLSelectElement
-                          ).value;
-                          this._persistViewState();
-                        }}
-                      >
-                        <option value=""
-                          >${this._t("filter.all_readiness")}</option
-                        >
-                        <option value="water"
-                          >${this._t("filter.readiness_water")}</option
-                        >
-                        <option value="food"
-                          >${this._t("filter.readiness_food")}</option
-                        >
-                        <option value="pet_food"
-                          >${this._t("filter.readiness_pet_food")}</option
-                        >
-                        <option value="none"
-                          >${this._t("filter.readiness_none")}</option
-                        >
-                      </select>
-                      ${this._activeFilterCount
-                        ? this._mdButton("Reset", {
-                            variant: "text",
-                            onClick: this._resetFilters,
-                          })
-                        : nothing}
-                    </div>
-                  `
-                : nothing}
               <div class="inventory-meta">
                 <span class="item-count"
                   >${items.length}/${this._snapshot?.items.length ?? 0}</span
@@ -2261,35 +2187,6 @@ export class ReadyHomePanel extends LitElement {
     .completeness-reason-expired {
       color: var(--error-color, #c62828);
     }
-    .attention {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
-      border-radius: 999px;
-      border: 1px solid var(--divider-color);
-      background: var(--card-background-color, transparent);
-      color: var(--primary-text-color);
-      cursor: pointer;
-      font: inherit;
-      font-size: 0.9rem;
-    }
-    .chip.active {
-      border-color: var(--primary-color);
-      background: var(--primary-color);
-      color: var(--text-primary-color, #fff);
-    }
-    .chip-count {
-      font-weight: 600;
-      min-width: 1.2em;
-      text-align: center;
-    }
     .inventory {
       background: var(--card-background-color, #fff);
       border-radius: var(--ha-card-border-radius, 12px);
@@ -2310,10 +2207,9 @@ export class ReadyHomePanel extends LitElement {
       align-items: center;
       gap: 10px;
     }
-    .search {
+    .filter-bar {
       flex: 1 1 auto;
       min-width: 0;
-      box-sizing: border-box;
     }
     .sort {
       flex: 0 0 auto;
@@ -2326,12 +2222,6 @@ export class ReadyHomePanel extends LitElement {
     .item-count {
       font-size: 0.8rem;
       color: var(--secondary-text-color);
-    }
-    .filters {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 10px;
     }
     select,
     input,
@@ -2637,16 +2527,8 @@ export class ReadyHomePanel extends LitElement {
       .toolbar-row {
         flex-wrap: nowrap;
       }
-      .search {
-        flex: 1 1 auto;
-        min-width: 0;
-      }
       .sort {
         max-width: 8.5rem;
-      }
-      .filters-btn {
-        flex: 0 0 auto;
-        padding: 0 10px;
       }
       .actions {
         flex-direction: column;
