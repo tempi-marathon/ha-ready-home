@@ -86,6 +86,16 @@ const press = (el: Element | null | undefined) =>
 
 const clean = (s: string | undefined | null) => (s ?? "").replace(/\s+/g, " ");
 
+/** Text shown by the stat cards: their label, value, meta and detail. */
+const statsText = (root: ParentNode | null | undefined) =>
+  clean(
+    Array.from(root?.querySelectorAll("hpu-stat-card") ?? [])
+      .flatMap((c) =>
+        ["label", "value", "meta", "detail"].map((a) => c.getAttribute(a)),
+      )
+      .join(" "),
+  );
+
 /** Render the panel; `open` clicks the Food or Pet food card and reads its modal. */
 async function renderPanel(
   language: string,
@@ -94,8 +104,8 @@ async function renderPanel(
   open: "food" | "pet_food" = "food",
 ): Promise<{ household: string; stats: string }> {
   const el = await mountPanel(language, settings, assessment);
-  const stats = clean(el.shadowRoot?.querySelector(".stats")?.textContent);
-  el.shadowRoot?.querySelector<HTMLElement>(`[data-stat="${open}"]`)?.click();
+  const stats = statsText(el.shadowRoot);
+  press(el.shadowRoot?.querySelector(`[data-stat="${open}"]`));
   await el.updateComplete;
   const household = clean(
     el.shadowRoot?.querySelector(".household-dialog")?.textContent,
@@ -437,9 +447,9 @@ describe("completeness dialog", () => {
     const el = await mountWithCompleteness("en");
     const root = el.shadowRoot!;
     expect(root.querySelector('[role="dialog"]')).toBeNull();
-    expect(root.querySelector(".stats")?.textContent).not.toContain("Essential");
+    expect(statsText(root)).not.toContain("Essential");
 
-    (root.querySelector('[data-stat="completeness"]') as HTMLElement).click();
+    press(root.querySelector('[data-stat="completeness"]'));
     await el.updateComplete;
 
     const dialog = root.querySelector('[role="dialog"]')!;
@@ -463,7 +473,7 @@ describe("completeness dialog", () => {
   it("closes on Escape and is localized in Dutch", async () => {
     const el = await mountWithCompleteness("nl");
     const root = el.shadowRoot!;
-    (root.querySelector('[data-stat="completeness"]') as HTMLElement).click();
+    press(root.querySelector('[data-stat="completeness"]'));
     await el.updateComplete;
     const text = root.querySelector('[role="dialog"]')?.textContent ?? "";
     expect(text).toContain("verlopen");
@@ -488,7 +498,7 @@ describe("completeness dialog", () => {
     ] as const) {
       const el = await mountWithCompleteness(lang, allComplete);
       const root = el.shadowRoot!;
-      (root.querySelector('[data-stat="completeness"]') as HTMLElement).click();
+      press(root.querySelector('[data-stat="completeness"]'));
       await el.updateComplete;
       const dialog = root.querySelector('[role="dialog"]')!;
       expect(dialog.textContent).toContain(message);
@@ -503,7 +513,7 @@ describe("completeness dialog", () => {
   it("shows the check only on complete categories", async () => {
     const el = await mountWithCompleteness("en");
     const root = el.shadowRoot!;
-    (root.querySelector('[data-stat="completeness"]') as HTMLElement).click();
+    press(root.querySelector('[data-stat="completeness"]'));
     await el.updateComplete;
     expect(root.querySelectorAll(".completeness-check")).toHaveLength(1);
     expect(root.querySelector('[role="dialog"]')?.textContent).not.toContain(
@@ -686,15 +696,15 @@ describe("household modals", () => {
     const el = await mountPanel("en", PET_SETTINGS, PET_ASSESSMENT);
     for (const which of ["food", "pet_food"] as const) {
       const c = card(el, which);
-      expect(c?.tagName).toBe("BUTTON");
-      expect(c?.getAttribute("aria-haspopup")).toBe("dialog");
+      expect(c?.tagName).toBe("HPU-STAT-CARD");
+      expect(c?.getAttribute("haspopup")).toBe("dialog");
     }
     el.remove();
   });
 
   it("opens the food breakdown from the Food card, without pets or water", async () => {
     const el = await mountPanel("en", PET_SETTINGS, PET_ASSESSMENT);
-    card(el, "food")?.click();
+    press(card(el, "food"));
     await el.updateComplete;
     const text = clean(modal(el)?.textContent);
     expect(modal(el)?.getAttribute("role")).toBe("dialog");
@@ -711,7 +721,7 @@ describe("household modals", () => {
 
   it("opens the pet breakdown from the Pet food card", async () => {
     const el = await mountPanel("en", PET_SETTINGS, PET_ASSESSMENT);
-    card(el, "pet_food")?.click();
+    press(card(el, "pet_food"));
     await el.updateComplete;
     const text = clean(modal(el)?.textContent);
     expect(text).toContain("Pet food needs");
@@ -735,7 +745,7 @@ describe("household modals", () => {
       () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })),
     ];
     for (const close of closers) {
-      card(el, "food")?.click();
+      press(card(el, "food"));
       await el.updateComplete;
       expect(modal(el)).not.toBeNull();
       close();
@@ -752,7 +762,7 @@ describe("household modals", () => {
       ...LEGACY_SETTINGS,
       number_of_people: null,
     });
-    card(el, "food")?.click();
+    press(card(el, "food"));
     await el.updateComplete;
     expect(clean(modal(el)?.textContent)).toContain("No household is set up yet.");
     el.remove();
@@ -760,7 +770,7 @@ describe("household modals", () => {
 
   it("translates the modals", async () => {
     const el = await mountPanel("nl", PET_SETTINGS, PET_ASSESSMENT);
-    card(el, "food")?.click();
+    press(card(el, "food"));
     await el.updateComplete;
     expect(clean(modal(el)?.textContent)).toContain("Voedselbehoefte");
     el.remove();
@@ -774,9 +784,9 @@ describe("readiness and completeness explanations", () => {
   it("opens a Readiness explanation from the Readiness card", async () => {
     const el = await mountWithCompleteness("en");
     const card = el.shadowRoot?.querySelector<HTMLElement>('[data-stat="readiness"]');
-    expect(card?.tagName).toBe("BUTTON");
-    expect(card?.getAttribute("aria-haspopup")).toBe("dialog");
-    card?.click();
+    expect(card?.tagName).toBe("HPU-STAT-CARD");
+    expect(card?.getAttribute("haspopup")).toBe("dialog");
+    press(card);
     await el.updateComplete;
     const body = text(el, ".explain-dialog");
     expect(body).toContain("water, food and pet food");
@@ -789,7 +799,7 @@ describe("readiness and completeness explanations", () => {
     const el = await mountWithCompleteness("en");
     const card = () =>
       el.shadowRoot?.querySelector<HTMLElement>('[data-stat="readiness"]');
-    card()?.click();
+    press(card());
     await el.updateComplete;
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     await el.updateComplete;
@@ -801,9 +811,7 @@ describe("readiness and completeness explanations", () => {
 
   it("starts the Completeness dialog with what it measures and leaves out", async () => {
     const el = await mountWithCompleteness("en");
-    el.shadowRoot
-      ?.querySelector<HTMLElement>('[data-stat="completeness"]')
-      ?.click();
+    press(el.shadowRoot?.querySelector('[data-stat="completeness"]'));
     await el.updateComplete;
     const body = text(el, ".completeness-dialog");
     expect(body).toContain("checklist items");
@@ -814,7 +822,7 @@ describe("readiness and completeness explanations", () => {
 
   it("shows the explanations in Dutch", async () => {
     const el = await mountWithCompleteness("nl");
-    el.shadowRoot?.querySelector<HTMLElement>('[data-stat="readiness"]')?.click();
+    press(el.shadowRoot?.querySelector('[data-stat="readiness"]'));
     await el.updateComplete;
     expect(text(el, ".explain-dialog")).toContain("Voorbeeld");
     expect(text(el, ".explain-dialog")).toContain("Compleetheid");
