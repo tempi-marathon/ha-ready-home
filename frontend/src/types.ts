@@ -27,7 +27,7 @@ export interface HomeAssistant {
   language?: string;
   locale?: HassLocale;
   themes?: {
-    darkMode?: boolean;
+    darkMode: boolean;
   };
   user?: {
     id?: string;

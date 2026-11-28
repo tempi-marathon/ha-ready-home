@@ -2,6 +2,8 @@
 
 Ready Home is a custom **Integration**. On Home Assistant **2026.11+** it installs through the built-in [Marketplace](https://www.hacs.xyz/docs/marketplace/) (**Settings → Marketplace**). On **2026.10 and older**, use [HACS](https://hacs.xyz/).
 
+**Requires Home Assistant 2026.8 or newer.** The panel now uses a shared UI library that supports 2026.8 and later. If you run an older version, stay on the previous release of Ready Home.
+
 ## Home Assistant 2026.11+ (Marketplace)
 
 [![Open Ready Home in the Home Assistant Marketplace.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=tempi-marathon&repository=ha-ready-home&category=integration)
