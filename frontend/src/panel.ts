@@ -5,12 +5,14 @@ import { property, state } from "lit/decorators.js";
 import "@tempi-marathon/ha-panel-ui/components/badge/badge.js";
 import "@tempi-marathon/ha-panel-ui/components/button/button.js";
 import "@tempi-marathon/ha-panel-ui/components/checkbox/checkbox.js";
+import "@tempi-marathon/ha-panel-ui/components/data-table/data-table.js";
 import "@tempi-marathon/ha-panel-ui/components/filter-bar/filter-bar.js";
 import "@tempi-marathon/ha-panel-ui/components/grid/grid.js";
 import "@tempi-marathon/ha-panel-ui/components/icon-button/icon-button.js";
 import "@tempi-marathon/ha-panel-ui/components/input/input.js";
 import "@tempi-marathon/ha-panel-ui/components/select/select.js";
 import "@tempi-marathon/ha-panel-ui/components/stat-card/stat-card.js";
+import type { Column } from "@tempi-marathon/ha-panel-ui/components/data-table/data-table.js";
 import type {
   FilterBarValue,
   FilterDef,
@@ -419,12 +421,6 @@ export class ReadyHomePanel extends LitElement {
     return tone === "bad" ? "danger" : tone === "warn" ? "warning" : undefined;
   }
 
-  private _expiryClass(status: string): string {
-    if (status === "expired") return "expiry-expired";
-    if (status === "urgent" || status === "expiring") return "expiry-warn";
-    return "";
-  }
-
   /** Format a stored YYYY-MM-DD using the HA user locale / date_format. */
   private _formatDate(iso: string | null | undefined): string {
     if (!iso) return "—";
@@ -793,9 +789,19 @@ export class ReadyHomePanel extends LitElement {
               ? html`<div class="error" role="alert">${this._error}</div>`
               : nothing}
 
-            ${this.narrow
-              ? this._renderCardList(items)
-              : this._renderTable(items)}
+            <hpu-data-table
+              class="inventory-table"
+              label=${this._t("action.inventory")}
+              manual-sort
+              rows-clickable
+              ?loading=${!this._snapshot}
+              .columns=${this._columns()}
+              .rows=${items}
+              @hpu-row-click=${(e: CustomEvent<{ row: InventoryItemDto }>) =>
+                this._openEdit(e.detail.row)}
+            >
+              ${this._renderEmpty()}
+            </hpu-data-table>
           </section>
         </div>
       </div>
@@ -811,11 +817,8 @@ export class ReadyHomePanel extends LitElement {
   }
 
   private _renderEmpty() {
-    if (!this._snapshot) {
-      return html`<div class="empty">Loading inventory…</div>`;
-    }
     return html`
-      <div class="empty">
+      <div slot="empty" class="empty">
         No items match.
         ${this._canWrite()
           ? html`
@@ -836,15 +839,9 @@ export class ReadyHomePanel extends LitElement {
     `;
   }
 
-  private _renderQtyText(item: InventoryItemDto) {
-    return html`
-      <span class="qty-text"
-        >${item.quantity}${item.desired_quantity
-          ? html` / ${item.desired_quantity}`
-          : nothing}
-        ${item.unit}</span
-      >
-    `;
+  private _qtyText(item: InventoryItemDto): string {
+    const desired = item.desired_quantity ? ` / ${item.desired_quantity}` : "";
+    return `${item.quantity}${desired} ${item.unit}`;
   }
 
   private _renderMeasure(item: InventoryItemDto) {
@@ -913,7 +910,7 @@ export class ReadyHomePanel extends LitElement {
   }
 
   private _renderStatusBadge(status: string) {
-    if (!status) return nothing;
+    if (!status) return null;
     const tone =
       status === "expired"
         ? "danger"
@@ -1046,121 +1043,43 @@ export class ReadyHomePanel extends LitElement {
     `;
   }
 
-  private _renderTable(items: InventoryItemDto[]) {
-    return html`
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Status</th>
-              <th>Quantity</th>
-              <th>L / kcal</th>
-              <th>Location</th>
-              <th>Category</th>
-              <th>Expiry</th>
-              <th class="actions-col"></th>
-            </tr>
-          </thead>
-          <tbody>
-            ${items.map((item) => this._renderRow(item))}
-            ${items.length === 0
-              ? html`<tr>
-                  <td colspan="8">${this._renderEmpty()}</td>
-                </tr>`
-              : nothing}
-          </tbody>
-        </table>
-      </div>
-    `;
-  }
-
-  private _renderCardList(items: InventoryItemDto[]) {
-    if (items.length === 0) {
-      return this._renderEmpty();
-    }
-    return html`
-      <div class="card-list">
-        ${items.map((item) => this._renderItemCard(item))}
-      </div>
-    `;
-  }
-
-  private _renderRow(item: InventoryItemDto) {
-    const status = this._itemStatus(item);
-    const measure = this._renderMeasure(item);
-    return html`
-      <tr class=${status ? `row-${status}` : ""}>
-        <td>
-          <hpu-button
-            variant="text"
-            @hpu-click=${() => this._openEdit(item)}
-            >${item.name}</hpu-button
-          >
-        </td>
-        <td class="status-col">${this._renderStatusBadge(status)}</td>
-        <td>${this._renderQtyText(item)}</td>
-        <td class="measure-col">${measure}</td>
-        <td>${item.location || "—"}</td>
-        <td>${item.category || "—"}</td>
-        <td class="expiry-col ${this._expiryClass(status)}">
-          ${this._formatDate(item.expiry_date)}
-        </td>
-        <td class="actions">
-          ${this._mdButton(this._canWrite() ? "Edit" : "View", {
+  private _columns(): Column<InventoryItemDto>[] {
+    const write = this._canWrite();
+    return [
+      { key: "name", label: "Name", primary: true },
+      {
+        key: "status",
+        label: "Status",
+        render: (item) => this._renderStatusBadge(this._itemStatus(item)),
+      },
+      { key: "quantity", label: "Quantity", render: (i) => this._qtyText(i) },
+      { key: "measure", label: "L / kcal", render: (i) => this._renderMeasure(i) },
+      { key: "location", label: "Location", render: (i) => i.location || "—" },
+      { key: "category", label: "Category", render: (i) => i.category || "—" },
+      {
+        key: "expiry_date",
+        label: "Expiry",
+        render: (i) => this._formatDate(i.expiry_date),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        align: "end",
+        render: (item) => html`
+          ${this._mdButton(write ? "Edit" : "View", {
             variant: "outlined",
             onClick: () => this._openEdit(item),
           })}
-          ${this._canWrite()
+          ${write
             ? this._mdButton("Remove", {
                 variant: "danger-text",
                 disabled: this._isRemovePending(item.id),
                 onClick: () => void this._remove(item),
               })
             : nothing}
-        </td>
-      </tr>
-    `;
-  }
-
-  private _renderItemCard(item: InventoryItemDto) {
-    const status = this._itemStatus(item);
-    const measure = this._renderMeasure(item);
-    const meta = [item.location, item.category, measure]
-      .filter(Boolean)
-      .join(" · ");
-    return html`
-      <article
-        class="item-card ${status ? `row-${status}` : ""}"
-        @click=${() => this._openEdit(item)}
-      >
-        <div class="item-card-top">
-          <div class="item-card-title">
-            <span class="item-name">${item.name}</span>
-            ${this._renderStatusBadge(status)}
-          </div>
-          <hpu-button
-            variant="text"
-            tone="danger"
-            size="sm"
-            ?disabled=${this._isRemovePending(item.id)}
-            ?hidden=${!this._canWrite()}
-            @click=${(e: Event) => e.stopPropagation()}
-            @hpu-click=${() => void this._remove(item)}
-            >Remove</hpu-button
-          >
-        </div>
-        ${meta ? html`<div class="meta">${meta}</div>` : nothing}
-        <div class="item-card-bottom">
-          ${this._renderQtyText(item)}
-          ${item.expiry_date
-            ? html`<span class="${this._expiryClass(status)}"
-                >${this._formatDate(item.expiry_date)}</span
-              >`
-            : nothing}
-        </div>
-      </article>
-    `;
+        `,
+      },
+    ];
   }
 
   private _formReadiness(): ReadinessKind {
@@ -2251,85 +2170,11 @@ export class ReadyHomePanel extends LitElement {
       border-bottom: 1px solid var(--divider-color);
       vertical-align: middle;
     }
-    th.actions-col,
-    td.actions {
-      text-align: right;
-    }
-    .status-col {
-      white-space: nowrap;
-    }
-    .measure-col {
-      white-space: nowrap;
-      color: var(--secondary-text-color);
-      font-size: 0.9rem;
-    }
-    .expiry-col {
-      white-space: nowrap;
-    }
     tbody tr:last-child td {
       border-bottom: none;
     }
-    .card-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .item-card {
-      border: 1px solid var(--divider-color);
-      border-radius: var(--ha-border-radius-lg, 12px);
-      padding: 16px;
-      background: var(--secondary-background-color, rgba(0, 0, 0, 0.03));
-      cursor: pointer;
-    }
-    .item-card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 8px;
-    }
-    .item-card-title {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px;
-      min-width: 0;
-    }
-    .item-name {
-      font-weight: 500;
-      font-size: 1.05rem;
-    }
-    .item-card-bottom {
-      margin-top: 10px;
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-    }
-    .meta {
-      font-size: 0.85rem;
-      color: var(--secondary-text-color);
-      margin-top: 4px;
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .expiry-expired {
-      color: var(--error-color, #c62828);
-      font-weight: 600;
-    }
-    .expiry-warn {
-      color: var(--warning-color, #f57c00);
-      font-weight: 600;
-    }
-    .qty-text {
-      white-space: nowrap;
-    }
-    .actions {
-      white-space: nowrap;
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      justify-content: flex-end;
+    .inventory-table {
+      display: block;
     }
     .empty {
       text-align: center;
@@ -2529,10 +2374,6 @@ export class ReadyHomePanel extends LitElement {
       }
       .sort {
         max-width: 8.5rem;
-      }
-      .actions {
-        flex-direction: column;
-        align-items: stretch;
       }
       .row2,
       .row3 {
