@@ -1,8 +1,13 @@
 /** Ready Home sidebar management panel. */
 
 import { LitElement, css, html, nothing } from "lit";
-import { live } from "lit/directives/live.js";
 import { property, state } from "lit/decorators.js";
+import "@tempi-marathon/ha-panel-ui/components/badge/badge.js";
+import "@tempi-marathon/ha-panel-ui/components/button/button.js";
+import "@tempi-marathon/ha-panel-ui/components/checkbox/checkbox.js";
+import "@tempi-marathon/ha-panel-ui/components/icon-button/icon-button.js";
+import "@tempi-marathon/ha-panel-ui/components/input/input.js";
+import "@tempi-marathon/ha-panel-ui/components/select/select.js";
 import { configureLibrary } from "@tempi-marathon/ha-panel-ui/helpers/i18n-runtime.js";
 import { applyTheme } from "@tempi-marathon/ha-panel-ui/tokens/theme-sync.js";
 import { installTokens } from "@tempi-marathon/ha-panel-ui/tokens/tokens.js";
@@ -472,18 +477,13 @@ export class ReadyHomePanel extends LitElement {
   private _renderMoreMenu(menu: HeaderAction[]) {
     return html`
       <div class="more">
-        <button
-          type="button"
-          class="icon-btn more-btn"
-          aria-label=${this._t("action.more")}
-          aria-haspopup="menu"
-          aria-expanded=${this._moreOpen ? "true" : "false"}
-          @click=${this._toggleMore}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="currentColor" d=${MDI_DOTS_VERTICAL} />
-          </svg>
-        </button>
+        <hpu-icon-button class="more-btn"
+          path=${MDI_DOTS_VERTICAL}
+          label=${this._t("action.more")}
+          haspopup="menu"
+          expanded=${this._moreOpen ? "true" : "false"}
+          @hpu-click=${this._toggleMore}
+        ></hpu-icon-button>
         ${this._moreOpen
           ? html`
               <div
@@ -572,15 +572,15 @@ export class ReadyHomePanel extends LitElement {
     },
   ) {
     const variant = opts.variant ?? "outlined";
+    const danger = variant === "danger-text";
     return html`
-      <button
-        type="button"
-        class="md-btn md-btn-${variant}"
+      <hpu-button
+        variant=${danger ? "text" : variant}
+        tone=${danger ? "danger" : "primary"}
         ?disabled=${opts.disabled ?? false}
-        @click=${opts.onClick}
+        @hpu-click=${opts.onClick}
+        >${label}</hpu-button
       >
-        ${label}
-      </button>
     `;
   }
 
@@ -614,16 +614,11 @@ export class ReadyHomePanel extends LitElement {
             <div class="brand">
               ${this.narrow
                 ? html`
-                    <button
-                      type="button"
-                      class="icon-btn"
-                      aria-label=${this._t("action.open_menu")}
-                      @click=${this._toggleMenu}
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path fill="currentColor" d=${MDI_MENU} />
-                      </svg>
-                    </button>
+                    <hpu-icon-button
+          path=${MDI_MENU}
+          label=${this._t("action.open_menu")}
+          @hpu-click=${this._toggleMenu}
+        ></hpu-icon-button>
                   `
                 : nothing}
               <h1 class="brand-heading">
@@ -818,13 +813,12 @@ export class ReadyHomePanel extends LitElement {
                     >${this._t("filter.sort")}: quantity</option
                   >
                 </select>
-                <button
-                  type="button"
-                  class="md-btn md-btn-outlined filters-btn ${this
-                    ._filtersOpen || this._activeFilterCount
-                    ? "active"
-                    : ""}"
-                  @click=${() => {
+                <hpu-button
+                  class="filters-btn"
+                  variant=${this._filtersOpen || this._activeFilterCount
+                    ? "tonal"
+                    : "outlined"}
+                  @hpu-click=${() => {
                     this._filtersOpen = !this._filtersOpen;
                     this._persistViewState();
                   }}
@@ -832,7 +826,7 @@ export class ReadyHomePanel extends LitElement {
                   Filters${this._activeFilterCount
                     ? html` (${this._activeFilterCount})`
                     : nothing}
-                </button>
+                </hpu-button>
               </div>
               ${this._filtersOpen
                 ? html`
@@ -1013,23 +1007,6 @@ export class ReadyHomePanel extends LitElement {
     return this._contentsToLiters(total, this._form.contents_unit);
   }
 
-  private _fieldLabel(text: string, required = false) {
-    return html`<span class="field-label"
-      >${text}${required
-        ? html`<span class="req" aria-hidden="true">*</span>`
-        : nothing}</span
-    >`;
-  }
-
-  private _fieldError(key: string) {
-    const msg = this._fieldErrors[key];
-    return msg ? html`<div class="field-error">${msg}</div>` : nothing;
-  }
-
-  private _fieldInvalid(key: string): boolean {
-    return Boolean(this._fieldErrors[key]);
-  }
-
   private _validateForm(): Record<string, string> {
     const f = this._form;
     const errors: Record<string, string> = {};
@@ -1055,8 +1032,14 @@ export class ReadyHomePanel extends LitElement {
 
   private _renderStatusBadge(status: string) {
     if (!status) return nothing;
-    return html`<span class="badge badge-${status}"
-      >${this._statusLabel(status)}</span
+    const tone =
+      status === "expired"
+        ? "danger"
+        : status === "low"
+          ? "info"
+          : "warning";
+    return html`<hpu-badge tone=${tone} size="sm"
+      >${this._statusLabel(status)}</hpu-badge
     >`;
   }
 
@@ -1095,16 +1078,11 @@ export class ReadyHomePanel extends LitElement {
         >
           <div class="dialog-header">
             <h2>${title}</h2>
-            <button
-              type="button"
-              class="icon-btn dialog-close"
-              aria-label=${this._t("action.close")}
-              @click=${this._closeHousehold}
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="currentColor" d=${MDI_CLOSE} />
-              </svg>
-            </button>
+            <hpu-icon-button class="dialog-close"
+          path=${MDI_CLOSE}
+          label=${this._t("action.close")}
+          @hpu-click=${this._closeHousehold}
+        ></hpu-icon-button>
           </div>
           ${!h
             ? html`<p class="field-hint">${this._t("household.not_configured")}</p>`
@@ -1232,9 +1210,11 @@ export class ReadyHomePanel extends LitElement {
     return html`
       <tr class=${status ? `row-${status}` : ""}>
         <td>
-          <button class="link" @click=${() => this._openEdit(item)}>
-            ${item.name}
-          </button>
+          <hpu-button
+            variant="text"
+            @hpu-click=${() => this._openEdit(item)}
+            >${item.name}</hpu-button
+          >
         </td>
         <td class="status-col">${this._renderStatusBadge(status)}</td>
         <td>${this._renderQtyText(item)}</td>
@@ -1277,18 +1257,16 @@ export class ReadyHomePanel extends LitElement {
             <span class="item-name">${item.name}</span>
             ${this._renderStatusBadge(status)}
           </div>
-          <button
-            type="button"
-            class="md-btn md-btn-danger-text"
+          <hpu-button
+            variant="text"
+            tone="danger"
+            size="sm"
             ?disabled=${this._isRemovePending(item.id)}
             ?hidden=${!this._canWrite()}
-            @click=${(e: Event) => {
-              e.stopPropagation();
-              void this._remove(item);
-            }}
+            @click=${(e: Event) => e.stopPropagation()}
+            @hpu-click=${() => void this._remove(item)}
+            >Remove</hpu-button
           >
-            Remove
-          </button>
         </div>
         ${meta ? html`<div class="meta">${meta}</div>` : nothing}
         <div class="item-card-bottom">
@@ -1354,261 +1332,122 @@ export class ReadyHomePanel extends LitElement {
         >
           <div class="dialog-header">
             <h2>${dialogTitle}</h2>
-            <button
-              type="button"
-              class="icon-btn dialog-close"
-              aria-label=${this._t("action.close")}
-              @click=${this._closeDialog}
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="currentColor" d=${MDI_CLOSE} />
-              </svg>
-            </button>
+            <hpu-icon-button class="dialog-close"
+          path=${MDI_CLOSE}
+          label=${this._t("action.close")}
+          @hpu-click=${this._closeDialog}
+        ></hpu-icon-button>
           </div>
 
           <div class="form-section">
             <div class="form-section-title">Details</div>
-            <label
-              >${this._t("field.barcode")}
-              <div class="barcode-row">
-                <input
-                  .value=${f.barcode || ""}
-                  ?disabled=${!write}
-                  @input=${this._onField("barcode")}
-                />
-                ${write
-                  ? html`
-                      ${this._mdButton(this._t("action.scan"), {
-                        variant: "outlined",
-                        disabled: this._scanning,
-                        onClick: () => void this._scanBarcode(),
-                      })}
-                      ${this._mdButton(this._t("action.lookup"), {
-                        variant: "outlined",
-                        disabled: this._scanning || !(f.barcode || "").trim(),
-                        onClick: () => void this._lookupBarcode(),
-                      })}
-                    `
-                  : nothing}
-              </div>
-              ${this._barcodeError
-                ? html`<div class="field-error" role="alert">
-                    ${this._barcodeError}
-                  </div>`
+            <div class="barcode-row">
+              ${this._textField("barcode", this._t("field.barcode"), {
+                write,
+                error: this._barcodeError,
+              })}
+              ${write
+                ? html`
+                    ${this._mdButton(this._t("action.scan"), {
+                      variant: "outlined",
+                      disabled: this._scanning,
+                      onClick: () => void this._scanBarcode(),
+                    })}
+                    ${this._mdButton(this._t("action.lookup"), {
+                      variant: "outlined",
+                      disabled: this._scanning || !(f.barcode || "").trim(),
+                      onClick: () => void this._lookupBarcode(),
+                    })}
+                  `
                 : nothing}
-            </label>
-            <label
-              >${this._fieldLabel("Name", write)}
-              <input
-                class=${this._fieldInvalid("name") ? "invalid" : ""}
-                .value=${f.name || ""}
-                ?disabled=${!write}
-                @input=${this._onField("name")}
-              />
-              ${this._fieldError("name")}
-            </label>
-            <div class="row2">
-              <label
-                >${this._fieldLabel("Location", write)}
-                <select
-                  class=${this._fieldInvalid("location") ? "invalid" : ""}
-                  .value=${live(f.location || "")}
-                  ?disabled=${!write}
-                  @change=${this._onField("location")}
-                >
-                  <option value="" ?selected=${!(f.location || "")}>
-                    Select location
-                  </option>
-                  ${locations.map(
-                    (l) =>
-                      html`<option
-                        value=${l}
-                        ?selected=${(f.location || "") === l}
-                      >
-                        ${l}
-                      </option>`,
-                  )}
-                </select>
-                ${this._fieldError("location")}
-              </label>
-              <label
-                >${this._fieldLabel("Category", write)}
-                <select
-                  class=${this._fieldInvalid("category") ? "invalid" : ""}
-                  .value=${live(f.category || "")}
-                  ?disabled=${!write}
-                  @change=${this._onField("category")}
-                >
-                  <option value="" ?selected=${!(f.category || "")}>
-                    Select category
-                  </option>
-                  ${categories.map(
-                    (c) =>
-                      html`<option
-                        value=${c}
-                        ?selected=${(f.category || "") === c}
-                      >
-                        ${c}
-                      </option>`,
-                  )}
-                </select>
-                ${this._fieldError("category")}
-              </label>
             </div>
-            <label
-              >${this._t("field.priority")}
-              <select
-                .value=${live(f.priority || "important")}
-                ?disabled=${!write}
-                @change=${this._onField("priority")}
-              >
-                ${PRIORITIES.map(
-                  (p) =>
-                    html`<option
-                      value=${p}
-                      ?selected=${(f.priority || "important") === p}
-                    >
-                      ${this._t(`priority.${p}`)}
-                    </option>`,
-                )}
-              </select>
-            </label>
-            <label
-              >${this._t("field.notes")}
-              <input
-                .value=${f.notes || ""}
-                ?disabled=${!write}
-                @input=${this._onField("notes")}
-              />
-            </label>
+            ${this._textField("name", "Name", { write, required: write })}
+            <div class="row2">
+              ${this._selectField(
+                "location",
+                "Location",
+                locations.map((l) => ({ value: l, label: l })),
+                { write, required: write, placeholder: "Select location" },
+              )}
+              ${this._selectField(
+                "category",
+                "Category",
+                categories.map((c) => ({ value: c, label: c })),
+                { write, required: write, placeholder: "Select category" },
+              )}
+            </div>
+            ${this._selectField(
+              "priority",
+              this._t("field.priority"),
+              PRIORITIES.map((p) => ({
+                value: p,
+                label: this._t(`priority.${p}`),
+              })),
+              { write, fallback: "important" },
+            )}
+            ${this._textField("notes", this._t("field.notes"), { write })}
           </div>
 
           <div class="form-section">
             <div class="form-section-title">Stock</div>
             <div class="row3">
-              <label
-                >${this._fieldLabel("Quantity", write)}
-                <input
-                  class=${this._fieldInvalid("quantity") ? "invalid" : ""}
-                  type="text"
-                  inputmode="decimal"
-                  .value=${live(f.quantity || "1")}
-                  ?disabled=${!write}
-                  @input=${this._onField("quantity")}
-                />
-                ${this._fieldError("quantity")}
-                ${qtyHint
-                  ? html`<div class="field-hint">${qtyHint}</div>`
-                  : nothing}
-              </label>
-              <label
-                >Desired quantity
-                <input
-                  type="text"
-                  inputmode="decimal"
-                  .value=${live(f.desired_quantity || "0")}
-                  ?disabled=${!write}
-                  @input=${this._onField("desired_quantity")}
-                />
-              </label>
-              <label
-                >${this._fieldLabel("Unit", write)}
-                <select
-                  class=${this._fieldInvalid("unit") ? "invalid" : ""}
-                  .value=${live(f.unit || "piece")}
-                  ?disabled=${!write}
-                  @change=${this._onField("unit")}
-                >
-                  ${STOCK_UNITS.map(
-                    (u) =>
-                      html`<option
-                        value=${u}
-                        ?selected=${(f.unit || "piece") === u}
-                      >
-                        ${ucfirst(u)}
-                      </option>`,
-                  )}
-                </select>
-                ${this._fieldError("unit")}
-              </label>
+              ${this._textField("quantity", "Quantity", {
+                write,
+                required: write,
+                inputmode: "decimal",
+                fallback: "1",
+                hint: qtyHint,
+              })}
+              ${this._textField("desired_quantity", "Desired quantity", {
+                write,
+                inputmode: "decimal",
+                fallback: "0",
+              })}
+              ${this._selectField(
+                "unit",
+                "Unit",
+                STOCK_UNITS.map((u) => ({ value: u, label: ucfirst(u) })),
+                { write, required: write, fallback: "piece" },
+              )}
             </div>
             <div class="row2">
-              <label
-                >${this._fieldLabel(
-                  "Contents per unit",
-                  write && (kind === "food" || kind === "water" || kind === "pet_food"),
-                )}
-                <input
-                  class=${this._fieldInvalid("contents_per_unit")
-                    ? "invalid"
-                    : ""}
-                  type="text"
-                  inputmode="decimal"
-                  .value=${live(f.contents_per_unit || "")}
-                  ?disabled=${!write}
-                  @input=${this._onField("contents_per_unit")}
-                />
-                ${this._fieldError("contents_per_unit")}
-                <div class="field-hint">
-                  How much is in one bottle, can, or pack?
-                </div>
-              </label>
-              <label
-                >${this._fieldLabel(
-                  "Contents unit",
-                  write && (kind === "food" || kind === "water" || kind === "pet_food"),
-                )}
-                <select
-                  class=${this._fieldInvalid("contents_unit") ? "invalid" : ""}
-                  .value=${live(f.contents_unit || "")}
-                  ?disabled=${!write}
-                  @change=${this._onField("contents_unit")}
-                >
-                  <option value="" ?selected=${!(f.contents_unit || "")}>
-                    Select unit
-                  </option>
-                  ${CONTENTS_UNITS.map(
-                    (u) =>
-                      html`<option
-                        value=${u}
-                        ?selected=${(f.contents_unit || "") === u}
-                      >
-                        ${ucfirst(u)}
-                      </option>`,
-                  )}
-                </select>
-                ${this._fieldError("contents_unit")}
-                <div class="field-hint">
-                  Liter, milliliter, gram, or kilogram for one stock unit.
-                </div>
-              </label>
+              ${this._textField("contents_per_unit", "Contents per unit", {
+                write,
+                required:
+                  write &&
+                  (kind === "food" || kind === "water" || kind === "pet_food"),
+                inputmode: "decimal",
+                hint: "How much is in one bottle, can, or pack?",
+              })}
+              ${this._selectField(
+                "contents_unit",
+                "Contents unit",
+                CONTENTS_UNITS.map((u) => ({ value: u, label: ucfirst(u) })),
+                {
+                  write,
+                  required:
+                    write &&
+                    (kind === "food" || kind === "water" || kind === "pet_food"),
+                  placeholder: "Select unit",
+                  hint: "Liter, milliliter, gram, or kilogram for one stock unit.",
+                },
+              )}
             </div>
             ${this._showCaloriesField()
-              ? html`
-                  <label
-                    >${this._fieldLabel(
-                      `Calories (kcal) per ${contentsLabel}`,
-                      write && kind === "food",
-                    )}
-                    <input
-                      class=${this._fieldInvalid("calories_per_content")
-                        ? "invalid"
-                        : ""}
-                      type="text"
-                      inputmode="decimal"
-                      .value=${live(f.calories_per_content || "")}
-                      ?disabled=${!write}
-                      @input=${this._onField("calories_per_content")}
-                    />
-                    ${this._fieldError("calories_per_content")}
-                    <div class="field-hint">
-                      Calories per contents unit${totalCalories != null
-                        ? html` · Total calories on hand:
-                            ${this._formatMeasureNumber(totalCalories)} kcal`
-                        : nothing}
-                    </div>
-                  </label>
-                `
+              ? this._textField(
+                  "calories_per_content",
+                  `Calories (kcal) per ${contentsLabel}`,
+                  {
+                    write,
+                    required: write && kind === "food",
+                    inputmode: "decimal",
+                    hint: `Calories per contents unit${
+                      totalCalories != null
+                        ? ` · Total calories on hand: ${this._formatMeasureNumber(totalCalories)} kcal`
+                        : ""
+                    }`,
+                  },
+                )
               : nothing}
             ${kind === "none"
               ? html`<div class="field-hint">
@@ -1620,15 +1459,7 @@ export class ReadyHomePanel extends LitElement {
 
           <div class="form-section">
             <div class="form-section-title">Dates</div>
-            <label
-              >Expiry
-              <input
-                type="date"
-                .value=${f.expiry_date || ""}
-                ?disabled=${!write}
-                @input=${this._onField("expiry_date")}
-              />
-            </label>
+            ${this._textField("expiry_date", "Expiry", { write, type: "date" })}
           </div>
 
           ${this._error
@@ -1656,13 +1487,63 @@ export class ReadyHomePanel extends LitElement {
     `;
   }
 
+  private _textField(
+    key: string,
+    label: string,
+    o: {
+      write: boolean;
+      required?: boolean;
+      type?: "text" | "date";
+      inputmode?: string;
+      hint?: string;
+      error?: string;
+      fallback?: string;
+    },
+  ) {
+    return html`<hpu-input
+      name=${key}
+      label=${label}
+      type=${o.type ?? "text"}
+      inputmode=${o.inputmode ?? ""}
+      hint=${o.hint ?? ""}
+      error=${o.error ?? this._fieldErrors[key] ?? ""}
+      ?required=${o.required ?? false}
+      ?disabled=${!o.write}
+      .value=${this._form[key] || o.fallback || ""}
+      @hpu-input=${this._onField(key)}
+    ></hpu-input>`;
+  }
+
+  private _selectField(
+    key: string,
+    label: string,
+    options: { value: string; label: string }[],
+    o: {
+      write: boolean;
+      required?: boolean;
+      placeholder?: string;
+      hint?: string;
+      fallback?: string;
+    },
+  ) {
+    return html`<hpu-select
+      name=${key}
+      label=${label}
+      placeholder=${o.placeholder ?? ""}
+      hint=${o.hint ?? ""}
+      error=${this._fieldErrors[key] ?? ""}
+      ?required=${o.required ?? false}
+      ?disabled=${!o.write}
+      .options=${options}
+      .value=${this._form[key] || o.fallback || ""}
+      @hpu-change=${this._onField(key)}
+    ></hpu-select>`;
+  }
+
   private _onField(key: string) {
     return (e: Event) => {
-      const target = e.target as
-        | HTMLInputElement
-        | HTMLSelectElement
-        | HTMLTextAreaElement;
-      this._form = { ...this._form, [key]: target.value };
+      const value = (e as CustomEvent<{ value: string }>).detail.value;
+      this._form = { ...this._form, [key]: value };
       if (key === "barcode" && this._barcodeError) {
         this._barcodeError = "";
       }
@@ -1743,16 +1624,11 @@ export class ReadyHomePanel extends LitElement {
         >
           <div class="dialog-header">
             <h2>${title}</h2>
-            <button
-              type="button"
-              class="icon-btn dialog-close"
-              aria-label=${this._t("action.close")}
-              @click=${this._closeReadiness}
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="currentColor" d=${MDI_CLOSE} />
-              </svg>
-            </button>
+            <hpu-icon-button class="dialog-close"
+          path=${MDI_CLOSE}
+          label=${this._t("action.close")}
+          @hpu-click=${this._closeReadiness}
+        ></hpu-icon-button>
           </div>
           <p>${this._t("readiness.explain")}</p>
           <p class="field-hint">${this._t("readiness.example")}</p>
@@ -1795,16 +1671,11 @@ export class ReadyHomePanel extends LitElement {
         >
           <div class="dialog-header">
             <h2>${title}</h2>
-            <button
-              type="button"
-              class="icon-btn dialog-close"
-              aria-label=${this._t("action.close")}
-              @click=${this._closeCompleteness}
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="currentColor" d=${MDI_CLOSE} />
-              </svg>
-            </button>
+            <hpu-icon-button class="dialog-close"
+          path=${MDI_CLOSE}
+          label=${this._t("action.close")}
+          @hpu-click=${this._closeCompleteness}
+        ></hpu-icon-button>
           </div>
           <p>${this._t("completeness.explain")}</p>
           <p class="field-hint">${this._t("completeness.example")}</p>
@@ -1973,30 +1844,26 @@ export class ReadyHomePanel extends LitElement {
           ? html`
               <details class="template-items">
                 <summary>${this._t("template.items")}</summary>
-                <label class="template-item template-select-all">
-                  <input
-                    type="checkbox"
-                    .checked=${state === "all"}
-                    .indeterminate=${state === "partial"}
-                    @change=${() => this._toggleTemplateAll(tpl)}
-                  />
-                  ${this._t("template.select_all")}
-                </label>
+                <hpu-checkbox
+                  class="template-item template-select-all"
+                  .checked=${state === "all"}
+                  .indeterminate=${state === "partial"}
+                  @hpu-change=${() => this._toggleTemplateAll(tpl)}
+                  >${this._t("template.select_all")}</hpu-checkbox
+                >
                 ${missing.map(
                   (item) => html`
-                    <label class="template-item">
-                      <input
-                        type="checkbox"
-                        .checked=${!unchecked.has(item.name)}
-                        @change=${(e: Event) =>
-                          this._toggleTemplateItem(
-                            tpl,
-                            item.name,
-                            (e.target as HTMLInputElement).checked,
-                          )}
-                      />
-                      ${item.name}
-                    </label>
+                    <hpu-checkbox
+                      class="template-item"
+                      .checked=${!unchecked.has(item.name)}
+                      @hpu-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                        this._toggleTemplateItem(
+                          tpl,
+                          item.name,
+                          e.detail.checked,
+                        )}
+                      >${item.name}</hpu-checkbox
+                    >
                   `,
                 )}
               </details>
@@ -2030,16 +1897,11 @@ export class ReadyHomePanel extends LitElement {
         >
           <div class="dialog-header">
             <h2>${this._t("dialog.template_title")}</h2>
-            <button
-              type="button"
-              class="icon-btn"
-              aria-label=${this._t("action.close")}
-              @click=${this._closeTemplates}
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="currentColor" d=${MDI_CLOSE} />
-              </svg>
-            </button>
+            <hpu-icon-button
+          path=${MDI_CLOSE}
+          label=${this._t("action.close")}
+          @hpu-click=${this._closeTemplates}
+        ></hpu-icon-button>
           </div>
           <p class="field-hint">${this._t("template.skip_existing")}</p>
           <div class="template-list">
@@ -2357,27 +2219,6 @@ export class ReadyHomePanel extends LitElement {
       max-width: min(280px, 100%);
       object-fit: contain;
     }
-    .icon-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      padding: 0;
-      border: none;
-      border-radius: 50%;
-      background: transparent;
-      color: var(--primary-text-color);
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-    .icon-btn:hover {
-      background: rgba(var(--rgb-primary-text-color, 0, 0, 0), 0.06);
-    }
-    .icon-btn svg {
-      width: 24px;
-      height: 24px;
-    }
     .more {
       position: relative;
       flex-shrink: 0;
@@ -2612,10 +2453,6 @@ export class ReadyHomePanel extends LitElement {
       align-items: center;
       gap: 10px;
     }
-    .filters-btn.active {
-      border-color: var(--primary-color);
-      color: var(--primary-color);
-    }
     select,
     input,
     button {
@@ -2628,59 +2465,6 @@ export class ReadyHomePanel extends LitElement {
       border: 1px solid var(--divider-color);
       background: var(--card-background-color, var(--primary-background-color));
       color: var(--primary-text-color);
-    }
-    .md-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      height: 36px;
-      padding: 0 16px;
-      border-radius: var(--ha-button-border-radius, var(--ha-border-radius-pill, 9999px));
-      border: none;
-      cursor: pointer;
-      font-size: 0.875rem;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      white-space: nowrap;
-      box-sizing: border-box;
-      background: transparent;
-      color: var(--primary-color);
-    }
-    .md-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .md-btn-filled {
-      background: var(--primary-color);
-      color: var(--text-primary-color, #fff);
-    }
-    .md-btn-outlined {
-      border: 1px solid var(--primary-color);
-      color: var(--primary-color);
-      background: transparent;
-    }
-    .md-btn-text {
-      color: var(--primary-color);
-      background: transparent;
-      padding: 0 8px;
-    }
-    .md-btn-danger-text {
-      color: var(--error-color, #c62828);
-      background: transparent;
-      padding: 0 8px;
-      text-transform: none;
-      letter-spacing: normal;
-      font-size: 0.8rem;
-      height: auto;
-    }
-    button.link {
-      border: none;
-      background: none;
-      padding: 0;
-      color: var(--primary-color);
-      text-align: left;
-      cursor: pointer;
     }
     .table-wrap {
       overflow-x: auto;
@@ -2758,27 +2542,6 @@ export class ReadyHomePanel extends LitElement {
       gap: 6px;
       align-items: center;
       flex-wrap: wrap;
-    }
-    .badge {
-      letter-spacing: 0.02em;
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 999px;
-      border: 1px solid var(--divider-color);
-    }
-    .badge-expired {
-      color: var(--error-color, #c62828);
-      border-color: currentColor;
-    }
-    .badge-urgent,
-    .badge-expiring {
-      color: var(--warning-color, #f57c00);
-      border-color: currentColor;
-    }
-    .badge-low {
-      color: var(--info-color, #1976d2);
-      border-color: currentColor;
     }
     .expiry-expired {
       color: var(--error-color, #c62828);
@@ -2888,16 +2651,6 @@ export class ReadyHomePanel extends LitElement {
       text-transform: uppercase;
       letter-spacing: 0.04em;
     }
-    .dialog label {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-size: 0.9rem;
-    }
-    .field-label {
-      display: block;
-      line-height: 1.3;
-    }
     .row2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -2907,25 +2660,6 @@ export class ReadyHomePanel extends LitElement {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 12px;
-    }
-    .req {
-      color: var(--error-color, #c62828);
-      margin-left: 2px;
-    }
-    .field-error {
-      color: var(--error-color, #c62828);
-      font-size: 0.75rem;
-      margin-top: 2px;
-    }
-    .dialog input.invalid,
-    .dialog select.invalid {
-      border-color: var(--error-color, #c62828);
-    }
-    .dialog input.invalid:focus,
-    .dialog select.invalid:focus {
-      outline: none;
-      border-color: var(--error-color, #c62828);
-      box-shadow: 0 0 0 1px var(--error-color, #c62828);
     }
     .field-hint {
       color: var(--secondary-text-color);
@@ -2950,7 +2684,6 @@ export class ReadyHomePanel extends LitElement {
       cursor: pointer;
       color: var(--primary-color);
     }
-    /* ".dialog label" stacks fields in a column; template rows must stay one line. */
     .dialog .template-item {
       flex-direction: row;
       align-items: center;
@@ -2961,14 +2694,6 @@ export class ReadyHomePanel extends LitElement {
       text-align: left;
       overflow-wrap: anywhere;
       cursor: pointer;
-    }
-    .template-item input[type="checkbox"] {
-      flex: 0 0 auto;
-      width: 18px;
-      height: 18px;
-      margin: 0;
-      padding: 0;
-      accent-color: var(--primary-color);
     }
     .template-items summary {
       padding: 2px 0;
@@ -3000,7 +2725,7 @@ export class ReadyHomePanel extends LitElement {
       gap: 6px;
       align-items: center;
     }
-    .barcode-row input {
+    .barcode-row hpu-input {
       flex: 1;
       min-width: 0;
     }
@@ -3081,9 +2806,6 @@ export class ReadyHomePanel extends LitElement {
     @media (max-width: 400px) {
       .brand-logo {
         max-width: 28vw;
-      }
-      .header-actions .md-btn {
-        padding: 0 12px;
       }
     }
   `;

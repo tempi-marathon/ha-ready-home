@@ -6,6 +6,7 @@ const root = import.meta.dirname;
 export default defineConfig({
   test: {
     environment: "jsdom",
+    setupFiles: ["frontend/src/test_setup.ts"],
   },
   build: {
     outDir: resolve(root, "custom_components/ready_home/dist"),
@@ -20,6 +21,7 @@ export default defineConfig({
         entryFileNames: "[name].js",
         chunkFileNames: "chunks/[name]-[hash].js",
         format: "es",
+        sourcemapExcludeSources: true,
       },
     },
   },

@@ -77,6 +77,13 @@ async function mountPanel(
   return el;
 }
 
+/** Library controls handle clicks on the native control inside their shadow root. */
+const press = (el: Element | null | undefined) =>
+  (
+    el?.shadowRoot?.querySelector<HTMLElement>("button, input") ??
+    (el as HTMLElement)
+  ).click();
+
 const clean = (s: string | undefined | null) => (s ?? "").replace(/\s+/g, " ");
 
 /** Render the panel; `open` clicks the Food or Pet food card and reads its modal. */
@@ -215,7 +222,7 @@ describe("pet food filter", () => {
       const find = () => el.shadowRoot?.querySelector('option[value="pet_food"]');
       if (!find()) {
         // The open state is persisted between renders, so only open when closed.
-        (el.shadowRoot?.querySelector(".filters-btn") as HTMLElement | null)?.click();
+        press(el.shadowRoot?.querySelector(".filters-btn"));
         await el.updateComplete;
       }
       const option = find();
@@ -281,10 +288,14 @@ describe("template item selection dialog", () => {
     const root = el.shadowRoot!;
     const checks = () =>
       Array.from(
-        root.querySelectorAll<HTMLInputElement>(".template-item input"),
+        root.querySelectorAll<HTMLElement & { checked: boolean; indeterminate: boolean }>(
+          "hpu-checkbox.template-item",
+        ),
       );
     const addButton = () =>
-      root.querySelector<HTMLButtonElement>(".template-card .md-btn-filled")!;
+      root.querySelector<HTMLElement & { disabled: boolean }>(
+        '.template-card hpu-button[variant="filled"]',
+      )!;
     return { el, root, checks, addButton };
   }
 
@@ -304,18 +315,18 @@ describe("template item selection dialog", () => {
   it("adds only checked items and disables the button when none are checked", async () => {
     const calls: unknown[][] = [];
     const { el, checks, addButton } = await openDialog(calls);
-    checks()[1].click(); // uncheck Gauze
+    press(checks()[1]); // uncheck Gauze
     await el.updateComplete;
     expect(checks()[0].indeterminate).toBe(true);
-    checks()[0].click(); // partial -> all
+    press(checks()[0]); // partial -> all
     await el.updateComplete;
     expect(checks().map((c) => c.checked)).toEqual([true, true, true]);
-    checks()[0].click(); // all -> none
+    press(checks()[0]); // all -> none
     await el.updateComplete;
     expect(addButton().disabled).toBe(true);
-    checks()[2].click(); // check Tape only
+    press(checks()[2]); // check Tape only
     await el.updateComplete;
-    addButton().click();
+    press(addButton());
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(calls[0].slice(0, 3)).toEqual([
       "ready_home",
@@ -332,7 +343,7 @@ describe("template item selection dialog", () => {
   it("shows the added/skipped notice after adding and clears it again", async () => {
     const { el, root, addButton } = await openDialog([]);
     vi.useFakeTimers();
-    addButton().click();
+    press(addButton());
     await vi.advanceTimersByTimeAsync(0);
     await el.updateComplete;
     expect(root.querySelector("[role=status]")?.textContent).toContain("Added 1, skipped 0.");
@@ -346,7 +357,7 @@ describe("template item selection dialog", () => {
     const { el, root, checks } = await openDialog([]);
     const details = root.querySelector<HTMLDetailsElement>(".template-items")!;
     details.open = true;
-    checks()[1].click(); // uncheck Gauze
+    press(checks()[1]); // uncheck Gauze
     await el.updateComplete;
     details.open = false;
     await el.updateComplete;
@@ -360,7 +371,7 @@ describe("template item selection dialog", () => {
   it("resets selections and collapses when the dialog is closed and reopened", async () => {
     const { el, root, checks } = await openDialog([]);
     root.querySelector<HTMLDetailsElement>(".template-items")!.open = true;
-    checks()[1].click(); // uncheck Gauze
+    press(checks()[1]); // uncheck Gauze
     await el.updateComplete;
     expect(checks().map((c) => c.checked)).toEqual([false, false, true]);
     (el as unknown as { _closeTemplates: () => void })._closeTemplates();
@@ -443,7 +454,7 @@ describe("completeness dialog", () => {
     expect(text).toContain("2/2");
     expect(root.querySelectorAll(".completeness-missing li")).toHaveLength(2);
 
-    (root.querySelector(".dialog-close") as HTMLElement).click();
+    press(root.querySelector(".dialog-close"));
     await el.updateComplete;
     expect(root.querySelector('[role="dialog"]')).toBeNull();
     el.remove();
@@ -538,16 +549,16 @@ describe("header actions", () => {
 
   const actions = (el: HeaderPanel) =>
     Array.from(
-      el.shadowRoot?.querySelectorAll(".header-actions .md-btn") ?? [],
+      el.shadowRoot?.querySelectorAll(".header-actions hpu-button") ?? [],
     ).map((b) => b.textContent?.trim());
   const trigger = (el: HeaderPanel) =>
-    el.shadowRoot?.querySelector<HTMLButtonElement>(".more-btn") ?? null;
+    el.shadowRoot?.querySelector<HTMLElement>(".more-btn") ?? null;
   const menuLabels = (el: HeaderPanel) =>
     Array.from(el.shadowRoot?.querySelectorAll('[role="menuitem"]') ?? []).map(
       (b) => b.textContent?.trim(),
     );
   async function openMenu(el: HeaderPanel) {
-    trigger(el)?.click();
+    press(trigger(el));
     await el.updateComplete;
   }
 
@@ -562,9 +573,9 @@ describe("header actions", () => {
     const el = await mount({ narrow: true });
     expect(actions(el)).toEqual(["Add item"]);
     const t = trigger(el);
-    expect(t?.getAttribute("aria-label")).toBe("More actions");
-    expect(t?.getAttribute("aria-haspopup")).toBe("menu");
-    expect(t?.getAttribute("aria-expanded")).toBe("false");
+    expect(t?.getAttribute("label")).toBe("More actions");
+    expect(t?.getAttribute("haspopup")).toBe("menu");
+    expect(t?.getAttribute("expanded")).toBe("false");
     expect(el.shadowRoot?.querySelector('[role="menu"]')).toBeNull();
     el.remove();
   });
@@ -581,7 +592,7 @@ describe("header actions", () => {
   it("lists Scan and Add from template in the menu, plus Push restock when configured", async () => {
     const el = await mount({ narrow: true });
     await openMenu(el);
-    expect(trigger(el)?.getAttribute("aria-expanded")).toBe("true");
+    expect(trigger(el)?.getAttribute("expanded")).toBe("true");
     expect(menuLabels(el)).toEqual(["Scan", "Add from template"]);
     el.remove();
     const withList = await mount({ narrow: true, todo: "todo.restock" });
@@ -596,7 +607,7 @@ describe("header actions", () => {
 
   it("translates the menu", async () => {
     const el = await mount({ narrow: true, language: "nl" });
-    expect(trigger(el)?.getAttribute("aria-label")).toBe("Meer acties");
+    expect(trigger(el)?.getAttribute("label")).toBe("Meer acties");
     await openMenu(el);
     expect(menuLabels(el)).toEqual(["Scannen", "Uit sjabloon"]);
     el.remove();
@@ -718,6 +729,7 @@ describe("household modals", () => {
       () =>
         el.shadowRoot
           ?.querySelector<HTMLElement>(".household-dialog .dialog-close")
+          ?.shadowRoot?.querySelector<HTMLElement>("button")
           ?.click(),
       () => el.shadowRoot?.querySelector<HTMLElement>(".dialog-backdrop")?.click(),
       () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })),
