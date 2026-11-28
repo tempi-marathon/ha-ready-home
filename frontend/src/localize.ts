@@ -103,6 +103,12 @@ const EN: Record<string, string> = {
   "template.select_all": "Select all",
   "template.add_selected": "Add missing items ({n})",
   "template.added_result": "Added {added}, skipped {skipped}.",
+  "confirm.remove_title": "Remove item",
+  "confirm.remove_message": "Remove “{name}”?",
+  "action.remove": "Remove",
+  "toast.saved": "Saved “{name}”",
+  "toast.removed": "Removed “{name}”",
+  "toast.restock_pushed": "Restock list sent",
   "error.generic": "Something went wrong",
 };
 
@@ -205,6 +211,12 @@ const NL: Record<string, string> = {
   "template.select_all": "Alles selecteren",
   "template.add_selected": "Ontbrekende items toevoegen ({n})",
   "template.added_result": "{added} toegevoegd, {skipped} overgeslagen.",
+  "confirm.remove_title": "Item verwijderen",
+  "confirm.remove_message": "“{name}” verwijderen?",
+  "action.remove": "Verwijderen",
+  "toast.saved": "“{name}” opgeslagen",
+  "toast.removed": "“{name}” verwijderd",
+  "toast.restock_pushed": "Bijbestellijst verstuurd",
   "error.generic": "Er ging iets mis",
 };
 

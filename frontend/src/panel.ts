@@ -6,12 +6,17 @@ import "@tempi-marathon/ha-panel-ui/components/badge/badge.js";
 import "@tempi-marathon/ha-panel-ui/components/button/button.js";
 import "@tempi-marathon/ha-panel-ui/components/checkbox/checkbox.js";
 import "@tempi-marathon/ha-panel-ui/components/data-table/data-table.js";
+import { confirm as confirmDialog } from "@tempi-marathon/ha-panel-ui/components/confirm/confirm.js";
 import "@tempi-marathon/ha-panel-ui/components/filter-bar/filter-bar.js";
+import "@tempi-marathon/ha-panel-ui/components/form/form-section.js";
+import "@tempi-marathon/ha-panel-ui/components/form/form.js";
 import "@tempi-marathon/ha-panel-ui/components/grid/grid.js";
 import "@tempi-marathon/ha-panel-ui/components/icon-button/icon-button.js";
+import "@tempi-marathon/ha-panel-ui/components/modal/modal.js";
 import "@tempi-marathon/ha-panel-ui/components/input/input.js";
 import "@tempi-marathon/ha-panel-ui/components/select/select.js";
 import "@tempi-marathon/ha-panel-ui/components/stat-card/stat-card.js";
+import { showToast } from "@tempi-marathon/ha-panel-ui/components/toast/toast.js";
 import type { Column } from "@tempi-marathon/ha-panel-ui/components/data-table/data-table.js";
 import type {
   FilterBarValue,
@@ -806,6 +811,7 @@ export class ReadyHomePanel extends LitElement {
         </div>
       </div>
 
+      <div class="overlays"></div>
       ${this._dialogOpen ? this._renderDialog() : nothing}
       ${this._completenessOpen ? this._renderCompletenessDialog() : nothing}
       ${this._readinessOpen ? this._renderReadinessDialog() : nothing}
@@ -943,33 +949,18 @@ export class ReadyHomePanel extends LitElement {
       which === "food" ? "household.food_title" : "household.pet_food_title",
     );
     return html`
-      <div
-        class="dialog-backdrop"
-        @click=${(e: Event) => {
-          if (e.target === e.currentTarget) this._closeHousehold();
-        }}
+      <hpu-modal
+        class="household-dialog"
+        open
+        heading=${title}
+        @hpu-close=${this._closeHousehold}
       >
-        <div
-          class="dialog household-dialog ${this.narrow ? "dialog-narrow" : ""}"
-          role="dialog"
-          aria-modal="true"
-          aria-label=${title}
-        >
-          <div class="dialog-header">
-            <h2>${title}</h2>
-            <hpu-icon-button class="dialog-close"
-          path=${MDI_CLOSE}
-          label=${this._t("action.close")}
-          @hpu-click=${this._closeHousehold}
-        ></hpu-icon-button>
-          </div>
-          ${!h
-            ? html`<p class="field-hint">${this._t("household.not_configured")}</p>`
-            : which === "food"
-              ? this._renderFoodTable(h)
-              : this._renderPetFoodTable(h)}
-        </div>
-      </div>
+        ${!h
+          ? html`<p class="field-hint">${this._t("household.not_configured")}</p>`
+          : which === "food"
+            ? this._renderFoodTable(h)
+            : this._renderPetFoodTable(h)}
+      </hpu-modal>
     `;
   }
 
@@ -1124,24 +1115,23 @@ export class ReadyHomePanel extends LitElement {
       : this._t("dialog.add_title");
 
     return html`
-      <div class="dialog-backdrop">
-        <div
-          class="dialog ${this.narrow ? "dialog-narrow" : ""}"
-          role="dialog"
-          aria-modal="true"
-          aria-label=${dialogTitle}
+      <hpu-modal
+        open
+        heading=${dialogTitle}
+        @hpu-close=${(e: CustomEvent<{ reason: string }>) => {
+          // A stray click outside must not throw away what was typed.
+          if (e.detail.reason === "backdrop") {
+            e.preventDefault();
+            return;
+          }
+          this._closeDialog();
+        }}
+      >
+        <hpu-form
+          @hpu-submit=${() => void this._save()}
+          @hpu-invalid=${() => void this._save()}
         >
-          <div class="dialog-header">
-            <h2>${dialogTitle}</h2>
-            <hpu-icon-button class="dialog-close"
-          path=${MDI_CLOSE}
-          label=${this._t("action.close")}
-          @hpu-click=${this._closeDialog}
-        ></hpu-icon-button>
-          </div>
-
-          <div class="form-section">
-            <div class="form-section-title">Details</div>
+          <hpu-form-section heading="Details" plain>
             <div class="barcode-row">
               ${this._textField("barcode", this._t("field.barcode"), {
                 write,
@@ -1187,10 +1177,9 @@ export class ReadyHomePanel extends LitElement {
               { write, fallback: "important" },
             )}
             ${this._textField("notes", this._t("field.notes"), { write })}
-          </div>
+          </hpu-form-section>
 
-          <div class="form-section">
-            <div class="form-section-title">Stock</div>
+          <hpu-form-section heading="Stock" plain>
             <div class="row3">
               ${this._textField("quantity", "Quantity", {
                 write,
@@ -1256,35 +1245,33 @@ export class ReadyHomePanel extends LitElement {
                   count toward readiness.
                 </div>`
               : nothing}
-          </div>
+          </hpu-form-section>
 
-          <div class="form-section">
-            <div class="form-section-title">Dates</div>
+          <hpu-form-section heading="Dates" plain>
             ${this._textField("expiry_date", "Expiry", { write, type: "date" })}
-          </div>
+          </hpu-form-section>
 
           ${this._error
             ? html`<div class="error" role="alert">${this._error}</div>`
             : nothing}
-
-          <div class="dialog-actions">
-            ${this._mdButton(
-              write ? this._t("action.cancel") : this._t("action.close"),
-              {
-                variant: "text",
-                onClick: this._closeDialog,
-              },
-            )}
-            ${write
-              ? this._mdButton(this._t("action.save"), {
-                  variant: "filled",
-                  disabled: this._saving,
-                  onClick: () => void this._save(),
-                })
-              : nothing}
-          </div>
+        </hpu-form>
+        <div slot="actions">
+          ${this._mdButton(
+            write ? this._t("action.cancel") : this._t("action.close"),
+            {
+              variant: "text",
+              onClick: this._closeDialog,
+            },
+          )}
+          ${write
+            ? this._mdButton(this._t("action.save"), {
+                variant: "filled",
+                disabled: this._saving,
+                onClick: () => void this._save(),
+              })
+            : nothing}
         </div>
-      </div>
+      </hpu-modal>
     `;
   }
 
@@ -1411,30 +1398,15 @@ export class ReadyHomePanel extends LitElement {
   private _renderReadinessDialog() {
     const title = this._t("readiness.title");
     return html`
-      <div
-        class="dialog-backdrop"
-        @click=${(e: Event) => {
-          if (e.target === e.currentTarget) this._closeReadiness();
-        }}
+      <hpu-modal
+        class="explain-dialog"
+        open
+        heading=${title}
+        @hpu-close=${this._closeReadiness}
       >
-        <div
-          class="dialog explain-dialog ${this.narrow ? "dialog-narrow" : ""}"
-          role="dialog"
-          aria-modal="true"
-          aria-label=${title}
-        >
-          <div class="dialog-header">
-            <h2>${title}</h2>
-            <hpu-icon-button class="dialog-close"
-          path=${MDI_CLOSE}
-          label=${this._t("action.close")}
-          @hpu-click=${this._closeReadiness}
-        ></hpu-icon-button>
-          </div>
-          <p>${this._t("readiness.explain")}</p>
-          <p class="field-hint">${this._t("readiness.example")}</p>
-        </div>
-      </div>
+        <p>${this._t("readiness.explain")}</p>
+        <p class="field-hint">${this._t("readiness.example")}</p>
+      </hpu-modal>
     `;
   }
 
@@ -1458,26 +1430,12 @@ export class ReadyHomePanel extends LitElement {
     const title = this._t("completeness.title");
     const allComplete = categories.every(([, c]) => c.missing.length === 0);
     return html`
-      <div
-        class="dialog-backdrop"
-        @click=${(e: Event) => {
-          if (e.target === e.currentTarget) this._closeCompleteness();
-        }}
+      <hpu-modal
+        class="completeness-dialog"
+        open
+        heading=${title}
+        @hpu-close=${this._closeCompleteness}
       >
-        <div
-          class="dialog completeness-dialog ${this.narrow ? "dialog-narrow" : ""}"
-          role="dialog"
-          aria-modal="true"
-          aria-label=${title}
-        >
-          <div class="dialog-header">
-            <h2>${title}</h2>
-            <hpu-icon-button class="dialog-close"
-          path=${MDI_CLOSE}
-          label=${this._t("action.close")}
-          @hpu-click=${this._closeCompleteness}
-        ></hpu-icon-button>
-          </div>
           <p>${this._t("completeness.explain")}</p>
           <p class="field-hint">${this._t("completeness.example")}</p>
           <div class="completeness-overall">
@@ -1531,8 +1489,7 @@ export class ReadyHomePanel extends LitElement {
               </section>
             `,
           )}
-        </div>
-      </div>
+      </hpu-modal>
     `;
   }
 
@@ -1610,6 +1567,7 @@ export class ReadyHomePanel extends LitElement {
       this._closeTemplates();
     } catch (err) {
       this._error = formatHassError(err);
+      showToast({ message: this._error, tone: "danger" });
     } finally {
       this._templateBusy = false;
     }
@@ -1620,8 +1578,10 @@ export class ReadyHomePanel extends LitElement {
     this._error = "";
     try {
       await this.hass.callService("ready_home", "push_restock_list", {});
+      showToast({ message: this._t("toast.restock_pushed"), tone: "success" });
     } catch (err) {
       this._error = formatHassError(err);
+      showToast({ message: this._error, tone: "danger" });
     }
   }
 
@@ -1684,38 +1644,22 @@ export class ReadyHomePanel extends LitElement {
 
   private _renderTemplateDialog() {
     return html`
-      <div
-        class="dialog-backdrop"
-        @click=${(e: Event) => {
-          if (e.target === e.currentTarget) this._closeTemplates();
-        }}
+      <hpu-modal
+        open
+        heading=${this._t("dialog.template_title")}
+        @hpu-close=${this._closeTemplates}
       >
-        <div
-          class="dialog"
-          role="dialog"
-          aria-modal="true"
-          aria-label=${this._t("dialog.template_title")}
-        >
-          <div class="dialog-header">
-            <h2>${this._t("dialog.template_title")}</h2>
-            <hpu-icon-button
-          path=${MDI_CLOSE}
-          label=${this._t("action.close")}
-          @hpu-click=${this._closeTemplates}
-        ></hpu-icon-button>
-          </div>
-          <p class="field-hint">${this._t("template.skip_existing")}</p>
-          <div class="template-list">
-            ${this._templates.map((tpl) => this._renderTemplateCard(tpl))}
-          </div>
-          <div class="dialog-actions">
-            ${this._mdButton(this._t("action.close"), {
-              variant: "text",
-              onClick: this._closeTemplates,
-            })}
-          </div>
+        <p class="field-hint">${this._t("template.skip_existing")}</p>
+        <div class="template-list">
+          ${this._templates.map((tpl) => this._renderTemplateCard(tpl))}
         </div>
-      </div>
+        <div slot="actions">
+          ${this._mdButton(this._t("action.close"), {
+            variant: "text",
+            onClick: this._closeTemplates,
+          })}
+        </div>
+      </hpu-modal>
     `;
   }
 
@@ -1781,30 +1725,9 @@ export class ReadyHomePanel extends LitElement {
   };
 
   private _onWindowKeyDown = (e: KeyboardEvent) => {
-    if (e.key !== "Escape") return;
-    if (this._moreOpen) {
-      e.preventDefault();
-      this._closeMore();
-      return;
-    }
-    if (this._readinessOpen) {
-      e.preventDefault();
-      this._closeReadiness();
-      return;
-    }
-    if (this._householdModal) {
-      e.preventDefault();
-      this._closeHousehold();
-      return;
-    }
-    if (this._completenessOpen) {
-      e.preventDefault();
-      this._closeCompleteness();
-      return;
-    }
-    if (!this._dialogOpen) return;
+    if (e.key !== "Escape" || !this._moreOpen) return;
     e.preventDefault();
-    this._closeDialog();
+    this._closeMore();
   };
 
   private _abortScan() {
@@ -1816,19 +1739,37 @@ export class ReadyHomePanel extends LitElement {
   private async _remove(item: InventoryItemDto) {
     if (!this._canWrite()) return;
     if (this._isRemovePending(item.id)) return;
-    if (!confirm(`Remove “${item.name}”?`)) return;
+    const confirmed = await confirmDialog({
+      title: this._t("confirm.remove_title"),
+      message: this._t("confirm.remove_message", { name: item.name }),
+      tone: "danger",
+      confirmLabel: this._t("action.remove"),
+      cancelLabel: this._t("action.cancel"),
+      host: this._overlayHost(),
+    });
+    if (!confirmed) return;
     this._pendingRemoveIds = [...this._pendingRemoveIds, item.id];
     this._error = "";
     try {
       await this.hass.callService("ready_home", "remove_item", {
         item_id: item.id,
       });
+      showToast({
+        message: this._t("toast.removed", { name: item.name }),
+        tone: "success",
+      });
     } catch (err) {
       this._pendingRemoveIds = this._pendingRemoveIds.filter(
         (id) => id !== item.id,
       );
       this._error = formatHassError(err);
+      showToast({ message: this._error, tone: "danger" });
     }
+  }
+
+  /** Themed overlays mount inside the panel so they inherit its theme. */
+  private _overlayHost(): HTMLElement | undefined {
+    return this.shadowRoot?.querySelector<HTMLElement>(".overlays") ?? undefined;
   }
 
   private async _save() {
@@ -1881,8 +1822,13 @@ export class ReadyHomePanel extends LitElement {
       this._dialogOpen = false;
       this._fieldErrors = {};
       this._barcodeError = "";
+      showToast({
+        message: this._t("toast.saved", { name }),
+        tone: "success",
+      });
     } catch (err) {
       this._error = formatHassError(err);
+      showToast({ message: this._error, tone: "danger" });
     } finally {
       this._saving = false;
     }
@@ -2197,75 +2143,6 @@ export class ReadyHomePanel extends LitElement {
       font-size: 0.9rem;
       margin-bottom: 10px;
     }
-    .dialog-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.45);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 16px;
-      box-sizing: border-box;
-    }
-    .dialog {
-      background: var(--card-background-color, #fff);
-      color: var(--primary-text-color);
-      padding: 20px;
-      border-radius: var(--ha-dialog-border-radius, var(--ha-border-radius-lg, 12px));
-      width: min(520px, 100%);
-      max-height: 90vh;
-      overflow: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      box-sizing: border-box;
-    }
-    .dialog-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-    .dialog-header h2 {
-      margin: 0;
-      flex: 1;
-      min-width: 0;
-    }
-    .dialog-close {
-      flex-shrink: 0;
-      margin: -8px -8px -8px 0;
-    }
-    .dialog.dialog-narrow {
-      width: 100%;
-      max-height: 100%;
-      border-radius: var(--ha-dialog-border-radius, var(--ha-border-radius-lg, 12px));
-      padding: 20px;
-      padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-    }
-    .dialog-backdrop:has(.dialog-narrow) {
-      align-items: stretch;
-      padding-top: max(12px, env(safe-area-inset-top, 0px));
-      padding-right: max(12px, env(safe-area-inset-right, 0px));
-      padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
-      padding-left: max(12px, env(safe-area-inset-left, 0px));
-    }
-    .form-section {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      padding: 12px;
-      border: 1px solid var(--divider-color);
-      border-radius: var(--ha-border-radius-md, 8px);
-      background: var(--secondary-background-color, rgba(0, 0, 0, 0.02));
-    }
-    .form-section-title {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--primary-color);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
     .row2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -2299,25 +2176,13 @@ export class ReadyHomePanel extends LitElement {
       cursor: pointer;
       color: var(--primary-color);
     }
-    .dialog .template-item {
-      flex-direction: row;
-      align-items: center;
-      gap: 10px;
-      padding: 4px 0;
-      font-size: 1rem;
-      line-height: 1.3;
-      text-align: left;
-      overflow-wrap: anywhere;
-      cursor: pointer;
-    }
     .template-items summary {
       padding: 2px 0;
     }
-    .dialog .template-select-all {
+    .template-select-all {
       font-weight: 500;
       padding-bottom: 6px;
       margin-bottom: 2px;
-      border-bottom: 1px solid var(--divider-color, #e0e0e0);
     }
     .template-card-body {
       display: flex;
@@ -2328,12 +2193,6 @@ export class ReadyHomePanel extends LitElement {
       margin: 0;
       color: var(--secondary-text-color);
       font-size: 0.9rem;
-    }
-    .dialog-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      margin-top: 4px;
     }
     .barcode-row {
       display: flex;
