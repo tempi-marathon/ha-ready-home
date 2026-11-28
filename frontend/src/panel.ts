@@ -5,9 +5,11 @@ import { property, state } from "lit/decorators.js";
 import "@tempi-marathon/ha-panel-ui/components/badge/badge.js";
 import "@tempi-marathon/ha-panel-ui/components/button/button.js";
 import "@tempi-marathon/ha-panel-ui/components/checkbox/checkbox.js";
+import "@tempi-marathon/ha-panel-ui/components/grid/grid.js";
 import "@tempi-marathon/ha-panel-ui/components/icon-button/icon-button.js";
 import "@tempi-marathon/ha-panel-ui/components/input/input.js";
 import "@tempi-marathon/ha-panel-ui/components/select/select.js";
+import "@tempi-marathon/ha-panel-ui/components/stat-card/stat-card.js";
 import { configureLibrary } from "@tempi-marathon/ha-panel-ui/helpers/i18n-runtime.js";
 import { applyTheme } from "@tempi-marathon/ha-panel-ui/tokens/theme-sync.js";
 import { installTokens } from "@tempi-marathon/ha-panel-ui/tokens/tokens.js";
@@ -358,16 +360,21 @@ export class ReadyHomePanel extends LitElement {
     );
   }
 
-  private _statToneClass(hours: number | null | undefined): string {
+  private _cardTone(hours: number | null | undefined) {
     const tone = readinessTone(hours, this._durationHours());
-    return tone ? `stat-${tone}` : "";
+    return tone === "ok"
+      ? "success"
+      : tone === "warn"
+        ? "warning"
+        : tone === "bad"
+          ? "danger"
+          : "gray";
   }
 
-  private _durationClass(hours: number | null | undefined): string {
+  /** Tone of the time-on-hand line: only low values are coloured. */
+  private _detailTone(hours: number | null | undefined) {
     const tone = readinessTone(hours, this._durationHours());
-    if (tone === "bad") return "duration-bad";
-    if (tone === "warn") return "duration-warn";
-    return "";
+    return tone === "bad" ? "danger" : tone === "warn" ? "warning" : undefined;
   }
 
   private _expiryClass(status: string): string {
@@ -636,127 +643,76 @@ export class ReadyHomePanel extends LitElement {
         </header>
 
         <div class="content">
-          <div class="stats">
-            <button
-              type="button"
-              class="stat stat-button ${this._statToneClass(supply)}"
+          <hpu-grid class="stats" min="11rem" gap="3">
+            <hpu-stat-card
               data-stat="readiness"
-              aria-haspopup="dialog"
-              aria-label=${this._t("readiness.open")}
-              @click=${this._openReadiness}
-            >
-              <span class="stat-label">
-                <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="currentColor" d=${MDI_SHIELD_CHECK} />
-                </svg>
-                ${this._t("stat.readiness")}
-              </span>
-              <span class="stat-value">${this._pct(overall)}</span>
-              <span class="stat-duration ${this._durationClass(supply)}"
-                >${this._formatHours(supply)}</span
-              >
-            </button>
-            <div class="stat ${this._statToneClass(waterSupply)}">
-              <span class="stat-label">
-                <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="currentColor" d=${MDI_WATER} />
-                </svg>
-                ${this._t("stat.water")}
-              </span>
-              <span class="stat-value"
-                >${this._formatAmount(a.water_on_hand, "L")}</span
-              >
-              <span class="stat-meta"
-                >${this._pct(water)} ·
-                ${this._formatAmount(a.water_target, "L")}</span
-              >
-              <span class="stat-duration ${this._durationClass(waterSupply)}"
-                >${this._formatHours(waterSupply)}</span
-              >
-            </div>
-            <button
-              type="button"
-              class="stat stat-button ${this._statToneClass(foodSupply)}"
+              label=${this._t("stat.readiness")}
+              value=${this._pct(overall)}
+              detail=${this._formatHours(supply)}
+              detail-tone=${this._detailTone(supply) ?? nothing}
+              tone=${this._cardTone(supply)}
+              .icon=${MDI_SHIELD_CHECK}
+              clickable
+              haspopup="dialog"
+              accessible-label=${this._t("readiness.open")}
+              @hpu-activate=${this._openReadiness}
+            ></hpu-stat-card>
+            <hpu-stat-card
+              label=${this._t("stat.water")}
+              value=${this._formatAmount(a.water_on_hand, "L")}
+              meta=${`${this._pct(water)} · ${this._formatAmount(a.water_target, "L")}`}
+              detail=${this._formatHours(waterSupply)}
+              detail-tone=${this._detailTone(waterSupply) ?? nothing}
+              tone=${this._cardTone(waterSupply)}
+              .icon=${MDI_WATER}
+            ></hpu-stat-card>
+            <hpu-stat-card
               data-stat="food"
-              aria-haspopup="dialog"
-              aria-label=${this._t("household.open_food")}
-              @click=${() => this._openHousehold("food")}
-            >
-              <span class="stat-label">
-                <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="currentColor" d=${MDI_FOOD} />
-                </svg>
-                ${this._t("stat.food")}
-              </span>
-              <span class="stat-value"
-                >${this._formatAmount(a.food_on_hand, "kcal")}</span
-              >
-              <span class="stat-meta"
-                >${this._pct(food)} ·
-                ${this._formatAmount(a.food_target, "kcal")}</span
-              >
-              <span class="stat-duration ${this._durationClass(foodSupply)}"
-                >${this._formatHours(foodSupply)}</span
-              >
-            </button>
+              label=${this._t("stat.food")}
+              value=${this._formatAmount(a.food_on_hand, "kcal")}
+              meta=${`${this._pct(food)} · ${this._formatAmount(a.food_target, "kcal")}`}
+              detail=${this._formatHours(foodSupply)}
+              detail-tone=${this._detailTone(foodSupply) ?? nothing}
+              tone=${this._cardTone(foodSupply)}
+              .icon=${MDI_FOOD}
+              clickable
+              haspopup="dialog"
+              accessible-label=${this._t("household.open_food")}
+              @hpu-activate=${() => this._openHousehold("food")}
+            ></hpu-stat-card>
             ${hasPetFood
               ? html`
-                  <button
-                    type="button"
-                    class="stat stat-button ${this._statToneClass(petFoodSupply)}"
+                  <hpu-stat-card
                     data-stat="pet_food"
-                    aria-haspopup="dialog"
-                    aria-label=${this._t("household.open_pet_food")}
-                    @click=${() => this._openHousehold("pet_food")}
-                  >
-                    <span class="stat-label">
-                      <svg
-                        class="stat-icon"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path fill="currentColor" d=${MDI_PAW} />
-                      </svg>
-                      ${this._t("stat.pet_food")}
-                    </span>
-                    <span class="stat-value"
-                      >${this._formatAmount(a.pet_food_on_hand, "g")}</span
-                    >
-                    <span class="stat-meta"
-                      >${this._pct(a.pet_food_percent)} ·
-                      ${this._formatAmount(petFoodTarget, "g")}</span
-                    >
-                    <span class="stat-duration ${this._durationClass(petFoodSupply)}"
-                      >${this._formatHours(petFoodSupply)}</span
-                    >
-                  </button>
+                    label=${this._t("stat.pet_food")}
+                    value=${this._formatAmount(a.pet_food_on_hand, "g")}
+                    meta=${`${this._pct(a.pet_food_percent)} · ${this._formatAmount(petFoodTarget, "g")}`}
+                    detail=${this._formatHours(petFoodSupply)}
+                    detail-tone=${this._detailTone(petFoodSupply) ?? nothing}
+                    tone=${this._cardTone(petFoodSupply)}
+                    .icon=${MDI_PAW}
+                    clickable
+                    haspopup="dialog"
+                    accessible-label=${this._t("household.open_pet_food")}
+                    @hpu-activate=${() => this._openHousehold("pet_food")}
+                  ></hpu-stat-card>
                 `
               : nothing}
             ${completeness != null
               ? html`
-                  <button
-                    type="button"
-                    class="stat stat-button"
+                  <hpu-stat-card
                     data-stat="completeness"
-                    aria-haspopup="dialog"
-                    aria-label=${this._t("completeness.open")}
-                    @click=${this._openCompleteness}
-                  >
-                    <span class="stat-label">
-                      <svg
-                        class="stat-icon"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path fill="currentColor" d=${MDI_CLIPBOARD_CHECK} />
-                      </svg>
-                      ${this._t("stat.completeness")}
-                    </span>
-                    <span class="stat-value">${this._pct(completeness)}</span>
-                  </button>
+                    label=${this._t("stat.completeness")}
+                    value=${this._pct(completeness)}
+                    .icon=${MDI_CLIPBOARD_CHECK}
+                    clickable
+                    haspopup="dialog"
+                    accessible-label=${this._t("completeness.open")}
+                    @hpu-activate=${this._openCompleteness}
+                  ></hpu-stat-card>
                 `
               : nothing}
-          </div>
+          </hpu-grid>
 
           <div class="attention" role="group" aria-label="Attention filters">
             <button
@@ -2267,42 +2223,7 @@ export class ReadyHomePanel extends LitElement {
       font-weight: 500;
     }
     .stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
       margin-bottom: 16px;
-    }
-    .stat {
-      padding: 16px;
-      border-radius: var(--ha-border-radius-md, 8px);
-      border-left: 3px solid var(--divider-color);
-      background: var(--card-background-color, #fff);
-      box-shadow: var(--ha-card-box-shadow, none);
-    }
-    .stat.stat-ok {
-      border-left-color: var(--rh-ready-color);
-    }
-    .stat.stat-warn {
-      border-left-color: var(--warning-color, #f57c00);
-    }
-    .stat.stat-bad {
-      border-left-color: var(--error-color, #c62828);
-    }
-    button.stat-button {
-      font: inherit;
-      color: inherit;
-      text-align: left;
-      border-top: none;
-      border-right: none;
-      border-bottom: none;
-      cursor: pointer;
-    }
-    button.stat-button:hover {
-      background: var(--secondary-background-color, rgba(0, 0, 0, 0.04));
-    }
-    button.stat-button:focus-visible {
-      outline: 2px solid var(--primary-color);
-      outline-offset: 2px;
     }
     .completeness-overall {
       font-size: 1.1rem;
@@ -2338,47 +2259,6 @@ export class ReadyHomePanel extends LitElement {
       color: var(--secondary-text-color);
     }
     .completeness-reason-expired {
-      color: var(--error-color, #c62828);
-    }
-    .stat-label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.85rem;
-      color: var(--secondary-text-color);
-      margin-bottom: 4px;
-    }
-    .stat-icon {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-      color: var(--secondary-text-color);
-    }
-    .stat.stat-ok .stat-icon {
-      color: var(--rh-ready-color);
-    }
-    .stat.stat-warn .stat-icon {
-      color: var(--warning-color, #f57c00);
-    }
-    .stat.stat-bad .stat-icon {
-      color: var(--error-color, #c62828);
-    }
-    .stat-value {
-      display: block;
-      font-size: 1.5rem;
-      font-weight: 600;
-    }
-    .stat-meta,
-    .stat-duration {
-      display: block;
-      margin-top: 4px;
-      font-size: 0.85rem;
-      color: var(--secondary-text-color);
-    }
-    .stat-duration.duration-warn {
-      color: var(--warning-color, #f57c00);
-    }
-    .stat-duration.duration-bad {
       color: var(--error-color, #c62828);
     }
     .attention {
@@ -2744,32 +2624,7 @@ export class ReadyHomePanel extends LitElement {
         object-fit: contain;
       }
       .stats {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 6px;
         margin-bottom: 12px;
-      }
-      .stat {
-        padding: 8px 6px;
-      }
-      .stat-label {
-        font-size: 0.7rem;
-        gap: 4px;
-        margin-bottom: 2px;
-      }
-      .stat-icon {
-        width: 14px;
-        height: 14px;
-      }
-      .stat-value {
-        font-size: 1.15rem;
-      }
-      .stat-meta,
-      .stat-duration {
-        font-size: 0.7rem;
-        margin-top: 2px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
       }
       .header,
       .content {
